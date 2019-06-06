@@ -12,8 +12,6 @@ import pickle
 
 
 import keras
-from keras.datasets import cifar10
-from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv1D, MaxPooling1D
@@ -22,24 +20,27 @@ import os
 
 # Hyperparameters
 batch_size = 32
-num_classes = 2
-epochs = 1
+num_classes = 3
+epochs = 100
 
-with open('t012_fidx12.pkl', 'rb') as f:
+with open('ocm012_fidx3.pkl', 'rb') as f:
     ocm0_all, ocm1_all, ocm2_all = pickle.load(f)
 
 # concatinate before and after water
 ocm0_bef = ocm0_all[:,:,0]
 ocm0_aft = ocm0_all[:,:,1]
-ocm0 = np.concatenate([ocm0_bef, ocm0_aft], axis=1)
+ocm0_10m = ocm0_all[:,:,2]
+ocm0 = np.concatenate([ocm0_bef, ocm0_aft, ocm0_10m], axis=1)
 
 ocm1_bef = ocm1_all[:,:,0]
 ocm1_aft = ocm1_all[:,:,1]
-ocm1 = np.concatenate([ocm1_bef, ocm1_aft], axis=1)
+ocm1_10m = ocm1_all[:,:,2]
+ocm1 = np.concatenate([ocm1_bef, ocm1_aft, ocm1_10m], axis=1)
 
 ocm2_bef = ocm2_all[:,:,0]
 ocm2_aft = ocm2_all[:,:,1]
-ocm2 = np.concatenate([ocm2_bef, ocm2_aft], axis=1)
+ocm2_10m = ocm2_all[:,:,2]
+ocm2 = np.concatenate([ocm2_bef, ocm2_aft, ocm2_10m], axis=1)
 
 # Transpose
 ocm0 = ocm0.T
@@ -65,13 +66,14 @@ ocm = (ocm - ocm_m) / ocm_v
 
 # Create Answer
 y = np.zeros(ocm0.shape[0])
-y[ocm0_bef.shape[0]:] = 1
+y[ocm0_bef.shape[0]:ocm0_bef.shape[0]*2] = 1
+y[ocm0_bef.shape[0]*2:] = 2
 
 
 ###################### Start Keras ##########################
 # The data, split between train and test sets:
-print('ocm:',ocm.shape)
-print('y:',y.shape)
+print('ocm:', ocm.shape)
+print('y:', y.shape)
 X_train, X_test, y_train, y_test = train_test_split(ocm, y, test_size=0.33, random_state=1)
 print('x_train shape:', X_train.shape)
 print(X_train.shape[0], 'train samples')

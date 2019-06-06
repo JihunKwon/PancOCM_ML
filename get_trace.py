@@ -22,12 +22,11 @@ Note: file name run1, run2 and run3 means: before, shortly after and 10 minutes 
 # Jihun Local
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy")  # Before water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy")  # After water
-#out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run3.npy")  # 10min After water
+out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run3.npy")  # 10min After water
 
 # these are where the runs end in each OCM file
 num_subject = 1  # This number has to be the number of total run (number of subjects * number of runs)
-rep_list = [8196, 8196]
-#rep_list = [8196, 8196, 8196]
+rep_list = [8196, 8196, 8196]
 
 print(np.size(rep_list))
 print(rep_list[0]*1)
@@ -115,7 +114,7 @@ for fidx in range(0, np.size(rep_list)):
         ocm2_all[:, 5*rep_list[fidx]-rep_list[fidx]*(i+1) : 5*rep_list[fidx]-rep_list[fidx]*i, fidx] = \
             ocm2[:, ocm2.shape[1]-rep_list[fidx]*(i+1)-1 : ocm2.shape[1]-rep_list[fidx]*i-1]
 
-with open('t012.pkl', 'wb') as f:
+with open('ocm012.pkl', 'wb') as f:
     pickle.dump([ocm0_all, ocm1_all, ocm2_all], f)
 
 print(time.time() - start)
