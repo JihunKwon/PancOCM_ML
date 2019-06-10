@@ -19,62 +19,113 @@ from sklearn.model_selection import train_test_split
 import os
 
 # Hyperparameters
-batch_size = 32
+batch_size = 540
 num_classes = 3
-epochs = 100
+epochs = 50
 
-with open('ocm012_fidx3.pkl', 'rb') as f:
-    ocm0_all, ocm1_all, ocm2_all = pickle.load(f)
+############# Import experiment 1 #############
+with open('ocm012_s1r1.pkl', 'rb') as f:
+    ocm0_all_1, ocm1_all_1, ocm2_all_1 = pickle.load(f)
 
 # concatinate before and after water
-ocm0_bef = ocm0_all[:,:,0]
-ocm0_aft = ocm0_all[:,:,1]
-ocm0_10m = ocm0_all[:,:,2]
-ocm0 = np.concatenate([ocm0_bef, ocm0_aft, ocm0_10m], axis=1)
+ocm0_bef_1 = ocm0_all_1[:,:,0]
+ocm0_aft_1 = ocm0_all_1[:,:,1]
+ocm0_10m_1 = ocm0_all_1[:,:,2]
+ocm0_1 = np.concatenate([ocm0_bef_1, ocm0_aft_1, ocm0_10m_1], axis=1)
 
-ocm1_bef = ocm1_all[:,:,0]
-ocm1_aft = ocm1_all[:,:,1]
-ocm1_10m = ocm1_all[:,:,2]
-ocm1 = np.concatenate([ocm1_bef, ocm1_aft, ocm1_10m], axis=1)
+ocm1_bef_1 = ocm1_all_1[:,:,0]
+ocm1_aft_1 = ocm1_all_1[:,:,1]
+ocm1_10m_1 = ocm1_all_1[:,:,2]
+ocm1_1 = np.concatenate([ocm1_bef_1, ocm1_aft_1, ocm1_10m_1], axis=1)
 
-ocm2_bef = ocm2_all[:,:,0]
-ocm2_aft = ocm2_all[:,:,1]
-ocm2_10m = ocm2_all[:,:,2]
-ocm2 = np.concatenate([ocm2_bef, ocm2_aft, ocm2_10m], axis=1)
+ocm2_bef_1 = ocm2_all_1[:,:,0]
+ocm2_aft_1 = ocm2_all_1[:,:,1]
+ocm2_10m_1 = ocm2_all_1[:,:,2]
+ocm2_1 = np.concatenate([ocm2_bef_1, ocm2_aft_1, ocm2_10m_1], axis=1)
 
 # Transpose
-ocm0 = ocm0.T
-ocm1 = ocm1.T
-ocm2 = ocm2.T
+ocm0_1 = ocm0_1.T
+ocm1_1 = ocm1_1.T
+ocm2_1 = ocm2_1.T
 
 # concatinate three OCM sensors
-print('ocm0 shape:', ocm0.shape)
-n, t = ocm0.shape
-ocm = np.zeros((n, t ,3))
-ocm[:,:,0] = ocm0[:,:]
-ocm[:,:,1] = ocm1[:,:]
-ocm[:,:,2] = ocm2[:,:]
+n, t = ocm0_1.shape
+ocm_1 = np.zeros((n, t ,3))
+ocm_1[:,:,0] = ocm0_1[:,:]
+ocm_1[:,:,1] = ocm1_1[:,:]
+ocm_1[:,:,2] = ocm2_1[:,:]
 #ocm = np.concatenate([ocm0, ocm1, ocm2], axis=2)
-print('ocm shape:', ocm.shape)
+print('ocm_1 shape:', ocm_1.shape)
 
 # Calculate mean and diviation
-ocm_m = np.mean(ocm)
-ocm_v = np.var(ocm)
+ocm_m = np.mean(ocm_1)
+ocm_v = np.var(ocm_1)
 
 # Standardization
-ocm = (ocm - ocm_m) / ocm_v
+ocm_1 = (ocm_1 - ocm_m) / ocm_v
 
 # Create Answer
-y = np.zeros(ocm0.shape[0])
-y[ocm0_bef.shape[0]:ocm0_bef.shape[0]*2] = 1
-y[ocm0_bef.shape[0]*2:] = 2
+y_1 = np.zeros(ocm0_1.shape[0])
+y_1[ocm0_bef_1.shape[0]:ocm0_bef_1.shape[0]*2] = 1
+y_1[ocm0_bef_1.shape[0]*2:] = 2
 
+
+############# Import experiment 2 #############
+with open('ocm012_s1r2.pkl', 'rb') as f:
+    ocm0_all_2, ocm1_all_2, ocm2_all_2 = pickle.load(f)
+
+# concatinate before and after water
+ocm0_bef_2 = ocm0_all_2[:,:,0]
+ocm0_aft_2 = ocm0_all_2[:,:,1]
+ocm0_10m_2 = ocm0_all_2[:,:,2]
+ocm0_2 = np.concatenate([ocm0_bef_2, ocm0_aft_2, ocm0_10m_2], axis=1)
+
+ocm1_bef_2 = ocm1_all_2[:,:,0]
+ocm1_aft_2 = ocm1_all_2[:,:,1]
+ocm1_10m_2 = ocm1_all_2[:,:,2]
+ocm1_2 = np.concatenate([ocm1_bef_2, ocm1_aft_2, ocm1_10m_2], axis=1)
+
+ocm2_bef_2 = ocm2_all_2[:,:,0]
+ocm2_aft_2 = ocm2_all_2[:,:,1]
+ocm2_10m_2 = ocm2_all_2[:,:,2]
+ocm2_2 = np.concatenate([ocm2_bef_2, ocm2_aft_2, ocm2_10m_2], axis=1)
+
+# Transpose
+ocm0_2 = ocm0_2.T
+ocm1_2 = ocm1_2.T
+ocm2_2 = ocm2_2.T
+
+# concatinate three OCM sensors
+n, t = ocm0_2.shape
+ocm_2 = np.zeros((n, t ,3))
+ocm_2[:,:,0] = ocm0_2[:,:]
+ocm_2[:,:,1] = ocm1_2[:,:]
+ocm_2[:,:,2] = ocm2_2[:,:]
+#ocm = np.concatenate([ocm0, ocm1, ocm2], axis=2)
+print('ocm_2 shape:', ocm_2.shape)
+
+# Calculate mean and diviation
+ocm_m = np.mean(ocm_2)
+ocm_v = np.var(ocm_2)
+
+# Standardization
+ocm_2 = (ocm_2 - ocm_m) / ocm_v
+
+# Create Answer
+y_2 = np.zeros(ocm0_2.shape[0])
+y_2[ocm0_bef_2.shape[0]:ocm0_bef_2.shape[0]*2] = 1
+y_2[ocm0_bef_2.shape[0]*2:] = 2
 
 ###################### Start Keras ##########################
 # The data, split between train and test sets:
-print('ocm:', ocm.shape)
-print('y:', y.shape)
-X_train, X_test, y_train, y_test = train_test_split(ocm, y, test_size=0.33, random_state=1)
+print('ocm:', ocm_1.shape)
+print('y:', y_1.shape)
+#X_train, X_test, y_train, y_test = train_test_split(ocm_1, y, test_size=0.33, random_state=1)
+X_train = ocm_1
+X_test = ocm_2
+y_train = y_1
+y_test = y_2
+
 print('x_train shape:', X_train.shape)
 print(X_train.shape[0], 'train samples')
 print(X_test.shape[0], 'test samples')
@@ -85,23 +136,12 @@ y_test = keras.utils.to_categorical(y_test, num_classes)
 
 # Build NN
 model = Sequential()
-model.add(Conv1D(32, 5, padding='same', input_shape=X_train.shape[1:], activation='relu'))
-model.add(Conv1D(32, 5, padding='same', activation='relu'))
+model.add(Conv1D(16, 8, padding='same', input_shape=X_train.shape[1:], activation='relu'))
 model.add(MaxPooling1D(2, padding='same'))
-model.add(Dropout(0.25))
-
-model.add(Conv1D(64, 5, padding='same', activation='relu'))
-model.add(Conv1D(64, 5, padding='same', activation='relu'))
-model.add(MaxPooling1D(2, padding='same'))
-model.add(Dropout(0.25))
-
-model.add(Conv1D(128, 5, padding='same', activation='relu'))
-model.add(Conv1D(128, 5, padding='same', activation='relu'))
-model.add(MaxPooling1D(2, padding='same'))
-model.add(Dropout(0.25))
+model.add(Dropout(0.5))
 
 model.add(Flatten())
-model.add(Dense(512))
+model.add(Dense(16))
 model.add(Activation('relu'))
 model.add(Dropout(0.5))
 model.add(Dense(num_classes))
@@ -110,7 +150,7 @@ model.add(Activation('softmax'))
 model.summary()
 
 # initiate RMSprop optimizer
-opt = keras.optimizers.rmsprop(lr=0.0001, decay=1e-6)
+opt = keras.optimizers.rmsprop(lr=0.000001, decay=1e-6)
 
 # Let's train the model using RMSprop
 model.compile(loss='categorical_crossentropy',
@@ -132,9 +172,33 @@ scores = model.evaluate(X_test, y_test, verbose=1)
 print('Test loss:', scores[0])
 print('Test accuracy:', scores[1])
 
-plt.plot(range(epochs), history.history['loss'], label='loss')
-plt.plot(range(epochs), history.history['val_loss'], label='val_loss')
-plt.xlabel('epoch')
-plt.ylabel('loss')
-plt.legend()
-plt.show()
+
+# ----------------------------------------------
+# Some plots
+# ----------------------------------------------
+fig, (axL, axR) = plt.subplots(ncols=2, figsize=(10,4))
+
+# loss
+def plot_history_loss(fit):
+    # Plot the loss in the history
+    axL.plot(fit.history['loss'],label="loss for training")
+    axL.plot(fit.history['val_loss'],label="loss for validation")
+    axL.set_title('model loss')
+    axL.set_xlabel('epoch')
+    axL.set_ylabel('loss')
+    axL.legend(loc='upper right')
+
+# acc
+def plot_history_acc(fit):
+    # Plot the loss in the history
+    axR.plot(fit.history['acc'],label="accuracy for training")
+    axR.plot(fit.history['val_acc'],label="accuracy for validation")
+    axR.set_title('model accuracy')
+    axR.set_xlabel('epoch')
+    axR.set_ylabel('accuracy')
+    axR.legend(loc='lower right')
+
+plot_history_loss(history)
+plot_history_acc(history)
+fig.savefig('./result.png')
+plt.close()
