@@ -20,18 +20,20 @@ Note: file name run1, run2 and run3 means: before, shortly after and 10 minutes 
 '''
 
 # Jihun Local
-'''
+
 # s1r1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy")  # Before water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy")  # After water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run3.npy")  # 10min After water
-rep_list = [8196, 8196, 8196]
-
+#rep_list = [8196, 8196, 8196]
+rep_list = [100, 100, 100]
+'''
 # s1r2
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run1.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run2.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run3.npy")
-rep_list = [8192, 8192, 8192]
+#rep_list = [8192, 8192, 8192]
+rep_list = [500, 500, 500]
 
 # s2r1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_02_20181102\\run1.npy")
@@ -50,17 +52,18 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190228\\run1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190228\\run2.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190228\\run3.npy")
 rep_list = [3401, 3401, 3401]
-'''
+
 # s3r2
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run1.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run3.npy")
 rep_list = [3690, 3690, 3690]
-
+'''
 
 # these are where the runs end in each OCM file
 num_subject = 1  # This number has to be the number of total run (number of subjects * number of runs)
-
+init = 300
+depth = 500
 print(np.size(rep_list))
 print(rep_list[0]*1)
 
@@ -70,13 +73,18 @@ d1 = np.zeros([5, np.size(rep_list)])
 d2 = np.zeros([5, np.size(rep_list)])
 d3 = np.zeros([5, np.size(rep_list)])
 
+# these store data for each transducer, 5 breath holds, 15 runs
+ocm0_all = np.zeros([depth, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
+ocm1_all = np.zeros([depth, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
+ocm2_all = np.zeros([depth, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
+
 for fidx in range(0, np.size(rep_list)):
     # fidx = 16
     in_filename = out_list[fidx]
     ocm = np.load(in_filename)
 
     # crop data
-    ocm = ocm[300:800, :]  # Original code.
+    ocm = ocm[init:init+depth, :]  # Original code.
 
     # s=# of samples per trace
     # t=# of total traces
@@ -93,14 +101,7 @@ for fidx in range(0, np.size(rep_list)):
     f2 = np.ones([10])
     max_p = 0
 
-    # My variables
-    offset_my = np.ones([s, t])  # offset correction
-    lptr_my = np.ones([s, t])  # low pass filter
-    lptr_env_my = np.ones([s, t])  # low pass filter
-    f1_my1 = np.ones([5])
-    f2_my = np.ones([10])  # Envelop
     for p in range(0, t):
-
         # high pass then low pass filter the data
         tr1 = ocm[:, p]
         offset = signal.detrend(tr1)
@@ -117,6 +118,29 @@ for fidx in range(0, np.size(rep_list)):
 
         lptr_norm[:, p] = np.divide(lptr[:, p], np.max(lptr[:, p]))
 
+        '''
+        # ========================Visualize==============================================
+        # This part shows how the signal changed after the filtering.
+        depth = np.linspace(0, s - 1, s)
+        fig = plt.figure(figsize=(12,8))
+
+        ax0 = fig.add_subplot(311)
+        a0 = ax0.plot(depth,ocm[:,p])
+        a0off = ax0.plot(depth,offset[:])
+        ax0.set_title('Raw and Offset')
+
+        ax1 = fig.add_subplot(312)
+        a1 = ax1.plot(depth,lptr[:,p])
+        ax1.set_title('Low pass 5')
+        ax2 = fig.add_subplot(313)
+        a2 = ax2.plot(depth,lptr_norm[:,p])
+        ax2.set_title('Low pass 5')
+
+        fig.tight_layout()
+        fig.show()
+        plt.savefig('Filtered_wave_my.png')
+        # =============================================================================
+        '''
 
     ocm = lptr_norm
 
@@ -131,12 +155,6 @@ for fidx in range(0, np.size(rep_list)):
     s, c0 = np.shape(ocm0)
     s, c1 = np.shape(ocm1)
     s, c2 = np.shape(ocm2)
-
-    # these store data for each transducer, 5 breath holds, 15 runs
-    ocm0_all = np.zeros([500, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
-    ocm1_all = np.zeros([500, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
-    ocm2_all = np.zeros([500, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
-
 
     # collect all the data so far
     for i in range(0, 5):  # Distribute ocm signal from end to start
