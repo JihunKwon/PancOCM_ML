@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from scipy import signal
 import pickle
 
-
 import keras
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
@@ -20,41 +19,35 @@ import os
 
 # Hyperparameters
 batch_size = 32
-num_classes = 3
-epochs = 20
+epochs = 5
 
 ############# Import experiment 1 #############
 with open('ocm012_s1r1.pkl', 'rb') as f:
     ocm0_all_1, ocm1_all_1, ocm2_all_1 = pickle.load(f)
 
+print(sum(ocm0_all_1))
+print(sum(ocm1_all_1))
+print(sum(ocm2_all_1))
+print('ocm0 shape', ocm0_all_1.shape)
+print('ocm1 shape', ocm1_all_1.shape)
+print('ocm2 shape', ocm2_all_1.shape)
+
 # concatinate before and after water
 ocm0_bef_1 = ocm0_all_1[:,:,0]
 ocm0_aft_1 = ocm0_all_1[:,:,1]
 ocm0_10m_1 = ocm0_all_1[:,:,2]
-ocm0_1 = np.concatenate([ocm0_bef_1, ocm0_aft_1, ocm0_10m_1], axis=1)
-
-ocm1_bef_1 = ocm1_all_1[:,:,0]
-ocm1_aft_1 = ocm1_all_1[:,:,1]
-ocm1_10m_1 = ocm1_all_1[:,:,2]
-ocm1_1 = np.concatenate([ocm1_bef_1, ocm1_aft_1, ocm1_10m_1], axis=1)
-
-ocm2_bef_1 = ocm2_all_1[:,:,0]
-ocm2_aft_1 = ocm2_all_1[:,:,1]
-ocm2_10m_1 = ocm2_all_1[:,:,2]
-ocm2_1 = np.concatenate([ocm2_bef_1, ocm2_aft_1, ocm2_10m_1], axis=1)
+ocm0_ba_1 = np.concatenate([ocm0_bef_1, ocm0_aft_1], axis=1)
+print(np.sum(ocm0_bef_1))
+print(np.sum(ocm0_aft_1))
+print(np.sum(ocm0_10m_1))
 
 # Transpose
-ocm0_1 = ocm0_1.T
-ocm1_1 = ocm1_1.T
-ocm2_1 = ocm2_1.T
+ocm0_1 = ocm0_ba_1.T
 
 # concatinate three OCM sensors
 n, t = ocm0_1.shape
-ocm_1 = np.zeros((n, t ,3))
+ocm_1 = np.zeros((n, t ,1))
 ocm_1[:,:,0] = ocm0_1[:,:]
-ocm_1[:,:,1] = ocm1_1[:,:]
-ocm_1[:,:,2] = ocm2_1[:,:]
-#ocm = np.concatenate([ocm0, ocm1, ocm2], axis=2)
 print('ocm_1 shape:', ocm_1.shape)
 
 # Calculate mean and diviation
@@ -67,8 +60,8 @@ ocm_1 = (ocm_1 - ocm_m) / ocm_v
 # Create Answer
 y_1 = np.zeros(ocm0_1.shape[0])
 y_1[ocm0_bef_1.shape[0]:ocm0_bef_1.shape[0]*2] = 1
-y_1[ocm0_bef_1.shape[0]*2:] = 2
-
+#y_1[ocm0_bef_1.shape[0]*2:] = 2
+print(y_1.shape)
 
 ############# Import experiment 2 #############
 with open('ocm012_s1r2.pkl', 'rb') as f:
@@ -78,30 +71,15 @@ with open('ocm012_s1r2.pkl', 'rb') as f:
 ocm0_bef_2 = ocm0_all_2[:,:,0]
 ocm0_aft_2 = ocm0_all_2[:,:,1]
 ocm0_10m_2 = ocm0_all_2[:,:,2]
-ocm0_2 = np.concatenate([ocm0_bef_2, ocm0_aft_2, ocm0_10m_2], axis=1)
-
-ocm1_bef_2 = ocm1_all_2[:,:,0]
-ocm1_aft_2 = ocm1_all_2[:,:,1]
-ocm1_10m_2 = ocm1_all_2[:,:,2]
-ocm1_2 = np.concatenate([ocm1_bef_2, ocm1_aft_2, ocm1_10m_2], axis=1)
-
-ocm2_bef_2 = ocm2_all_2[:,:,0]
-ocm2_aft_2 = ocm2_all_2[:,:,1]
-ocm2_10m_2 = ocm2_all_2[:,:,2]
-ocm2_2 = np.concatenate([ocm2_bef_2, ocm2_aft_2, ocm2_10m_2], axis=1)
+ocm0_ba_2 = np.concatenate([ocm0_bef_2, ocm0_aft_2], axis=1)
 
 # Transpose
-ocm0_2 = ocm0_2.T
-ocm1_2 = ocm1_2.T
-ocm2_2 = ocm2_2.T
+ocm0_2 = ocm0_ba_2.T
 
 # concatinate three OCM sensors
 n, t = ocm0_2.shape
-ocm_2 = np.zeros((n, t ,3))
+ocm_2 = np.zeros((n, t ,1))
 ocm_2[:,:,0] = ocm0_2[:,:]
-ocm_2[:,:,1] = ocm1_2[:,:]
-ocm_2[:,:,2] = ocm2_2[:,:]
-#ocm = np.concatenate([ocm0, ocm1, ocm2], axis=2)
 print('ocm_2 shape:', ocm_2.shape)
 
 # Calculate mean and diviation
@@ -114,7 +92,7 @@ ocm_2 = (ocm_2 - ocm_m) / ocm_v
 # Create Answer
 y_2 = np.zeros(ocm0_2.shape[0])
 y_2[ocm0_bef_2.shape[0]:ocm0_bef_2.shape[0]*2] = 1
-y_2[ocm0_bef_2.shape[0]*2:] = 2
+#y_2[ocm0_bef_2.shape[0]*2:] = 2
 
 ###################### Start Keras ##########################
 # The data, split between train and test sets:
@@ -127,12 +105,13 @@ y_train = y_1
 y_test = y_2
 
 print('x_train shape:', X_train.shape)
-print(X_train.shape[0], 'train samples')
-print(X_test.shape[0], 'test samples')
+print('x_test shape:', X_test.shape)
+print('y_train shape:', y_train.shape)
+print('y_test shape:', y_test.shape)
 
 # Convert class vectors to binary class matrices.
-y_train = keras.utils.to_categorical(y_train, num_classes)
-y_test = keras.utils.to_categorical(y_test, num_classes)
+y_train = keras.utils.to_categorical(y_train, 1)
+y_test = keras.utils.to_categorical(y_test, 1)
 
 # Build NN
 model = Sequential()
@@ -140,11 +119,11 @@ model.add(Conv1D(8, 4, padding='same', input_shape=X_train.shape[1:], activation
 model.add(MaxPooling1D(2, padding='same'))
 model.add(Dropout(0.5))
 
-model.add(Flatten())
+#model.add(Flatten())
 model.add(Dense(8))
 model.add(Activation('relu'))
 model.add(Dropout(0.5))
-model.add(Dense(num_classes))
+model.add(Dense(1))
 model.add(Activation('softmax'))
 
 model.summary()
@@ -160,11 +139,16 @@ model.compile(loss='categorical_crossentropy',
 X_train = X_train.astype('float32')
 X_test = X_test.astype('float32')
 
+print('x_train shape_2:', X_train.shape)
+print('x_test shape_2:', X_test.shape)
+print('y_train shape_2:', y_train.shape)
+print('y_test shape_2:', y_test.shape)
+
 history = model.fit(X_train, y_train,
           batch_size=batch_size,
           epochs=epochs,
-          validation_data=(X_test, y_test),
-          shuffle=True)
+          validation_data=(X_test, y_test)
+          ,shuffle=True)
 
 
 # Score trained model.
@@ -203,19 +187,23 @@ plot_history_acc(history)
 fig.savefig('./result.png')
 plt.close()
 
-'''
+
 ### ROC ###
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import auc
 
+print('X_test shape',X_test.shape)
 y_pred_keras = model.predict(X_test).ravel()
-print(y_pred_keras.shape)
-print(y_pred_keras)
+print('y_pred_keras shape',y_pred_keras.shape)
+print('y_pred_keras: ',y_pred_keras)
+print('y_test: ',y_test)
+print('y_test shape: ',y_test.shape)
 #y_pred_keras = model.predict(X_test).ravel()
 fpr_keras, tpr_keras, thresholds_keras = confusion_matrix(y_test, y_pred_keras)
 
 auc_keras = auc(fpr_keras, tpr_keras)
 
+'''
 plt.figure(1)
 plt.plot([0, 1], [0, 1], 'k--')
 plt.plot(fpr_keras, tpr_keras, label='Keras (area = {:.3f})'.format(auc_keras))
