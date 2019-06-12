@@ -19,108 +19,199 @@ import os
 
 # Hyperparameters
 batch_size = 32
-epochs = 5
+epochs = 20
+fname1 = 'ocm012_s1r'
+fname2 = '.pkl'
 
-############# Import experiment 1 #############
-with open('ocm012_s1r1_1000.pkl', 'rb') as f:
+#################### Import experiment 1 ####################
+with open(fname1 + str(1) + fname2, 'rb') as f:
     ocm0_all_1, ocm1_all_1, ocm2_all_1 = pickle.load(f)
 
-print('ocm0 shape', ocm0_all_1.shape)
-print('ocm1 shape', ocm1_all_1.shape)
-print('ocm2 shape', ocm2_all_1.shape)
 
-# concatinate before and after water
+# concatinate Before and After water for each OCM
 ocm0_bef_1 = ocm0_all_1[:,:,0]
 ocm0_aft_1 = ocm0_all_1[:,:,1]
 ocm0_10m_1 = ocm0_all_1[:,:,2]
+
+ocm1_bef_1 = ocm1_all_1[:,:,0]
+ocm1_aft_1 = ocm1_all_1[:,:,1]
+ocm1_10m_1 = ocm1_all_1[:,:,2]
+
+ocm2_bef_1 = ocm2_all_1[:,:,0]
+ocm2_aft_1 = ocm2_all_1[:,:,1]
+ocm2_10m_1 = ocm2_all_1[:,:,2]
+
+# Classify Before and After
 ocm0_ba_1 = np.concatenate([ocm0_bef_1, ocm0_aft_1], axis=1)
-print(np.sum(ocm0_bef_1))
-print(np.sum(ocm0_aft_1))
-print(np.sum(ocm0_10m_1))
+ocm1_ba_1 = np.concatenate([ocm1_bef_1, ocm1_aft_1], axis=1)
+ocm2_ba_1 = np.concatenate([ocm2_bef_1, ocm2_aft_1], axis=1)
+# Classify Before and 10min
+ocm0_b10_1 = np.concatenate([ocm0_bef_1, ocm0_10m_1], axis=1)
+ocm1_b10_1 = np.concatenate([ocm1_bef_1, ocm1_10m_1], axis=1)
+ocm2_b10_1 = np.concatenate([ocm2_bef_1, ocm2_10m_1], axis=1)
+# Classify After and 10min
+ocm0_a10_1 = np.concatenate([ocm0_aft_1, ocm0_10m_1], axis=1)
+ocm1_a10_1 = np.concatenate([ocm1_aft_1, ocm1_10m_1], axis=1)
+ocm2_a10_1 = np.concatenate([ocm2_aft_1, ocm2_10m_1], axis=1)
 
 # Transpose
-ocm0_1 = ocm0_ba_1.T
+ocm0_ba_1 = ocm0_ba_1.T
+ocm1_ba_1 = ocm1_ba_1.T
+ocm2_ba_1 = ocm2_ba_1.T
+
+ocm0_b10_1 = ocm0_b10_1.T
+ocm1_b10_1 = ocm1_b10_1.T
+ocm2_b10_1 = ocm2_b10_1.T
+
+ocm0_a10_1 = ocm0_a10_1.T
+ocm1_a10_1 = ocm1_a10_1.T
+ocm2_a10_1 = ocm2_a10_1.T
 
 # concatinate three OCM sensors
-n, t = ocm0_1.shape
-ocm_1 = np.zeros((n, t ,1))
-ocm_1[:,:,0] = ocm0_1[:,:]
-print('ocm_1 shape:', ocm_1.shape)
+n, t = ocm0_ba_1.shape
+ocm_ba_1 = np.zeros((n, t ,3))
+ocm_b10_1 = np.zeros((n, t ,3))
+ocm_a10_1 = np.zeros((n, t ,3))
 
-# Calculate mean and diviation
-ocm_m = np.mean(ocm_1)
-ocm_v = np.var(ocm_1)
+ocm_ba_1[:,:,0] = ocm0_ba_1[:,:]
+ocm_ba_1[:,:,1] = ocm1_ba_1[:,:]
+ocm_ba_1[:,:,2] = ocm2_ba_1[:,:]
 
-# Standardization
-ocm_1 = (ocm_1 - ocm_m) / ocm_v
+ocm_b10_1[:,:,0] = ocm0_b10_1[:,:]
+ocm_b10_1[:,:,1] = ocm1_b10_1[:,:]
+ocm_b10_1[:,:,2] = ocm2_b10_1[:,:]
 
-# Create Answer
-y_1 = np.zeros(ocm0_1.shape[0])
-y_1[ocm0_bef_1.shape[1]:ocm0_bef_1.shape[1]*2] = 1
-#y_1[ocm0_bef_1.shape[0]*2:] = 2
-print(y_1.shape)
+ocm_a10_1[:,:,0] = ocm0_a10_1[:,:]
+ocm_a10_1[:,:,1] = ocm1_a10_1[:,:]
+ocm_a10_1[:,:,2] = ocm2_a10_1[:,:]
+print('ocm_1 shape:', ocm_ba_1.shape)
 
-############# Import experiment 2 #############
-with open('ocm012_s1r2_1000.pkl', 'rb') as f:
+
+#################### Import experiment 2 ####################
+with open(fname1 + str(2) + fname2, 'rb') as f:
     ocm0_all_2, ocm1_all_2, ocm2_all_2 = pickle.load(f)
 
 # concatinate before and after water
 ocm0_bef_2 = ocm0_all_2[:,:,0]
 ocm0_aft_2 = ocm0_all_2[:,:,1]
 ocm0_10m_2 = ocm0_all_2[:,:,2]
+
+ocm1_bef_2 = ocm1_all_2[:,:,0]
+ocm1_aft_2 = ocm1_all_2[:,:,1]
+ocm1_10m_2 = ocm1_all_2[:,:,2]
+
+ocm2_bef_2 = ocm2_all_2[:,:,0]
+ocm2_aft_2 = ocm2_all_2[:,:,1]
+ocm2_10m_2 = ocm2_all_2[:,:,2]
+
+# Classify Before and After
 ocm0_ba_2 = np.concatenate([ocm0_bef_2, ocm0_aft_2], axis=1)
+ocm1_ba_2 = np.concatenate([ocm1_bef_2, ocm1_aft_2], axis=1)
+ocm2_ba_2 = np.concatenate([ocm2_bef_2, ocm2_aft_2], axis=1)
+# Classify Before and 10min
+ocm0_b10_2 = np.concatenate([ocm0_bef_2, ocm0_10m_2], axis=1)
+ocm1_b10_2 = np.concatenate([ocm1_bef_2, ocm1_10m_2], axis=1)
+ocm2_b10_2 = np.concatenate([ocm2_bef_2, ocm2_10m_2], axis=1)
+# Classify After and 10min
+ocm0_a10_2 = np.concatenate([ocm0_aft_2, ocm0_10m_2], axis=1)
+ocm1_a10_2 = np.concatenate([ocm1_aft_2, ocm1_10m_2], axis=1)
+ocm2_a10_2 = np.concatenate([ocm2_aft_2, ocm2_10m_2], axis=1)
 
 # Transpose
-ocm0_2 = ocm0_ba_2.T
+ocm0_ba_2 = ocm0_ba_2.T
+ocm1_ba_2 = ocm1_ba_2.T
+ocm2_ba_2 = ocm2_ba_2.T
+ocm0_b10_2 = ocm0_b10_2.T
+ocm1_b10_2 = ocm1_b10_2.T
+ocm2_b10_2 = ocm2_b10_2.T
+ocm0_a10_2 = ocm0_a10_2.T
+ocm1_a10_2 = ocm1_a10_2.T
+ocm2_a10_2 = ocm2_a10_2.T
 
 # concatinate three OCM sensors
-n, t = ocm0_2.shape
-ocm_2 = np.zeros((n, t ,1))
-ocm_2[:,:,0] = ocm0_2[:,:]
-print('ocm_2 shape:', ocm_2.shape)
+n, t = ocm0_ba_2.shape
+ocm_ba_2 = np.zeros((n, t ,3))
+ocm_b10_2 = np.zeros((n, t ,3))
+ocm_a10_2 = np.zeros((n, t ,3))
 
+ocm_ba_2[:,:,0] = ocm0_ba_2[:,:]
+ocm_ba_2[:,:,1] = ocm1_ba_2[:,:]
+ocm_ba_2[:,:,2] = ocm2_ba_2[:,:]
+
+ocm_b10_2[:,:,0] = ocm0_b10_2[:,:]
+ocm_b10_2[:,:,1] = ocm1_b10_2[:,:]
+ocm_b10_2[:,:,2] = ocm2_b10_2[:,:]
+
+ocm_a10_2[:,:,0] = ocm0_a10_2[:,:]
+ocm_a10_2[:,:,1] = ocm1_a10_2[:,:]
+ocm_a10_2[:,:,2] = ocm2_a10_2[:,:]
+print('ocm_2 shape:', ocm_ba_2.shape)
+
+#################### Pre Proccesing ####################
 # Calculate mean and diviation
-ocm_m = np.mean(ocm_2)
-ocm_v = np.var(ocm_2)
+ocm_ba_12 = np.concatenate([ocm0_ba_1, ocm0_ba_2, ocm1_ba_1, ocm1_ba_2, ocm2_ba_1, ocm2_ba_2], axis=0)
+ocm_ba_m = np.mean(ocm_ba_12)
+ocm_ba_v = np.var(ocm_ba_12)
+
+ocm_b10_12 = np.concatenate([ocm0_b10_1, ocm0_b10_2, ocm1_b10_1, ocm1_b10_2, ocm2_b10_1, ocm2_b10_2], axis=0)
+ocm_b10_m = np.mean(ocm_b10_12)
+ocm_b10_v = np.var(ocm_b10_12)
+
+ocm_a10_12 = np.concatenate([ocm0_a10_1, ocm0_a10_2, ocm1_a10_1, ocm1_a10_2, ocm2_a10_1, ocm2_a10_2], axis=0)
+ocm_a10_m = np.mean(ocm_a10_12)
+ocm_a10_v = np.var(ocm_a10_12)
 
 # Standardization
-ocm_2 = (ocm_2 - ocm_m) / ocm_v
+ocm_ba_1 = (ocm_ba_1 - ocm_ba_m) / ocm_ba_v
+ocm_ba_2 = (ocm_ba_2 - ocm_ba_m) / ocm_ba_v
+
+ocm_b10_1 = (ocm_b10_1 - ocm_b10_m) / ocm_b10_v
+ocm_b10_2 = (ocm_b10_2 - ocm_b10_m) / ocm_b10_v
+
+ocm_a10_1 = (ocm_a10_1 - ocm_a10_m) / ocm_a10_v
+ocm_a10_2 = (ocm_a10_2 - ocm_a10_m) / ocm_a10_v
 
 # Create Answer
-y_2 = np.zeros(ocm0_2.shape[0])
-y_2[ocm0_bef_2.shape[1]:ocm0_bef_2.shape[1]*2] = 1
-#y_2[ocm0_bef_2.shape[0]*2:] = 2
+
+y_ba_1 = np.zeros(ocm_ba_1.shape[0])
+y_ba_1[ocm0_bef_1.shape[1]:] = 1
+y_ba_2 = np.zeros(ocm_ba_2.shape[0])
+y_ba_2[ocm0_bef_2.shape[1]:] = 1
+
+y_b10_1 = np.zeros(ocm_b10_1.shape[0])
+y_b10_1[ocm0_bef_1.shape[1]:] = 1
+y_b10_2 = np.zeros(ocm_b10_2.shape[0])
+y_b10_2[ocm0_bef_2.shape[1]:] = 1
+
+y_a10_1 = np.zeros(ocm_a10_1.shape[0])
+y_a10_1[ocm0_bef_1.shape[1]:] = 1
+y_a10_2 = np.zeros(ocm_a10_2.shape[0])
+y_a10_2[ocm0_bef_2.shape[1]:] = 1
+
 
 ###################### Start Keras ##########################
 # The data, split between train and test sets:
-print('ocm:', ocm_1.shape)
-print('y:', y_1.shape)
-#X_train, X_test, y_train, y_test = train_test_split(ocm_1, y, test_size=0.33, random_state=1)
-X_train = ocm_1
-X_test = ocm_2
-y_train = y_1.astype(int)
-y_test = y_2.astype(int)
+#X_train, X_test, y_train, y_test = train_test_split(ocm_ba_2, y_ba_2, test_size=0.33, random_state=1)
 
-print('x_train shape:', X_train.shape)
-print('x_test shape:', X_test.shape)
-print('y_train shape:', y_train.shape)
-print('y_test shape:', y_test.shape)
-
-# Convert class vectors to binary class matrices.
-#y_train = keras.utils.to_categorical(y_train, 2)
-#y_test = keras.utils.to_categorical(y_test, 2)
-
-#y = y_test.ravel()
+X_train = ocm_ba_1
+X_test = ocm_ba_2
+y_train = y_ba_1.astype(int)
+y_test = y_ba_2.astype(int)
 
 # Build NN
 model = Sequential()
+model.add(Conv1D(16, 8, padding='same', input_shape=X_train.shape[1:], activation='relu'))
+model.add(MaxPooling1D(2, padding='same'))
+model.add(Dropout(0.5))
 
-model.add(Conv1D(8, 4, padding='same', input_shape=X_train.shape[1:], activation='relu'))
+model.add(Conv1D(8, 8, padding='same', activation='relu'))
 model.add(MaxPooling1D(2, padding='same'))
 model.add(Dropout(0.5))
 
 model.add(Flatten())
-
+model.add(Dense(16))
+model.add(Activation('relu'))
+model.add(Dropout(0.5))
 model.add(Dense(8))
 model.add(Activation('relu'))
 model.add(Dropout(0.5))
@@ -130,7 +221,7 @@ model.add(Activation('sigmoid'))
 model.summary()
 
 # initiate RMSprop optimizer
-opt = keras.optimizers.rmsprop(lr=0.0001, decay=1e-6)
+opt = keras.optimizers.rmsprop(lr=0.00001, decay=1e-6)
 
 # Let's train the model using RMSprop
 model.compile(loss='binary_crossentropy',
@@ -140,17 +231,11 @@ model.compile(loss='binary_crossentropy',
 X_train = X_train.astype('float32')
 X_test = X_test.astype('float32')
 
-print('x_train shape_2:', X_train.shape)
-print('x_test shape_2:', X_test.shape)
-print('y_train shape_2:', y_train.shape)
-print('y_test shape_2:', y_test.shape)
-
 history = model.fit(X_train, y_train,
           batch_size=batch_size,
           epochs=epochs,
           validation_data=(X_test, y_test)
           ,shuffle=True)
-
 
 # Score trained model.
 scores = model.evaluate(X_test, y_test, verbose=1)
@@ -190,26 +275,11 @@ plt.close()
 
 
 ### ROC ###
-from sklearn.metrics import roc_curve, confusion_matrix
-from sklearn.metrics import auc
+from sklearn.metrics import roc_curve, auc
 
-
-### June 11 ###
-'''
-print('X_test shape',X_test.shape)
-y_pred_keras = model.predict(X_test).ravel()
-print('y_pred_keras shape',y_pred_keras.shape)
-print('y_pred_keras: ',y_pred_keras)
-print('y_test shape',y_test.shape)
-#y_pred_keras = model.predict(X_test).ravel()
-y = y_test.flatten()
-print('y: ',y)
-fpr_keras, tpr_keras, thresholds_keras = roc_curve(y_test, y_pred_keras)
-print('here')
-auc_keras = auc(fpr_keras, tpr_keras)
-'''
-### June 12 ###
 y_pred = model.predict(X_test)
+y_pred_prob = model.predict_proba(X_test)
+y_pred_class = model.predict_classes(X_test)
 fpr, tpr, thr = roc_curve(y_test, y_pred)
 auc_keras = auc(fpr, tpr)
 
@@ -222,18 +292,3 @@ plt.ylabel('True positive rate')
 plt.title('ROC curve')
 plt.legend(loc='best')
 plt.savefig('./ROC.png')
-'''
-# Zoom in view of the upper left corner.
-fig3 = plt.subplots(ncols=1, figsize=(5,4))
-plt.figure(2)
-plt.xlim(0, 0.2)
-plt.ylim(0.8, 1)
-plt.plot([0, 1], [0, 1], 'k--')
-plt.plot(fpr, tpr, label='Keras (area = {:.3f})'.format(auc_keras))
-plt.xlabel('False positive rate')
-plt.ylabel('True positive rate')
-plt.title('ROC curve (zoomed in at top left)')
-plt.legend(loc='best')
-plt.savefig('./ROC_zoom.png')
-
-'''
