@@ -25,15 +25,16 @@ Note: file name run1, run2 and run3 means: before, shortly after and 10 minutes 
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy")  # Before water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy")  # After water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run3.npy")  # 10min After water
-rep_list = [8196, 8196, 8196]
-#rep_list = [100, 100, 100]
+#rep_list = [8196, 8196, 8196]
+rep_list = [100, 100, 100]
 '''
 # s1r2
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run1.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run2.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run3.npy")
 rep_list = [8192, 8192, 8192]
-#rep_list = [500, 500, 500]
+#rep_list = [1000, 1000, 1000]
+
 '''
 # s2r1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_02_20181102\\run1.npy")
@@ -74,9 +75,12 @@ d2 = np.zeros([5, np.size(rep_list)])
 d3 = np.zeros([5, np.size(rep_list)])
 
 # these store data for each transducer, 5 breath holds, 15 runs
-ocm0_all = np.zeros([depth, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
-ocm1_all = np.zeros([depth, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
-ocm2_all = np.zeros([depth, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
+#ocm0_all = np.zeros([depth, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
+#ocm1_all = np.zeros([depth, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
+#ocm2_all = np.zeros([depth, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
+ocm0_all = np.zeros([depth, 5 * rep_list[0], np.size(rep_list)])
+ocm1_all = np.zeros([depth, 5 * rep_list[0], np.size(rep_list)])
+ocm2_all = np.zeros([depth, 5 * rep_list[0], np.size(rep_list)])
 
 for fidx in range(0, np.size(rep_list)):
     # fidx = 16
