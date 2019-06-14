@@ -19,7 +19,8 @@ import os
 
 # Hyperparameters
 batch_size = 32
-epochs = 20
+epochs = 3
+#fname1 = 'ocm012_undr2_s1r'
 fname1 = 'ocm012_s1r'
 fname2 = '.pkl'
 
@@ -172,7 +173,8 @@ ocm_a10_1 = (ocm_a10_1 - ocm_a10_m) / ocm_a10_v
 ocm_a10_2 = (ocm_a10_2 - ocm_a10_m) / ocm_a10_v
 
 # Create Answer
-
+#このラベル間違ってるんじゃない？
+#OCMがconcatinateされる順番を再確認して、それに合ったラベリングができている？
 y_ba_1 = np.zeros(ocm_ba_1.shape[0])
 y_ba_1[ocm0_bef_1.shape[1]:] = 1
 y_ba_2 = np.zeros(ocm_ba_2.shape[0])
@@ -191,7 +193,7 @@ y_a10_2[ocm0_bef_2.shape[1]:] = 1
 
 ###################### Start Keras ##########################
 # The data, split between train and test sets:
-#X_train, X_test, y_train, y_test = train_test_split(ocm_ba_2, y_ba_2, test_size=0.33, random_state=1)
+#X_train, X_test, y_train, y_test = train_test_split(ocm_ba_1, y_ba_1, test_size=0.5, random_state=1)
 
 X_train = ocm_ba_1
 X_test = ocm_ba_2

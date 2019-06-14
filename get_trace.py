@@ -25,9 +25,9 @@ Note: file name run1, run2 and run3 means: before, shortly after and 10 minutes 
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy")  # Before water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy")  # After water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run3.npy")  # 10min After water
-#rep_list = [8196, 8196, 8196]
-rep_list = [100, 100, 100]
-'''
+rep_list = [8196, 8196, 8196]
+#rep_list = [1000, 1000, 1000]
+
 # s1r2
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run1.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run2.npy")
@@ -35,12 +35,13 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run3
 rep_list = [8192, 8192, 8192]
 #rep_list = [1000, 1000, 1000]
 
-'''
+
 # s2r1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_02_20181102\\run1.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_02_20181102\\run2.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_02_20181102\\run3.npy")
 rep_list = [6932, 6932, 6932]
+
 
 # s2r2
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_02_20181220\\run1.npy")
@@ -53,13 +54,13 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190228\\run1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190228\\run2.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190228\\run3.npy")
 rep_list = [3401, 3401, 3401]
-
+'''
 # s3r2
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run1.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run3.npy")
 rep_list = [3690, 3690, 3690]
-'''
+
 
 # these are where the runs end in each OCM file
 num_subject = 1  # This number has to be the number of total run (number of subjects * number of runs)
@@ -75,12 +76,15 @@ d2 = np.zeros([5, np.size(rep_list)])
 d3 = np.zeros([5, np.size(rep_list)])
 
 # these store data for each transducer, 5 breath holds, 15 runs
-#ocm0_all = np.zeros([depth, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
-#ocm1_all = np.zeros([depth, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
-#ocm2_all = np.zeros([depth, 5 * rep_list[0] * np.size(rep_list), np.size(rep_list)])
 ocm0_all = np.zeros([depth, 5 * rep_list[0], np.size(rep_list)])
 ocm1_all = np.zeros([depth, 5 * rep_list[0], np.size(rep_list)])
 ocm2_all = np.zeros([depth, 5 * rep_list[0], np.size(rep_list)])
+
+# Undersampling of ocm0_all
+s_rate = 5
+ocm0_all_udr = np.zeros([depth, 5 * rep_list[0] // s_rate, np.size(rep_list)])
+ocm1_all_udr = np.zeros([depth, 5 * rep_list[0] // s_rate, np.size(rep_list)])
+ocm2_all_udr = np.zeros([depth, 5 * rep_list[0] // s_rate, np.size(rep_list)])
 
 for fidx in range(0, np.size(rep_list)):
     # fidx = 16
@@ -168,9 +172,28 @@ for fidx in range(0, np.size(rep_list)):
             ocm1[:, ocm1.shape[1]-rep_list[fidx]*(i+1)-1 : ocm1.shape[1]-rep_list[fidx]*i-1]
         ocm2_all[:, 5*rep_list[fidx]-rep_list[fidx]*(i+1) : 5*rep_list[fidx]-rep_list[fidx]*i, fidx] = \
             ocm2[:, ocm2.shape[1]-rep_list[fidx]*(i+1)-1 : ocm2.shape[1]-rep_list[fidx]*i-1]
+
+    
+    ### Under sampling here
+    for t in range(0, ocm0_all_udr.shape[1]):
+        '''
+        if t==0 or t==ocm0_all_udr.shape[1]-1:
+            ocm0_all_udr[:, t, fidx] = ocm0_all[:, s_rate*t, fidx]
+            ocm1_all_udr[:, t, fidx] = ocm0_all[:, s_rate*t, fidx]
+            ocm1_all_udr[:, t, fidx] = ocm0_all[:, s_rate*t, fidx]
+        else:
+        '''
+        ocm0_all_udr[:, t, fidx] = (ocm0_all[:, s_rate*t, fidx]+ocm0_all[:, s_rate*t+1, fidx]+ocm0_all[:, s_rate*t+2, fidx]+ocm0_all[:, s_rate*t+3, fidx]+ocm0_all[:, s_rate*t+4, fidx])/s_rate
+        ocm1_all_udr[:, t, fidx] = (ocm1_all[:, s_rate*t, fidx]+ocm1_all[:, s_rate*t+1, fidx]+ocm1_all[:, s_rate*t+2, fidx]+ocm1_all[:, s_rate*t+3, fidx]+ocm1_all[:, s_rate*t+4, fidx])/s_rate
+        ocm2_all_udr[:, t, fidx] = (ocm2_all[:, s_rate*t, fidx]+ocm2_all[:, s_rate*t+1, fidx]+ocm2_all[:, s_rate*t+2, fidx]+ocm2_all[:, s_rate*t+3, fidx]+ocm2_all[:, s_rate*t+4, fidx])/s_rate
+        #ocm0_all_udr[:, t, fidx] = (ocm0_all[:, s_rate*t, fidx]+ocm0_all[:, s_rate*t+1, fidx])/s_rate
+        #ocm1_all_udr[:, t, fidx] = (ocm1_all[:, s_rate*t, fidx]+ocm1_all[:, s_rate*t+1, fidx])/s_rate
+        #ocm2_all_udr[:, t, fidx] = (ocm2_all[:, s_rate*t, fidx]+ocm2_all[:, s_rate*t+1, fidx])/s_rate
     print('fidx No.',fidx,' has finished')
 
-with open('ocm012.pkl', 'wb') as f:
-    pickle.dump([ocm0_all, ocm1_all, ocm2_all], f)
+#with open('ocm012.pkl', 'wb') as f:
+#    pickle.dump([ocm0_all, ocm1_all, ocm2_all], f)
+with open('ocm012_undr5.pkl', 'wb') as f:
+    pickle.dump([ocm0_all_udr, ocm1_all_udr, ocm2_all_udr], f)
 
 print(time.time() - start)
