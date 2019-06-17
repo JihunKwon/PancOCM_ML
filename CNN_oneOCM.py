@@ -19,133 +19,69 @@ import os
 
 # Hyperparameters
 batch_size = 32
-epochs = 3
-#fname1 = 'ocm012_undr2_s1r'
-fname1 = 'ocm012_s1r'
+epochs = 5
+fname1 = 'ocm012_undr2_s1r'
+#fname1 = 'ocm012_s1r'
 fname2 = '.pkl'
 
 #################### Import experiment 1 ####################
-with open(fname1 + str(1) + fname2, 'rb') as f:
+with open('ocm012_undr2_s1r1.pkl', 'rb') as f:
     ocm0_all_1, ocm1_all_1, ocm2_all_1 = pickle.load(f)
-
-
 # concatinate Before and After water for each OCM
 ocm0_bef_1 = ocm0_all_1[:,:,0]
 ocm0_aft_1 = ocm0_all_1[:,:,1]
-ocm0_10m_1 = ocm0_all_1[:,:,2]
-
 ocm1_bef_1 = ocm1_all_1[:,:,0]
 ocm1_aft_1 = ocm1_all_1[:,:,1]
-ocm1_10m_1 = ocm1_all_1[:,:,2]
-
 ocm2_bef_1 = ocm2_all_1[:,:,0]
 ocm2_aft_1 = ocm2_all_1[:,:,1]
-ocm2_10m_1 = ocm2_all_1[:,:,2]
-
 # Classify Before and After
 ocm0_ba_1 = np.concatenate([ocm0_bef_1, ocm0_aft_1], axis=1)
 ocm1_ba_1 = np.concatenate([ocm1_bef_1, ocm1_aft_1], axis=1)
 ocm2_ba_1 = np.concatenate([ocm2_bef_1, ocm2_aft_1], axis=1)
-# Classify Before and 10min
-ocm0_b10_1 = np.concatenate([ocm0_bef_1, ocm0_10m_1], axis=1)
-ocm1_b10_1 = np.concatenate([ocm1_bef_1, ocm1_10m_1], axis=1)
-ocm2_b10_1 = np.concatenate([ocm2_bef_1, ocm2_10m_1], axis=1)
-# Classify After and 10min
-ocm0_a10_1 = np.concatenate([ocm0_aft_1, ocm0_10m_1], axis=1)
-ocm1_a10_1 = np.concatenate([ocm1_aft_1, ocm1_10m_1], axis=1)
-ocm2_a10_1 = np.concatenate([ocm2_aft_1, ocm2_10m_1], axis=1)
-
 # Transpose
 ocm0_ba_1 = ocm0_ba_1.T
 ocm1_ba_1 = ocm1_ba_1.T
 ocm2_ba_1 = ocm2_ba_1.T
-
-ocm0_b10_1 = ocm0_b10_1.T
-ocm1_b10_1 = ocm1_b10_1.T
-ocm2_b10_1 = ocm2_b10_1.T
-
-ocm0_a10_1 = ocm0_a10_1.T
-ocm1_a10_1 = ocm1_a10_1.T
-ocm2_a10_1 = ocm2_a10_1.T
-
 # concatinate three OCM sensors
 n, t = ocm0_ba_1.shape
 ocm_ba_1 = np.zeros((n, t ,3))
-ocm_b10_1 = np.zeros((n, t ,3))
-ocm_a10_1 = np.zeros((n, t ,3))
-
+# allocate to one variable
 ocm_ba_1[:,:,0] = ocm0_ba_1[:,:]
 ocm_ba_1[:,:,1] = ocm1_ba_1[:,:]
 ocm_ba_1[:,:,2] = ocm2_ba_1[:,:]
-
-ocm_b10_1[:,:,0] = ocm0_b10_1[:,:]
-ocm_b10_1[:,:,1] = ocm1_b10_1[:,:]
-ocm_b10_1[:,:,2] = ocm2_b10_1[:,:]
-
-ocm_a10_1[:,:,0] = ocm0_a10_1[:,:]
-ocm_a10_1[:,:,1] = ocm1_a10_1[:,:]
-ocm_a10_1[:,:,2] = ocm2_a10_1[:,:]
 print('ocm_1 shape:', ocm_ba_1.shape)
 
-
 #################### Import experiment 2 ####################
-with open(fname1 + str(2) + fname2, 'rb') as f:
+with open('ocm012_undr2_s1r2.pkl', 'rb') as f:
     ocm0_all_2, ocm1_all_2, ocm2_all_2 = pickle.load(f)
 
 # concatinate before and after water
 ocm0_bef_2 = ocm0_all_2[:,:,0]
 ocm0_aft_2 = ocm0_all_2[:,:,1]
-ocm0_10m_2 = ocm0_all_2[:,:,2]
-
 ocm1_bef_2 = ocm1_all_2[:,:,0]
 ocm1_aft_2 = ocm1_all_2[:,:,1]
-ocm1_10m_2 = ocm1_all_2[:,:,2]
-
 ocm2_bef_2 = ocm2_all_2[:,:,0]
 ocm2_aft_2 = ocm2_all_2[:,:,1]
-ocm2_10m_2 = ocm2_all_2[:,:,2]
 
 # Classify Before and After
 ocm0_ba_2 = np.concatenate([ocm0_bef_2, ocm0_aft_2], axis=1)
 ocm1_ba_2 = np.concatenate([ocm1_bef_2, ocm1_aft_2], axis=1)
 ocm2_ba_2 = np.concatenate([ocm2_bef_2, ocm2_aft_2], axis=1)
-# Classify Before and 10min
-ocm0_b10_2 = np.concatenate([ocm0_bef_2, ocm0_10m_2], axis=1)
-ocm1_b10_2 = np.concatenate([ocm1_bef_2, ocm1_10m_2], axis=1)
-ocm2_b10_2 = np.concatenate([ocm2_bef_2, ocm2_10m_2], axis=1)
-# Classify After and 10min
-ocm0_a10_2 = np.concatenate([ocm0_aft_2, ocm0_10m_2], axis=1)
-ocm1_a10_2 = np.concatenate([ocm1_aft_2, ocm1_10m_2], axis=1)
-ocm2_a10_2 = np.concatenate([ocm2_aft_2, ocm2_10m_2], axis=1)
 
 # Transpose
 ocm0_ba_2 = ocm0_ba_2.T
 ocm1_ba_2 = ocm1_ba_2.T
 ocm2_ba_2 = ocm2_ba_2.T
-ocm0_b10_2 = ocm0_b10_2.T
-ocm1_b10_2 = ocm1_b10_2.T
-ocm2_b10_2 = ocm2_b10_2.T
-ocm0_a10_2 = ocm0_a10_2.T
-ocm1_a10_2 = ocm1_a10_2.T
-ocm2_a10_2 = ocm2_a10_2.T
 
 # concatinate three OCM sensors
 n, t = ocm0_ba_2.shape
 ocm_ba_2 = np.zeros((n, t ,3))
 ocm_b10_2 = np.zeros((n, t ,3))
 ocm_a10_2 = np.zeros((n, t ,3))
-
+# allocate to one variable
 ocm_ba_2[:,:,0] = ocm0_ba_2[:,:]
 ocm_ba_2[:,:,1] = ocm1_ba_2[:,:]
 ocm_ba_2[:,:,2] = ocm2_ba_2[:,:]
-
-ocm_b10_2[:,:,0] = ocm0_b10_2[:,:]
-ocm_b10_2[:,:,1] = ocm1_b10_2[:,:]
-ocm_b10_2[:,:,2] = ocm2_b10_2[:,:]
-
-ocm_a10_2[:,:,0] = ocm0_a10_2[:,:]
-ocm_a10_2[:,:,1] = ocm1_a10_2[:,:]
-ocm_a10_2[:,:,2] = ocm2_a10_2[:,:]
 print('ocm_2 shape:', ocm_ba_2.shape)
 
 #################### Pre Proccesing ####################
@@ -154,24 +90,11 @@ ocm_ba_12 = np.concatenate([ocm0_ba_1, ocm0_ba_2, ocm1_ba_1, ocm1_ba_2, ocm2_ba_
 ocm_ba_m = np.mean(ocm_ba_12)
 ocm_ba_v = np.var(ocm_ba_12)
 
-ocm_b10_12 = np.concatenate([ocm0_b10_1, ocm0_b10_2, ocm1_b10_1, ocm1_b10_2, ocm2_b10_1, ocm2_b10_2], axis=0)
-ocm_b10_m = np.mean(ocm_b10_12)
-ocm_b10_v = np.var(ocm_b10_12)
-
-ocm_a10_12 = np.concatenate([ocm0_a10_1, ocm0_a10_2, ocm1_a10_1, ocm1_a10_2, ocm2_a10_1, ocm2_a10_2], axis=0)
-ocm_a10_m = np.mean(ocm_a10_12)
-ocm_a10_v = np.var(ocm_a10_12)
-
+'''
 # Standardization
 ocm_ba_1 = (ocm_ba_1 - ocm_ba_m) / ocm_ba_v
 ocm_ba_2 = (ocm_ba_2 - ocm_ba_m) / ocm_ba_v
-
-ocm_b10_1 = (ocm_b10_1 - ocm_b10_m) / ocm_b10_v
-ocm_b10_2 = (ocm_b10_2 - ocm_b10_m) / ocm_b10_v
-
-ocm_a10_1 = (ocm_a10_1 - ocm_a10_m) / ocm_a10_v
-ocm_a10_2 = (ocm_a10_2 - ocm_a10_m) / ocm_a10_v
-
+'''
 # Create Answer
 #このラベル間違ってるんじゃない？
 #OCMがconcatinateされる順番を再確認して、それに合ったラベリングができている？
@@ -179,17 +102,6 @@ y_ba_1 = np.zeros(ocm_ba_1.shape[0])
 y_ba_1[ocm0_bef_1.shape[1]:] = 1
 y_ba_2 = np.zeros(ocm_ba_2.shape[0])
 y_ba_2[ocm0_bef_2.shape[1]:] = 1
-
-y_b10_1 = np.zeros(ocm_b10_1.shape[0])
-y_b10_1[ocm0_bef_1.shape[1]:] = 1
-y_b10_2 = np.zeros(ocm_b10_2.shape[0])
-y_b10_2[ocm0_bef_2.shape[1]:] = 1
-
-y_a10_1 = np.zeros(ocm_a10_1.shape[0])
-y_a10_1[ocm0_bef_1.shape[1]:] = 1
-y_a10_2 = np.zeros(ocm_a10_2.shape[0])
-y_a10_2[ocm0_bef_2.shape[1]:] = 1
-
 
 ###################### Start Keras ##########################
 # The data, split between train and test sets:
@@ -202,24 +114,13 @@ y_test = y_ba_2.astype(int)
 
 # Build NN
 model = Sequential()
-model.add(Conv1D(16, 8, padding='same', input_shape=X_train.shape[1:], activation='relu'))
-model.add(MaxPooling1D(2, padding='same'))
+model.add(Conv1D(filters=16, kernel_size=3, padding='same', input_shape=X_train.shape[1:], activation='relu'))
+model.add(Conv1D(filters=16, kernel_size=3, activation='relu'))
 model.add(Dropout(0.5))
-
-model.add(Conv1D(8, 8, padding='same', activation='relu'))
-model.add(MaxPooling1D(2, padding='same'))
-model.add(Dropout(0.5))
-
+model.add(MaxPooling1D(pool_size=2, padding='same'))
 model.add(Flatten())
-model.add(Dense(16))
-model.add(Activation('relu'))
-model.add(Dropout(0.5))
-model.add(Dense(8))
-model.add(Activation('relu'))
-model.add(Dropout(0.5))
-model.add(Dense(1))
-model.add(Activation('sigmoid'))
-
+model.add(Dense(20, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
 model.summary()
 
 # initiate RMSprop optimizer
