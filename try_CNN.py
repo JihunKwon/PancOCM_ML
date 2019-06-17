@@ -17,139 +17,264 @@ from keras.layers import Conv1D, MaxPooling1D
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping
 
-import os
-
 # Hyperparameters
 batch_size = 32
-epochs = 20
-fname1 = 'ocm012_undr2_s1r'
+epochs = 5
+#fname1 = 'ocm012_undr2_s1r'
 #fname1 = 'ocm012_s1r'
-fname2 = '.pkl'
+#fname2 = '.pkl'
 
-#################### Import experiment 1 ####################
-with open(fname1 + str(1) + fname2, 'rb') as f:
-    ocm0_all_r1, ocm1_all_r1, ocm2_all_r1 = pickle.load(f)
-
-
+#%%%%%%%%%%%%%%%%%%% Import data %%%%%%%%%%%%%%%%%%%
+#################### S1r1 ####################
+with open('ocm012_undr2_s1r1.pkl', 'rb') as f:
+    ocm0_all_s1r1, ocm1_all_s1r1, ocm2_all_s1r1 = pickle.load(f)
 # concatinate Before and After water for each OCM
-ocm0_bef_r1 = ocm0_all_r1[:,:,0]
-ocm0_aft_r1 = ocm0_all_r1[:,:,1]
-ocm0_r10m_r1 = ocm0_all_r1[:,:,2]
-
-ocm1_bef_r1 = ocm1_all_r1[:,:,0]
-ocm1_aft_r1 = ocm1_all_r1[:,:,1]
-ocm1_r10m_r1 = ocm1_all_r1[:,:,2]
-
-ocm2_bef_r1 = ocm2_all_r1[:,:,0]
-ocm2_aft_r1 = ocm2_all_r1[:,:,1]
-ocm2_r10m_r1 = ocm2_all_r1[:,:,2]
-
+ocm0_bef_s1r1 = ocm0_all_s1r1[:,:,0]
+ocm0_aft_s1r1 = ocm0_all_s1r1[:,:,1]
+ocm1_bef_s1r1 = ocm1_all_s1r1[:,:,0]
+ocm1_aft_s1r1 = ocm1_all_s1r1[:,:,1]
+ocm2_bef_s1r1 = ocm2_all_s1r1[:,:,0]
+ocm2_aft_s1r1 = ocm2_all_s1r1[:,:,1]
 # Classify Before and After
-ocm0_ba_r1 = np.concatenate([ocm0_bef_r1, ocm0_aft_r1], axis=1)
-ocm1_ba_r1 = np.concatenate([ocm1_bef_r1, ocm1_aft_r1], axis=1)
-ocm2_ba_r1 = np.concatenate([ocm2_bef_r1, ocm2_aft_r1], axis=1)
-
+ocm0_ba_s1r1 = np.concatenate([ocm0_bef_s1r1, ocm0_aft_s1r1], axis=1)
+ocm1_ba_s1r1 = np.concatenate([ocm1_bef_s1r1, ocm1_aft_s1r1], axis=1)
+ocm2_ba_s1r1 = np.concatenate([ocm2_bef_s1r1, ocm2_aft_s1r1], axis=1)
 # Transpose
-ocm0_ba_r1 = ocm0_ba_r1.T
-ocm1_ba_r1 = ocm1_ba_r1.T
-ocm2_ba_r1 = ocm2_ba_r1.T
-
+ocm0_ba_s1r1 = ocm0_ba_s1r1.T
+ocm1_ba_s1r1 = ocm1_ba_s1r1.T
+ocm2_ba_s1r1 = ocm2_ba_s1r1.T
 # concatinate three OCM sensors
-n, t = ocm0_ba_r1.shape
-ocm_ba_r1 = np.zeros((n, t ,3))
-ocm_b10_r1 = np.zeros((n, t ,3))
-ocm_a10_r1 = np.zeros((n, t ,3))
+n, t = ocm0_ba_s1r1.shape
+ocm_ba_s1r1 = np.zeros((n, t ,3))
+# allocate to one variable
+ocm_ba_s1r1[:,:,0] = ocm0_ba_s1r1[:,:]
+ocm_ba_s1r1[:,:,1] = ocm1_ba_s1r1[:,:]
+ocm_ba_s1r1[:,:,2] = ocm2_ba_s1r1[:,:]
+print('ocm_s1r1 shape:', ocm_ba_s1r1.shape)
 
-ocm_ba_r1[:,:,0] = ocm0_ba_r1[:,:]
-ocm_ba_r1[:,:,1] = ocm1_ba_r1[:,:]
-ocm_ba_r1[:,:,2] = ocm2_ba_r1[:,:]
-print('ocm_r1 shape:', ocm_ba_r1.shape)
-
-
-#################### Import experiment 2 ####################
-with open(fname1 + str(2) + fname2, 'rb') as f:
-    ocm0_all_r2, ocm1_all_r2, ocm2_all_r2 = pickle.load(f)
-
+#################### S1r2 ####################
+with open('ocm012_undr2_s1r2.pkl', 'rb') as f:
+    ocm0_all_s1r2, ocm1_all_s1r2, ocm2_all_s1r2 = pickle.load(f)
 # concatinate before and after water
-ocm0_bef_r2 = ocm0_all_r2[:,:,0]
-ocm0_aft_r2 = ocm0_all_r2[:,:,1]
-ocm0_r10m_r2 = ocm0_all_r2[:,:,2]
-
-ocm1_bef_r2 = ocm1_all_r2[:,:,0]
-ocm1_aft_r2 = ocm1_all_r2[:,:,1]
-ocm1_r10m_r2 = ocm1_all_r2[:,:,2]
-
-ocm2_bef_r2 = ocm2_all_r2[:,:,0]
-ocm2_aft_r2 = ocm2_all_r2[:,:,1]
-ocm2_r10m_r2 = ocm2_all_r2[:,:,2]
-
+ocm0_bef_s1r2 = ocm0_all_s1r2[:,:,0]
+ocm0_aft_s1r2 = ocm0_all_s1r2[:,:,1]
+ocm1_bef_s1r2 = ocm1_all_s1r2[:,:,0]
+ocm1_aft_s1r2 = ocm1_all_s1r2[:,:,1]
+ocm2_bef_s1r2 = ocm2_all_s1r2[:,:,0]
+ocm2_aft_s1r2 = ocm2_all_s1r2[:,:,1]
 # Classify Before and After
-ocm0_ba_r2 = np.concatenate([ocm0_bef_r2, ocm0_aft_r2], axis=1)
-ocm1_ba_r2 = np.concatenate([ocm1_bef_r2, ocm1_aft_r2], axis=1)
-ocm2_ba_r2 = np.concatenate([ocm2_bef_r2, ocm2_aft_r2], axis=1)
-
+ocm0_ba_s1r2 = np.concatenate([ocm0_bef_s1r2, ocm0_aft_s1r2], axis=1)
+ocm1_ba_s1r2 = np.concatenate([ocm1_bef_s1r2, ocm1_aft_s1r2], axis=1)
+ocm2_ba_s1r2 = np.concatenate([ocm2_bef_s1r2, ocm2_aft_s1r2], axis=1)
 # Transpose
-ocm0_ba_r2 = ocm0_ba_r2.T
-ocm1_ba_r2 = ocm1_ba_r2.T
-ocm2_ba_r2 = ocm2_ba_r2.T
-
+ocm0_ba_s1r2 = ocm0_ba_s1r2.T
+ocm1_ba_s1r2 = ocm1_ba_s1r2.T
+ocm2_ba_s1r2 = ocm2_ba_s1r2.T
 # concatinate three OCM sensors
-n, t = ocm0_ba_r2.shape
-ocm_ba_r2 = np.zeros((n, t ,3))
-ocm_b10_r2 = np.zeros((n, t ,3))
-ocm_a10_r2 = np.zeros((n, t ,3))
+n, t = ocm0_ba_s1r2.shape
+ocm_ba_s1r2 = np.zeros((n, t ,3))
+ocm_b10_s1r2 = np.zeros((n, t ,3))
+ocm_a10_s1r2 = np.zeros((n, t ,3))
+# allocate to one variable
+ocm_ba_s1r2[:,:,0] = ocm0_ba_s1r2[:,:]
+ocm_ba_s1r2[:,:,1] = ocm1_ba_s1r2[:,:]
+ocm_ba_s1r2[:,:,2] = ocm2_ba_s1r2[:,:]
+print('ocm_s1r2 shape:', ocm_ba_s1r2.shape)
 
-ocm_ba_r2[:,:,0] = ocm0_ba_r2[:,:]
-ocm_ba_r2[:,:,1] = ocm1_ba_r2[:,:]
-ocm_ba_r2[:,:,2] = ocm2_ba_r2[:,:]
+#################### S2r1 ####################
+with open('ocm012_undr2_s2r1.pkl', 'rb') as f:
+    ocm0_all_s2r1, ocm1_all_s2r1, ocm2_all_s2r1 = pickle.load(f)
+# concatinate Before and After water for each OCM
+ocm0_bef_s2r1 = ocm0_all_s2r1[:,:,0]
+ocm0_aft_s2r1 = ocm0_all_s2r1[:,:,1]
+ocm1_bef_s2r1 = ocm1_all_s2r1[:,:,0]
+ocm1_aft_s2r1 = ocm1_all_s2r1[:,:,1]
+ocm2_bef_s2r1 = ocm2_all_s2r1[:,:,0]
+ocm2_aft_s2r1 = ocm2_all_s2r1[:,:,1]
+# Classify Before and After
+ocm0_ba_s2r1 = np.concatenate([ocm0_bef_s2r1, ocm0_aft_s2r1], axis=1)
+ocm1_ba_s2r1 = np.concatenate([ocm1_bef_s2r1, ocm1_aft_s2r1], axis=1)
+ocm2_ba_s2r1 = np.concatenate([ocm2_bef_s2r1, ocm2_aft_s2r1], axis=1)
+# Transpose
+ocm0_ba_s2r1 = ocm0_ba_s2r1.T
+ocm1_ba_s2r1 = ocm1_ba_s2r1.T
+ocm2_ba_s2r1 = ocm2_ba_s2r1.T
+# concatinate three OCM sensors
+n, t = ocm0_ba_s2r1.shape
+ocm_ba_s2r1 = np.zeros((n, t ,3))
+ocm_b10_s2r1 = np.zeros((n, t ,3))
+ocm_a10_s2r1 = np.zeros((n, t ,3))
+# allocate to one variable
+ocm_ba_s2r1[:,:,0] = ocm0_ba_s2r1[:,:]
+ocm_ba_s2r1[:,:,1] = ocm1_ba_s2r1[:,:]
+ocm_ba_s2r1[:,:,2] = ocm2_ba_s2r1[:,:]
+print('ocm_s2r1 shape:', ocm_ba_s2r1.shape)
 
-print('ocm_r2 shape:', ocm_ba_r2.shape)
+#################### S2r2 ####################
+with open('ocm012_s2r1.pkl', 'rb') as f:
+    ocm0_all_s2r2, ocm1_all_s2r2, ocm2_all_s2r2 = pickle.load(f)
+# concatinate before and after water
+ocm0_bef_s2r2 = ocm0_all_s2r2[:,:,0]
+ocm0_aft_s2r2 = ocm0_all_s2r2[:,:,1]
+ocm1_bef_s2r2 = ocm1_all_s2r2[:,:,0]
+ocm1_aft_s2r2 = ocm1_all_s2r2[:,:,1]
+ocm2_bef_s2r2 = ocm2_all_s2r2[:,:,0]
+ocm2_aft_s2r2 = ocm2_all_s2r2[:,:,1]
+# Classify Before and After
+ocm0_ba_s2r2 = np.concatenate([ocm0_bef_s2r2, ocm0_aft_s2r2], axis=1)
+ocm1_ba_s2r2 = np.concatenate([ocm1_bef_s2r2, ocm1_aft_s2r2], axis=1)
+ocm2_ba_s2r2 = np.concatenate([ocm2_bef_s2r2, ocm2_aft_s2r2], axis=1)
+# Transpose
+ocm0_ba_s2r2 = ocm0_ba_s2r2.T
+ocm1_ba_s2r2 = ocm1_ba_s2r2.T
+ocm2_ba_s2r2 = ocm2_ba_s2r2.T
+# concatinate three OCM sensors
+n, t = ocm0_ba_s2r2.shape
+ocm_ba_s2r2 = np.zeros((n, t ,3))
+ocm_b10_s2r2 = np.zeros((n, t ,3))
+ocm_a10_s2r2 = np.zeros((n, t ,3))
+# allocate to one variable
+ocm_ba_s2r2[:,:,0] = ocm0_ba_s2r2[:,:]
+ocm_ba_s2r2[:,:,1] = ocm1_ba_s2r2[:,:]
+ocm_ba_s2r2[:,:,2] = ocm2_ba_s2r2[:,:]
+print('ocm_s2r2 shape:', ocm_ba_s2r2.shape)
 
-#################### Pre Proccesing ####################
+
+'''
+#################### S3r1 ####################
+with open('ocm012_undr2_s3r1.pkl', 'rb') as f:
+    ocm0_all_s3r1, ocm1_all_s3r1, ocm2_all_s3r1 = pickle.load(f)
+# concatinate Before and After water for each OCM
+ocm0_bef_s3r1 = ocm0_all_s3r1[:,:,0]
+ocm0_aft_s3r1 = ocm0_all_s3r1[:,:,1]
+ocm1_bef_s3r1 = ocm1_all_s3r1[:,:,0]
+ocm1_aft_s3r1 = ocm1_all_s3r1[:,:,1]
+ocm2_bef_s3r1 = ocm2_all_s3r1[:,:,0]
+ocm2_aft_s3r1 = ocm2_all_s3r1[:,:,1]
+# Classify Before and After
+ocm0_ba_s3r1 = np.concatenate([ocm0_bef_s3r1, ocm0_aft_s3r1], axis=1)
+ocm1_ba_s3r1 = np.concatenate([ocm1_bef_s3r1, ocm1_aft_s3r1], axis=1)
+ocm2_ba_s3r1 = np.concatenate([ocm2_bef_s3r1, ocm2_aft_s3r1], axis=1)
+# Transpose
+ocm0_ba_s3r1 = ocm0_ba_s3r1.T
+ocm1_ba_s3r1 = ocm1_ba_s3r1.T
+ocm2_ba_s3r1 = ocm2_ba_s3r1.T
+# concatinate three OCM sensors
+n, t = ocm0_ba_s3r1.shape
+ocm_ba_s3r1 = np.zeros((n, t ,3))
+ocm_b10_s3r1 = np.zeros((n, t ,3))
+ocm_a10_s3r1 = np.zeros((n, t ,3))
+# allocate to one variable
+ocm_ba_s3r1[:,:,0] = ocm0_ba_s3r1[:,:]
+ocm_ba_s3r1[:,:,1] = ocm1_ba_s3r1[:,:]
+ocm_ba_s3r1[:,:,2] = ocm2_ba_s3r1[:,:]
+print('ocm_s3r1 shape:', ocm_ba_s3r1.shape)
+
+#################### S3r2 ####################
+with open('ocm012_undr2_s3r1.pkl', 'rb') as f:
+    ocm0_all_s3r2, ocm1_all_s3r2, ocm2_all_s3r2 = pickle.load(f)
+# concatinate before and after water
+ocm0_bef_s3r2 = ocm0_all_s3r2[:,:,0]
+ocm0_aft_s3r2 = ocm0_all_s3r2[:,:,1]
+ocm1_bef_s3r2 = ocm1_all_s3r2[:,:,0]
+ocm1_aft_s3r2 = ocm1_all_s3r2[:,:,1]
+ocm2_bef_s3r2 = ocm2_all_s3r2[:,:,0]
+ocm2_aft_s3r2 = ocm2_all_s3r2[:,:,1]
+# Classify Before and After
+ocm0_ba_s3r2 = np.concatenate([ocm0_bef_s3r2, ocm0_aft_s3r2], axis=1)
+ocm1_ba_s3r2 = np.concatenate([ocm1_bef_s3r2, ocm1_aft_s3r2], axis=1)
+ocm2_ba_s3r2 = np.concatenate([ocm2_bef_s3r2, ocm2_aft_s3r2], axis=1)
+# Transpose
+ocm0_ba_s3r2 = ocm0_ba_s3r2.T
+ocm1_ba_s3r2 = ocm1_ba_s3r2.T
+ocm2_ba_s3r2 = ocm2_ba_s3r2.T
+# concatinate three OCM sensors
+n, t = ocm0_ba_s3r2.shape
+ocm_ba_s3r2 = np.zeros((n, t ,3))
+ocm_b10_s3r2 = np.zeros((n, t ,3))
+ocm_a10_s3r2 = np.zeros((n, t ,3))
+# allocate to one variable
+ocm_ba_s3r2[:,:,0] = ocm0_ba_s3r2[:,:]
+ocm_ba_s3r2[:,:,1] = ocm1_ba_s3r2[:,:]
+ocm_ba_s3r2[:,:,2] = ocm2_ba_s3r2[:,:]
+print('ocm_s3r2 shape:', ocm_ba_s3r2.shape)
+'''
+#%%%%%%%%%%%%%%%%%%% Pre Proccesing %%%%%%%%%%%%%%%%%%%
 # Calculate mean and diviation
-ocm_ba_r12 = np.concatenate([ocm0_ba_r1, ocm0_ba_r2, ocm1_ba_r1, ocm1_ba_r2, ocm2_ba_r1, ocm2_ba_r2], axis=0)
-ocm_ba_m = np.mean(ocm_ba_r12)
-ocm_ba_v = np.var(ocm_ba_r12)
+#ocm_ba_r12 = np.concatenate([ocm0_ba_r1, ocm0_ba_r2, ocm1_ba_r1, ocm1_ba_r2, ocm2_ba_r1, ocm2_ba_r2], axis=0)
+#ocm_ba_m = np.mean(ocm_ba_r12)
+#ocm_ba_v = np.var(ocm_ba_r12)
 
 # Standardization
 #ocm_ba_r1 = (ocm_ba_r1 - ocm_ba_m) / ocm_ba_v
 #ocm_ba_r2 = (ocm_ba_r2 - ocm_ba_m) / ocm_ba_v
 
+# Concatenate Training set
+# All subject
+#ocm_ba_all_r1 = np.zeros((ocm_ba_s1r1.shape[0]+ocm_ba_s2r1.shape[0]+ocm_ba_s3r1.shape[0], ocm_ba_s1r1.shape[1], ocm_ba_s1r1.shape[2]))
+#ocm_ba_all_r2 = np.zeros((ocm_ba_s1r2.shape[0]+ocm_ba_s2r2.shape[0]+ocm_ba_s3r2.shape[0], ocm_ba_s1r2.shape[1], ocm_ba_s1r2.shape[2]))
+# S1 and S2
+ocm_ba_all_r1 = np.zeros((ocm_ba_s1r1.shape[0]+ocm_ba_s2r1.shape[0], ocm_ba_s1r1.shape[1], ocm_ba_s1r1.shape[2]))
+ocm_ba_all_r2 = np.zeros((ocm_ba_s1r2.shape[0]+ocm_ba_s2r2.shape[0], ocm_ba_s1r2.shape[1], ocm_ba_s1r2.shape[2]))
+ocm_ba_all_r1 = np.concatenate([ocm_ba_s1r1, ocm_ba_s2r1], axis=0)
+ocm_ba_all_r2 = np.concatenate([ocm_ba_s1r2, ocm_ba_s2r2], axis=0)
+
+'''
+# Only S1
+ocm_ba_all_r1 = np.zeros(ocm_ba_s1r1.shape)
+ocm_ba_all_r2 = np.zeros(ocm_ba_s1r2.shape)
+ocm_ba_all_r1 = ocm_ba_s1r1
+ocm_ba_all_r2 = ocm_ba_s1r2
+'''
+print('ocm_ba_all_r1 shape:', ocm_ba_all_r1.shape)
+print('ocm_ba_all_r2 shape:', ocm_ba_all_r2.shape)
+
 # Create Answer
-y_ba_r1 = np.zeros(ocm_ba_r1.shape[0])
-y_ba_r1[ocm0_bef_r1.shape[1]:] = 1
-y_ba_r2 = np.zeros(ocm_ba_r2.shape[0])
-y_ba_r2[ocm0_bef_r2.shape[1]:] = 1
+y_ba_s1r1 = np.zeros(ocm_ba_s1r1.shape[0])
+y_ba_s1r1[ocm0_bef_s1r1.shape[1]:] = 1
+y_ba_s1r2 = np.zeros(ocm_ba_s1r2.shape[0])
+y_ba_s1r2[ocm0_bef_s1r2.shape[1]:] = 1
+y_ba_s2r1 = np.zeros(ocm_ba_s2r1.shape[0])
+y_ba_s2r1[ocm0_bef_s2r1.shape[1]:] = 1
+y_ba_s2r2 = np.zeros(ocm_ba_s2r2.shape[0])
+y_ba_s2r2[ocm0_bef_s2r2.shape[1]:] = 1
+#y_ba_s3r1 = np.zeros(ocm_ba_s3r1.shape[0])
+#y_ba_s3r1[ocm0_bef_s3r1.shape[1]:] = 1
+#y_ba_s3r2 = np.zeros(ocm_ba_s3r2.shape[0])
+#y_ba_s3r2[ocm0_bef_s3r2.shape[1]:] = 1
 
-###################### Start Keras ##########################
+# All subject
+#y_ba_all_r1 = np.concatenate([y_ba_s1r1,y_ba_s2r1,y_ba_s3r1], axis=0)
+#y_ba_all_r2 = np.concatenate([y_ba_s1r2,y_ba_s2r2,y_ba_s3r2], axis=0)
+# S1 and S2
+y_ba_all_r1 = np.concatenate([y_ba_s1r1,y_ba_s2r1], axis=0)
+y_ba_all_r2 = np.concatenate([y_ba_s1r2,y_ba_s2r2], axis=0)
+# Only S1
+#y_ba_all_r1 = y_ba_s1r1
+#y_ba_all_r2 = y_ba_s1r2
+print('y_ba_all_r1 shape:', y_ba_all_r1.shape)
+print('y_ba_all_r2 shape:', y_ba_all_r2.shape)
+
+#%%%%%%%%%%%%%%%%%%% Start Keras %%%%%%%%%%%%%%%%%%%
 # The data, split between train and test sets:
-#X_train, X_test, y_train, y_test = train_test_split(ocm_ba_r1, y_ba_r1, test_size=0.5, random_state=1)
+#X_train, X_test, y_train, y_test = train_test_split(ocm_ba_all_r1, y_ba_all_r1, test_size=0.5, random_state=1)
 
-X_train = ocm_ba_r1
-X_test = ocm_ba_r2
-y_train = y_ba_r1.astype(int)
-y_test = y_ba_r2.astype(int)
+X_train = ocm_ba_all_r1
+X_test = ocm_ba_all_r2
+y_train = y_ba_all_r1.astype(int)
+y_test = y_ba_all_r2.astype(int)
+
+n_timesteps, n_features = X_train.shape[1], X_train.shape[2]
 
 # Build NN
 model = Sequential()
-model.add(Conv1D(16, 8, padding='same', input_shape=X_train.shape[1:], activation='relu'))
-model.add(MaxPooling1D(2, padding='same'))
+model.add(Conv1D(filters=64, kernel_size=3, padding='same', input_shape=X_train.shape[1:], activation='relu'))
+model.add(Conv1D(filters=64, kernel_size=3, activation='relu'))
 model.add(Dropout(0.5))
-
-model.add(Conv1D(8, 8, padding='same', activation='relu'))
-model.add(MaxPooling1D(2, padding='same'))
-model.add(Dropout(0.5))
-
+model.add(MaxPooling1D(pool_size=2, padding='same'))
 model.add(Flatten())
-model.add(Dense(100))
-model.add(Activation('relu'))
-model.add(Dropout(0.5))
-model.add(Dense(8))
-model.add(Activation('relu'))
-model.add(Dropout(0.5))
-model.add(Dense(1))
-model.add(Activation('sigmoid'))
-
+model.add(Dense(100, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
 model.summary()
 
 # initiate RMSprop optimizer
@@ -170,8 +295,8 @@ history = model.fit(X_train, y_train,
                     batch_size=batch_size,
                     epochs=epochs,
                     validation_data=(X_test, y_test),
-                    shuffle=True,
-                    callbacks=[es])
+                    shuffle=True)#,
+                    #callbacks=[es])
 
 # Score trained model.
 scores = model.evaluate(X_test, y_test, verbose=1)
