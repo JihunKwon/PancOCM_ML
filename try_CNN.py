@@ -113,7 +113,7 @@ ocm_ba_s2r1[:,:,2] = ocm2_ba_s2r1[:,:]
 print('ocm_s2r1 shape:', ocm_ba_s2r1.shape)
 
 #################### S2r2 ####################
-with open('ocm012_s2r1.pkl', 'rb') as f:
+with open('ocm012_s2r2.pkl', 'rb') as f:
     ocm0_all_s2r2, ocm1_all_s2r2, ocm2_all_s2r2 = pickle.load(f)
 # concatinate before and after water
 ocm0_bef_s2r2 = ocm0_all_s2r2[:,:,0]
@@ -169,34 +169,7 @@ ocm_ba_s3r1[:,:,0] = ocm0_ba_s3r1[:,:]
 ocm_ba_s3r1[:,:,1] = ocm1_ba_s3r1[:,:]
 ocm_ba_s3r1[:,:,2] = ocm2_ba_s3r1[:,:]
 print('ocm_s3r1 shape:', ocm_ba_s3r1.shape)
-'''
-#################### S3r2 ####################
-with open('ocm012_undr2_s3r1.pkl', 'rb') as f:
-    ocm0_all_s3r2, ocm1_all_s3r2, ocm2_all_s3r2 = pickle.load(f)
-# concatinate before and after water
-ocm0_bef_s3r2 = ocm0_all_s3r2[:,:,0]
-ocm0_aft_s3r2 = ocm0_all_s3r2[0,0,1] # S3r2, OCM0 "after" and "10min" is dead.
-ocm1_bef_s3r2 = ocm1_all_s3r2[:,:,0]
-ocm1_aft_s3r2 = ocm1_all_s3r2[:,:,1]
-ocm2_bef_s3r2 = ocm2_all_s3r2[:,:,0]
-ocm2_aft_s3r2 = ocm2_all_s3r2[:,:,1]
-# Classify Before and After
-ocm0_ba_s3r2 = np.concatenate([ocm0_bef_s3r2, ocm0_aft_s3r2], axis=1)
-ocm1_ba_s3r2 = np.concatenate([ocm1_bef_s3r2, ocm1_aft_s3r2], axis=1)
-ocm2_ba_s3r2 = np.concatenate([ocm2_bef_s3r2, ocm2_aft_s3r2], axis=1)
-# Transpose
-ocm0_ba_s3r2 = ocm0_ba_s3r2.T
-ocm1_ba_s3r2 = ocm1_ba_s3r2.T
-ocm2_ba_s3r2 = ocm2_ba_s3r2.T
-# concatinate three OCM sensors
-n, t = ocm1_ba_s3r2.shape
-ocm_ba_s3r2 = np.zeros((n, t ,2))
-# allocate to one variable
-#ocm_ba_s3r2[:,:,0] = ocm0_ba_s3r2[:,:]
-ocm_ba_s3r2[:,:,0] = ocm1_ba_s3r2[:,:]
-ocm_ba_s3r2[:,:,1] = ocm2_ba_s3r2[:,:]
-print('ocm_s3r2 shape:', ocm_ba_s3r2.shape)
-'''
+
 #%%%%%%%%%%%%%%%%%%% Pre Proccesing %%%%%%%%%%%%%%%%%%%
 # Calculate mean and diviation
 #ocm_ba_r12 = np.concatenate([ocm0_ba_r1, ocm0_ba_r2, ocm1_ba_r1, ocm1_ba_r2, ocm2_ba_r1, ocm2_ba_r2], axis=0)
