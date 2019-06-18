@@ -1,5 +1,6 @@
 '''
 This code analyzes the OCM waves, and calculates weighting factor by gradient descent (ascend) method
+Learning rate 0.001
 '''
 from __future__ import print_function
 from mpl_toolkits.mplot3d import Axes3D
@@ -16,6 +17,7 @@ from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv1D, MaxPooling1D
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping
+from keras.regularizers import l1_l2
 
 # Hyperparameters
 batch_size = 32
@@ -82,7 +84,7 @@ ocm_ba_s1r2[:,:,2] = ocm2_ba_s1r2[:,:]
 print('ocm_s1r2 shape:', ocm_ba_s1r2.shape)
 
 #################### S2r1 ####################
-with open('ocm012_undr2_s2r1.pkl', 'rb') as f:
+with open('ocm012_s2r1.pkl', 'rb') as f:
     ocm0_all_s2r1, ocm1_all_s2r1, ocm2_all_s2r1 = pickle.load(f)
 # concatinate Before and After water for each OCM
 ocm0_bef_s2r1 = ocm0_all_s2r1[:,:,0]
@@ -139,10 +141,8 @@ ocm_ba_s2r2[:,:,1] = ocm1_ba_s2r2[:,:]
 ocm_ba_s2r2[:,:,2] = ocm2_ba_s2r2[:,:]
 print('ocm_s2r2 shape:', ocm_ba_s2r2.shape)
 
-
-'''
 #################### S3r1 ####################
-with open('ocm012_undr2_s3r1.pkl', 'rb') as f:
+with open('ocm012_s3r1.pkl', 'rb') as f:
     ocm0_all_s3r1, ocm1_all_s3r1, ocm2_all_s3r1 = pickle.load(f)
 # concatinate Before and After water for each OCM
 ocm0_bef_s3r1 = ocm0_all_s3r1[:,:,0]
@@ -169,13 +169,13 @@ ocm_ba_s3r1[:,:,0] = ocm0_ba_s3r1[:,:]
 ocm_ba_s3r1[:,:,1] = ocm1_ba_s3r1[:,:]
 ocm_ba_s3r1[:,:,2] = ocm2_ba_s3r1[:,:]
 print('ocm_s3r1 shape:', ocm_ba_s3r1.shape)
-
+'''
 #################### S3r2 ####################
 with open('ocm012_undr2_s3r1.pkl', 'rb') as f:
     ocm0_all_s3r2, ocm1_all_s3r2, ocm2_all_s3r2 = pickle.load(f)
 # concatinate before and after water
 ocm0_bef_s3r2 = ocm0_all_s3r2[:,:,0]
-ocm0_aft_s3r2 = ocm0_all_s3r2[:,:,1]
+ocm0_aft_s3r2 = ocm0_all_s3r2[0,0,1] # S3r2, OCM0 "after" and "10min" is dead.
 ocm1_bef_s3r2 = ocm1_all_s3r2[:,:,0]
 ocm1_aft_s3r2 = ocm1_all_s3r2[:,:,1]
 ocm2_bef_s3r2 = ocm2_all_s3r2[:,:,0]
@@ -189,14 +189,12 @@ ocm0_ba_s3r2 = ocm0_ba_s3r2.T
 ocm1_ba_s3r2 = ocm1_ba_s3r2.T
 ocm2_ba_s3r2 = ocm2_ba_s3r2.T
 # concatinate three OCM sensors
-n, t = ocm0_ba_s3r2.shape
-ocm_ba_s3r2 = np.zeros((n, t ,3))
-ocm_b10_s3r2 = np.zeros((n, t ,3))
-ocm_a10_s3r2 = np.zeros((n, t ,3))
+n, t = ocm1_ba_s3r2.shape
+ocm_ba_s3r2 = np.zeros((n, t ,2))
 # allocate to one variable
-ocm_ba_s3r2[:,:,0] = ocm0_ba_s3r2[:,:]
-ocm_ba_s3r2[:,:,1] = ocm1_ba_s3r2[:,:]
-ocm_ba_s3r2[:,:,2] = ocm2_ba_s3r2[:,:]
+#ocm_ba_s3r2[:,:,0] = ocm0_ba_s3r2[:,:]
+ocm_ba_s3r2[:,:,0] = ocm1_ba_s3r2[:,:]
+ocm_ba_s3r2[:,:,1] = ocm2_ba_s3r2[:,:]
 print('ocm_s3r2 shape:', ocm_ba_s3r2.shape)
 '''
 #%%%%%%%%%%%%%%%%%%% Pre Proccesing %%%%%%%%%%%%%%%%%%%
@@ -204,22 +202,22 @@ print('ocm_s3r2 shape:', ocm_ba_s3r2.shape)
 #ocm_ba_r12 = np.concatenate([ocm0_ba_r1, ocm0_ba_r2, ocm1_ba_r1, ocm1_ba_r2, ocm2_ba_r1, ocm2_ba_r2], axis=0)
 #ocm_ba_m = np.mean(ocm_ba_r12)
 #ocm_ba_v = np.var(ocm_ba_r12)
-
 # Standardization
 #ocm_ba_r1 = (ocm_ba_r1 - ocm_ba_m) / ocm_ba_v
 #ocm_ba_r2 = (ocm_ba_r2 - ocm_ba_m) / ocm_ba_v
 
 # Concatenate Training set
-# All subject
-#ocm_ba_all_r1 = np.zeros((ocm_ba_s1r1.shape[0]+ocm_ba_s2r1.shape[0]+ocm_ba_s3r1.shape[0], ocm_ba_s1r1.shape[1], ocm_ba_s1r1.shape[2]))
-#ocm_ba_all_r2 = np.zeros((ocm_ba_s1r2.shape[0]+ocm_ba_s2r2.shape[0]+ocm_ba_s3r2.shape[0], ocm_ba_s1r2.shape[1], ocm_ba_s1r2.shape[2]))
-# S1 and S2
-ocm_ba_all_r1 = np.zeros((ocm_ba_s1r1.shape[0]+ocm_ba_s2r1.shape[0], ocm_ba_s1r1.shape[1], ocm_ba_s1r1.shape[2]))
-ocm_ba_all_r2 = np.zeros((ocm_ba_s1r2.shape[0]+ocm_ba_s2r2.shape[0], ocm_ba_s1r2.shape[1], ocm_ba_s1r2.shape[2]))
-ocm_ba_all_r1 = np.concatenate([ocm_ba_s1r1, ocm_ba_s2r1], axis=0)
+# All subject (except s3r2)
+ocm_ba_all_r1 = np.zeros((ocm_ba_s1r1.shape[0]+ocm_ba_s2r1.shape[0]+ocm_ba_s3r1.shape[0], ocm_ba_s1r1.shape[1], ocm_ba_s1r1.shape[2]))
+ocm_ba_all_r2 = np.zeros((ocm_ba_s1r2.shape[0]+ocm_ba_s2r2.shape[0], ocm_ba_s1r2.shape[1], ocm_ba_s1r2.shape[2])) # Exclude s3r2 (because of ocm0)
+ocm_ba_all_r1 = np.concatenate([ocm_ba_s1r1, ocm_ba_s2r1, ocm_ba_s3r1], axis=0)
 ocm_ba_all_r2 = np.concatenate([ocm_ba_s1r2, ocm_ba_s2r2], axis=0)
-
 '''
+# S1 and S2
+#ocm_ba_all_r1 = np.zeros((ocm_ba_s1r1.shape[0]+ocm_ba_s2r1.shape[0], ocm_ba_s1r1.shape[1], ocm_ba_s1r1.shape[2]))
+#ocm_ba_all_r2 = np.zeros((ocm_ba_s1r2.shape[0]+ocm_ba_s2r2.shape[0], ocm_ba_s1r2.shape[1], ocm_ba_s1r2.shape[2]))
+#ocm_ba_all_r1 = np.concatenate([ocm_ba_s1r1, ocm_ba_s2r1], axis=0)
+#ocm_ba_all_r2 = np.concatenate([ocm_ba_s1r2, ocm_ba_s2r2], axis=0)
 # Only S1
 ocm_ba_all_r1 = np.zeros(ocm_ba_s1r1.shape)
 ocm_ba_all_r2 = np.zeros(ocm_ba_s1r2.shape)
@@ -238,20 +236,22 @@ y_ba_s2r1 = np.zeros(ocm_ba_s2r1.shape[0])
 y_ba_s2r1[ocm0_bef_s2r1.shape[1]:] = 1
 y_ba_s2r2 = np.zeros(ocm_ba_s2r2.shape[0])
 y_ba_s2r2[ocm0_bef_s2r2.shape[1]:] = 1
-#y_ba_s3r1 = np.zeros(ocm_ba_s3r1.shape[0])
-#y_ba_s3r1[ocm0_bef_s3r1.shape[1]:] = 1
+y_ba_s3r1 = np.zeros(ocm_ba_s3r1.shape[0])
+y_ba_s3r1[ocm0_bef_s3r1.shape[1]:] = 1
 #y_ba_s3r2 = np.zeros(ocm_ba_s3r2.shape[0])
 #y_ba_s3r2[ocm0_bef_s3r2.shape[1]:] = 1
 
-# All subject
-#y_ba_all_r1 = np.concatenate([y_ba_s1r1,y_ba_s2r1,y_ba_s3r1], axis=0)
-#y_ba_all_r2 = np.concatenate([y_ba_s1r2,y_ba_s2r2,y_ba_s3r2], axis=0)
-# S1 and S2
-y_ba_all_r1 = np.concatenate([y_ba_s1r1,y_ba_s2r1], axis=0)
+# All subject (except s3r2)
+y_ba_all_r1 = np.concatenate([y_ba_s1r1,y_ba_s2r1,y_ba_s3r1], axis=0)
 y_ba_all_r2 = np.concatenate([y_ba_s1r2,y_ba_s2r2], axis=0)
+'''
+# S1 and S2
+#y_ba_all_r1 = np.concatenate([y_ba_s1r1,y_ba_s2r1], axis=0)
+#y_ba_all_r2 = np.concatenate([y_ba_s1r2,y_ba_s2r2], axis=0)
 # Only S1
 #y_ba_all_r1 = y_ba_s1r1
 #y_ba_all_r2 = y_ba_s1r2
+'''
 print('y_ba_all_r1 shape:', y_ba_all_r1.shape)
 print('y_ba_all_r2 shape:', y_ba_all_r2.shape)
 
@@ -267,18 +267,30 @@ y_test = y_ba_all_r2.astype(int)
 n_timesteps, n_features = X_train.shape[1], X_train.shape[2]
 
 # Build NN
+n_conv = 64
+n_dense = 128
+
 model = Sequential()
-model.add(Conv1D(filters=64, kernel_size=3, padding='same', input_shape=X_train.shape[1:], activation='relu'))
-model.add(Conv1D(filters=64, kernel_size=3, activation='relu'))
-model.add(Dropout(0.5))
+model.add(Conv1D(filters=n_conv, kernel_size=3, padding='same', input_shape=(n_timesteps, n_features), activation='relu'))
+model.add(Conv1D(filters=n_conv, kernel_size=3, activation='relu'))
+model.add(Dropout(0.2))
 model.add(MaxPooling1D(pool_size=2, padding='same'))
+
+model.add(Conv1D(filters=n_conv * 2, kernel_size=3, activation='relu'))
+model.add(Conv1D(filters=n_conv * 2, kernel_size=3, activation='relu'))
+model.add(Dropout(0.2))
+model.add(MaxPooling1D(pool_size=2, padding='same'))
+
 model.add(Flatten())
-model.add(Dense(100, activation='relu'))
+model.add(Dense(n_dense, activation='relu', W_regularizer = l1_l2(0.001)))
+model.add(Dropout(0.2))
+model.add(Dense(int(n_dense * 0.4), activation='relu', W_regularizer = l1_l2(0.001)))
+model.add(Dropout(0.2))
 model.add(Dense(1, activation='sigmoid'))
 model.summary()
 
 # initiate RMSprop optimizer
-opt = keras.optimizers.adam(lr=0.00001, decay=1e-6)
+opt = keras.optimizers.adam(lr=0.00005, decay=1e-6)
 
 # Let's train the model using RMSprop
 model.compile(loss='binary_crossentropy',
@@ -317,7 +329,7 @@ def plot_history_loss(fit):
     axL.set_title('model loss')
     axL.set_xlabel('epoch')
     axL.set_ylabel('loss')
-    axL.legend(loc='upper right')
+    axL.legend(loc='best')
 
 # acc
 def plot_history_acc(fit):
@@ -327,7 +339,7 @@ def plot_history_acc(fit):
     axR.set_title('model accuracy')
     axR.set_xlabel('epoch')
     axR.set_ylabel('accuracy')
-    axR.legend(loc='lower right')
+    axR.legend(loc='best')
 
 plot_history_loss(history)
 plot_history_acc(history)
