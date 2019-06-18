@@ -20,14 +20,14 @@ Note: file name run1, run2 and run3 means: before, shortly after and 10 minutes 
 '''
 
 # Jihun Local
-'''
+
 # s1r1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy")  # Before water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy")  # After water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run3.npy")  # 10min After water
 rep_list = [8196, 8196, 8196]
 #rep_list = [1000, 1000, 1000]
-
+'''
 # s1r2
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run1.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run2.npy")
@@ -54,18 +54,18 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190228\\run1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190228\\run2.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190228\\run3.npy")
 rep_list = [3401, 3401, 3401]
-'''
+
 # s3r2
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run1.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run3.npy")
 rep_list = [3690, 3690, 3690]
-
+'''
 
 # these are where the runs end in each OCM file
 num_subject = 1  # This number has to be the number of total run (number of subjects * number of runs)
 init = 300
-depth = 500
+depth = 350
 print(np.size(rep_list))
 print(rep_list[0]*1)
 
@@ -81,7 +81,7 @@ ocm1_all = np.zeros([depth, 5 * rep_list[0], np.size(rep_list)])
 ocm2_all = np.zeros([depth, 5 * rep_list[0], np.size(rep_list)])
 
 # Undersampling of ocm0_all
-s_rate = 5
+s_rate = 2
 ocm0_all_udr = np.zeros([depth, 5 * rep_list[0] // s_rate, np.size(rep_list)])
 ocm1_all_udr = np.zeros([depth, 5 * rep_list[0] // s_rate, np.size(rep_list)])
 ocm2_all_udr = np.zeros([depth, 5 * rep_list[0] // s_rate, np.size(rep_list)])
@@ -183,17 +183,24 @@ for fidx in range(0, np.size(rep_list)):
             ocm1_all_udr[:, t, fidx] = ocm0_all[:, s_rate*t, fidx]
         else:
         '''
-        ocm0_all_udr[:, t, fidx] = (ocm0_all[:, s_rate*t, fidx]+ocm0_all[:, s_rate*t+1, fidx]+ocm0_all[:, s_rate*t+2, fidx]+ocm0_all[:, s_rate*t+3, fidx]+ocm0_all[:, s_rate*t+4, fidx])/s_rate
-        ocm1_all_udr[:, t, fidx] = (ocm1_all[:, s_rate*t, fidx]+ocm1_all[:, s_rate*t+1, fidx]+ocm1_all[:, s_rate*t+2, fidx]+ocm1_all[:, s_rate*t+3, fidx]+ocm1_all[:, s_rate*t+4, fidx])/s_rate
-        ocm2_all_udr[:, t, fidx] = (ocm2_all[:, s_rate*t, fidx]+ocm2_all[:, s_rate*t+1, fidx]+ocm2_all[:, s_rate*t+2, fidx]+ocm2_all[:, s_rate*t+3, fidx]+ocm2_all[:, s_rate*t+4, fidx])/s_rate
-        #ocm0_all_udr[:, t, fidx] = (ocm0_all[:, s_rate*t, fidx]+ocm0_all[:, s_rate*t+1, fidx])/s_rate
-        #ocm1_all_udr[:, t, fidx] = (ocm1_all[:, s_rate*t, fidx]+ocm1_all[:, s_rate*t+1, fidx])/s_rate
-        #ocm2_all_udr[:, t, fidx] = (ocm2_all[:, s_rate*t, fidx]+ocm2_all[:, s_rate*t+1, fidx])/s_rate
+        if s_rate == 5:
+            ocm0_all_udr[:, t, fidx] = (ocm0_all[:, s_rate*t, fidx]+ocm0_all[:, s_rate*t+1, fidx]+ocm0_all[:, s_rate*t+2, fidx]+ocm0_all[:, s_rate*t+3, fidx]+ocm0_all[:, s_rate*t+4, fidx])/s_rate
+            ocm1_all_udr[:, t, fidx] = (ocm1_all[:, s_rate*t, fidx]+ocm1_all[:, s_rate*t+1, fidx]+ocm1_all[:, s_rate*t+2, fidx]+ocm1_all[:, s_rate*t+3, fidx]+ocm1_all[:, s_rate*t+4, fidx])/s_rate
+            ocm2_all_udr[:, t, fidx] = (ocm2_all[:, s_rate*t, fidx]+ocm2_all[:, s_rate*t+1, fidx]+ocm2_all[:, s_rate*t+2, fidx]+ocm2_all[:, s_rate*t+3, fidx]+ocm2_all[:, s_rate*t+4, fidx])/s_rate
+        elif s_rate == 2:
+            ocm0_all_udr[:, t, fidx] = (ocm0_all[:, s_rate*t, fidx]+ocm0_all[:, s_rate*t+1, fidx])/s_rate
+            ocm1_all_udr[:, t, fidx] = (ocm1_all[:, s_rate*t, fidx]+ocm1_all[:, s_rate*t+1, fidx])/s_rate
+            ocm2_all_udr[:, t, fidx] = (ocm2_all[:, s_rate*t, fidx]+ocm2_all[:, s_rate*t+1, fidx])/s_rate
     print('fidx No.',fidx,' has finished')
 
-#with open('ocm012.pkl', 'wb') as f:
-#    pickle.dump([ocm0_all, ocm1_all, ocm2_all], f)
-with open('ocm012_undr5.pkl', 'wb') as f:
-    pickle.dump([ocm0_all_udr, ocm1_all_udr, ocm2_all_udr], f)
+with open('ocm012.pkl', 'wb') as f:
+    pickle.dump([ocm0_all, ocm1_all, ocm2_all], f)
+
+if s_rate == 2:
+    with open('ocm012_undr2.pkl', 'wb') as f:
+        pickle.dump([ocm0_all_udr, ocm1_all_udr, ocm2_all_udr], f)
+elif s_rate == 5:
+    with open('ocm012_undr5.pkl', 'wb') as f:
+        pickle.dump([ocm0_all_udr, ocm1_all_udr, ocm2_all_udr], f)
 
 print(time.time() - start)
