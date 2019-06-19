@@ -51,23 +51,35 @@ ocm2_aft_train = ocm2_all[:,0:bh,phase]
 ocm0_aft_test = ocm0_all[:,bh:bh*5,phase]
 ocm1_aft_test = ocm1_all[:,bh:bh*5,phase]
 ocm2_aft_test = ocm2_all[:,bh:bh*5,phase]
-# Classify Before and After
-ocm_bef_train = np.concatenate([ocm0_bef_train, ocm1_bef_train, ocm2_bef_train], axis=1)
-ocm_bef_test = np.concatenate([ocm0_bef_test, ocm1_bef_test, ocm2_bef_test], axis=1)
-ocm_aft_train = np.concatenate([ocm0_aft_train, ocm1_aft_train, ocm2_aft_train], axis=1)
-ocm_aft_test = np.concatenate([ocm0_aft_test, ocm1_aft_test, ocm2_aft_test], axis=1)
+
+# allocate to one variable
+ocm_bef_train = np.zeros((ocm0_bef_train.shape[0], ocm0_bef_train.shape[1], 3))
+ocm_aft_train = np.zeros((ocm0_aft_train.shape[0], ocm0_aft_train.shape[1], 3))
+ocm_bef_test = np.zeros((ocm0_bef_test.shape[0], ocm0_bef_test.shape[1], 3))
+ocm_aft_test = np.zeros((ocm0_aft_test.shape[0], ocm0_aft_test.shape[1], 3))
+
+ocm_bef_train[:,:,0] = ocm0_bef_train[:,:]
+ocm_bef_train[:,:,1] = ocm1_bef_train[:,:]
+ocm_bef_train[:,:,2] = ocm2_bef_train[:,:]
+ocm_bef_test[:,:,0] = ocm0_bef_test[:,:]
+ocm_bef_test[:,:,1] = ocm1_bef_test[:,:]
+ocm_bef_test[:,:,2] = ocm2_bef_test[:,:]
+ocm_aft_train[:,:,0] = ocm0_aft_train[:,:]
+ocm_aft_train[:,:,1] = ocm1_aft_train[:,:]
+ocm_aft_train[:,:,2] = ocm2_aft_train[:,:]
+ocm_aft_test[:,:,0] = ocm0_aft_test[:,:]
+ocm_aft_test[:,:,1] = ocm1_aft_test[:,:]
+ocm_aft_test[:,:,2] = ocm2_aft_test[:,:]
 
 # Transpose
-ocm_bef_train = ocm_bef_train.T
-ocm_aft_train = ocm_aft_train.T
-ocm_bef_test = ocm_bef_test.T
-ocm_aft_test = ocm_aft_test.T
+ocm_bef_train = np.einsum('abc->bac', ocm_bef_train)
+ocm_aft_train = np.einsum('abc->bac', ocm_aft_train)
+ocm_bef_test = np.einsum('abc->bac', ocm_bef_test)
+ocm_aft_test = np.einsum('abc->bac', ocm_aft_test)
 print('before train:', ocm_bef_train.shape)
 print('after  train:', ocm_bef_train.shape)
 print('before test:', ocm_aft_test.shape)
 print('after  test:', ocm_aft_test.shape)
-print('end')
-
 
 #%%%%%%%%%%%%%%%%%%% Pre Proccesing %%%%%%%%%%%%%%%%%%%
 # Calculate mean and diviation
@@ -88,8 +100,8 @@ ocm_aft_test = (ocm_aft_test - ocm_aft_test_m) / ocm_aft_test_v
 
 # Concatenate Training set
 # All subject (except s3r2)
-ocm_ba_train = np.zeros((ocm_bef_train.shape[0]+ocm_aft_train.shape[0], ocm_bef_train.shape[1], ocm_bef_train.shape[2]))
-ocm_ba_test = np.zeros((ocm_bef_test.shape[0]+ocm_aft_test.shape[0], ocm_bef_test.shape[1], ocm_bef_test.shape[2]))
+ocm_ba_train = np.zeros((ocm_bef_train.shape[0]+ocm_aft_train.shape[0], ocm_bef_train.shape[1]))
+ocm_ba_test = np.zeros((ocm_bef_test.shape[0]+ocm_aft_test.shape[0], ocm_bef_test.shape[1]))
 ocm_ba_train = np.concatenate([ocm_bef_train, ocm_aft_train], axis=0)
 ocm_ba_test = np.concatenate([ocm_bef_test, ocm_aft_test], axis=0)
 print('ocm_ba_train shape:', ocm_ba_train.shape)
