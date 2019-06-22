@@ -8,9 +8,9 @@ from scipy import signal
 import pickle
 import seaborn as sns
 
-plt.rcParams['font.family'] ='sans-serif'#使用するフォント
-plt.rcParams['xtick.direction'] = 'in'#x軸の目盛線が内向き('in')か外向き('out')か双方向か('inout')
-plt.rcParams['ytick.direction'] = 'in'#y軸の目盛線が内向き('in')か外向き('out')か双方向か('inout')
+plt.rcParams['font.family'] ='sans-serif'
+plt.rcParams['xtick.direction'] = 'in'
+plt.rcParams['ytick.direction'] = 'in'
 
 sr_list = ['s1r1', 's1r2', 's2r1', 's2r2', 's3r1', 's3r2']
 for fidx in range(0,np.size(sr_list)):
@@ -38,8 +38,10 @@ for fidx in range(0,np.size(sr_list)):
     ocm2_m = np.mean(ocm2_all_r1[:,:,:], axis=1)
     ocm2_sd = np.std(ocm2_all_r1[:,:,:], axis=1)
 
-    fig = plt.figure(figsize=(18, 6))
+
     # ========================Visualize==============================================
+    '''
+    fig = plt.figure(figsize=(18, 6))
     # This part shows raw signals
     ## Mean+1SD
     # OCM0
@@ -104,3 +106,48 @@ for fidx in range(0,np.size(sr_list)):
     f_name = 'Mean_SD_' + Sub_run + '.png'
     plt.savefig(f_name)
     # =============================================================================
+    '''
+
+    # ======================== Count num of traces outside of mean+3SD ==============================================
+    num_max = ocm0_all_r1.shape[1]  # Total num of traces
+    ocm0_yes = [0,0,0,0,0,0]
+    ocm1_yes = [0,0,0,0,0,0]
+    ocm2_yes = [0,0,0,0,0,0]
+    for num in range(0, num_max):  # each traces
+        # If any of the depth is out of the envelope, flag will be 1.
+        flag_0 = 0
+        flag_1 = 0
+        flag_2 = 0
+        for d in range(0, ocm0_all_r1.shape[0]):
+            if flag_0 == 0:  # if no change has been detected in shallower region
+                # if anatomy changed (after is smaller than mean-3SD or after is greater than mean+3SD)
+                # OCM0
+                if (ocm0_all_r1[d, num, 1] < (ocm0_m[d, 0] - 3*ocm0_sd[d, 0])) or ((ocm0_m[d, 0] + 3*ocm0_sd[d, 0]) < ocm0_all_r1[d, num, 1]):
+                    ocm0_yes[fidx] = ocm0_yes[fidx] + 1  # Anatomy changed!
+                    flag_0 = 1  # Change detected! This depth is done.
+            # OCM1
+            if flag_1 == 0:
+                if (ocm1_all_r1[d, num, 1] < (ocm1_m[d, 0] - 3*ocm1_sd[d, 0])) or ((ocm1_m[d, 0] + 3*ocm1_sd[d, 0]) < ocm1_all_r1[d, num, 1]):
+                    ocm1_yes[fidx] = ocm1_yes[fidx] + 1  # Anatomy changed!
+                    flag_1 = 1  # Change detected! This depth is done.
+            # OCM2
+            if flag_2 == 0:
+                if (ocm2_all_r1[d, num, 1] < (ocm2_m[d, 0] - 3*ocm2_sd[d, 0])) or ((ocm2_m[d, 0] + 3*ocm2_sd[d, 0]) < ocm2_all_r1[d, num, 1]):
+                    ocm2_yes[fidx] = ocm2_yes[fidx] + 1  # Anatomy changed!
+                    flag_2 = 1  # Change detected! This depth is done.
+
+    print('fidx:', Sub_run)
+    print('OCM0 changed:', ocm0_yes[fidx])
+    print('Not changed:', num_max - ocm0_yes[fidx])
+    print('TPR_0:', '{:.3f}'.format(ocm0_yes[fidx]/num_max))
+    print('FNR_0:', '{:.3f}'.format((num_max - ocm0_yes[fidx])/num_max))
+    print('OCM1 changed:', ocm1_yes[fidx])
+    print('Not changed:', num_max - ocm1_yes[fidx])
+    print('TPR_1:', '{:.3f}'.format(ocm1_yes[fidx]/num_max))
+    print('FNR_1:', '{:.3f}'.format((num_max - ocm1_yes[fidx])/num_max))
+    print('OCM2 changed:', ocm2_yes[fidx])
+    print('Not changed:', num_max - ocm2_yes[fidx])
+    print('TPR_2:', '{:.3f}'.format(ocm2_yes[fidx]/num_max))
+    print('FNR_2:', '{:.3f}'.format((num_max - ocm2_yes[fidx])/num_max))
+
+
