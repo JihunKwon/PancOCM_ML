@@ -53,7 +53,7 @@ for fidx in range(0,np.size(sr_list)):
     ocm2_sd_2 = np.zeros([1, ocm0_all_r1.shape[0]])
 
     # Calculate mean of bh1~4 for "before" water phase
-
+    '''
     ocm0_m_2 = np.mean(ocm0_all_r1[:, 0:int(num_max/5*4), 0], axis=1)
     ocm0_sd_2 = np.std(ocm0_all_r1[:, 0:int(num_max/5*4), 0], axis=1)
     ocm1_m_2 = np.mean(ocm1_all_r1[:, 0:int(num_max/5*4), 0], axis=1)
@@ -61,13 +61,13 @@ for fidx in range(0,np.size(sr_list)):
     ocm2_m_2 = np.mean(ocm2_all_r1[:, 0:int(num_max/5*4), 0], axis=1)
     ocm2_sd_2 = np.std(ocm2_all_r1[:, 0:int(num_max/5*4), 0], axis=1)
     '''
-    ocm0_m_2 = np.mean(ocm0_all_r1[:, 0:int(num_max/5*1), 0], axis=1)
-    ocm0_sd_2 = np.std(ocm0_all_r1[:, 0:int(num_max/5*1), 0], axis=1)
-    ocm1_m_2 = np.mean(ocm1_all_r1[:, 0:int(num_max/5*1), 0], axis=1)
-    ocm1_sd_2 = np.std(ocm1_all_r1[:, 0:int(num_max/5*1), 0], axis=1)
-    ocm2_m_2 = np.mean(ocm2_all_r1[:, 0:int(num_max/5*1), 0], axis=1)
-    ocm2_sd_2 = np.std(ocm2_all_r1[:, 0:int(num_max/5*1), 0], axis=1)
-    '''
+    ocm0_m_2 = np.mean(ocm0_all_r1[:, 0:num_max, 0], axis=1)
+    ocm0_sd_2 = np.std(ocm0_all_r1[:, 0:num_max, 0], axis=1)
+    ocm1_m_2 = np.mean(ocm1_all_r1[:, 0:num_max, 0], axis=1)
+    ocm1_sd_2 = np.std(ocm1_all_r1[:, 0:num_max, 0], axis=1)
+    ocm2_m_2 = np.mean(ocm2_all_r1[:, 0:num_max, 0], axis=1)
+    ocm2_sd_2 = np.std(ocm2_all_r1[:, 0:num_max, 0], axis=1)
+
     # ========================Visualize==============================================
     '''
     fig = plt.figure(figsize=(18, 6))
@@ -138,8 +138,8 @@ for fidx in range(0,np.size(sr_list)):
     '''
 
     # ======================== Count num of traces outside of mean+3SD ==============================================
-    ocm_bef_out = np.zeros([3,6])
-    ocm_aft_out = np.zeros([3,6])
+    ocm_bef_out = np.zeros([3, 6])
+    ocm_aft_out = np.zeros([3, 6])
     for num in range(0, num_max):  # each traces
         # If any of the depth is out of the envelope, flag will be 1.
         flag_0_bef = 0
@@ -149,59 +149,58 @@ for fidx in range(0,np.size(sr_list)):
         flag_1_aft = 0
         flag_2_aft = 0
 
-        ## If bh=5, scan "before water" and detect out of envelope, which is going to be the FPR
-        phase = 0  # Before
-        if num_max/5*4 <= num:
-        #if num < num_max/5*1:
-            for d in range(0, ocm0_all_r1.shape[0]):
-                ocm = 0
-                if flag_0_bef == 0:  # if no change has been detected in shallower region
-                    # if anatomy changed (after is smaller than mean-3SD or after is greater than mean+3SD)
-                    if (ocm0_all_r1[d, num, phase] < (ocm0_m_2[d] - 3 * ocm0_sd_2[d])) or ((ocm0_m_2[d] + 3 * ocm0_sd_2[d]) < ocm0_all_r1[d, num, phase]):
-                        ocm_bef_out[ocm][fidx] = ocm_bef_out[ocm][fidx] + 1  # Anatomy changed!
-                        flag_0_bef = 1  # Change detected! This trace is done.
-                ocm = 1
-                if flag_1_bef == 0:
-                    if (ocm1_all_r1[d, num, phase] < (ocm1_m_2[d] - 3 * ocm1_sd_2[d])) or ((ocm1_m_2[d] + 3 * ocm1_sd_2[d]) < ocm1_all_r1[d, num, phase]):
-                        ocm_bef_out[ocm][fidx] = ocm_bef_out[ocm][fidx] + 1  # Anatomy changed!
-                        flag_1_bef = 1  # Change detected! This trace is done.
-                ocm = 2
-                if flag_2_bef == 0:
-                    if (ocm2_all_r1[d, num, phase] < (ocm2_m_2[d] - 3 * ocm2_sd_2[d])) or ((ocm2_m_2[d] + 3 * ocm2_sd_2[d]) < ocm2_all_r1[d, num, phase]):
-                        ocm_bef_out[ocm][fidx] = ocm_bef_out[ocm][fidx] + 1  # Anatomy changed!
-                        flag_2_bef = 1  # Change detected! This trace is done.
+        # Detect out of envelope
 
-        ## Scan "after water" and detect out of envelope, which is going to be TPR
-        phase = 1  # After
         for d in range(0, ocm0_all_r1.shape[0]):
             ocm = 0
-            if flag_0_aft == 0:  # if no change has been detected in shallower region
-                # if anatomy changed (after is smaller than mean-3SD or after is greater than mean+3SD)
-                if (ocm0_all_r1[d, num, phase] < (ocm0_m_2[d] - 3*ocm0_sd_2[d])) or ((ocm0_m_2[d] + 3*ocm0_sd_2[d]) < ocm0_all_r1[d, num, phase]):
-                    ocm_aft_out[ocm][fidx] = ocm_aft_out[ocm][fidx] + 1  # Anatomy changed!
+            phase = 0  # Before
+            if flag_0_bef == 0:  # if no change has been detected in shallower region
+                if (ocm0_all_r1[d, num, phase] < (ocm0_m_2[d] - 3 * ocm0_sd_2[d])) or ((ocm0_m_2[d] + 3 * ocm0_sd_2[d]) < ocm0_all_r1[d, num, phase]):
+                    ocm_bef_out[ocm][fidx] = ocm_bef_out[ocm][fidx] + 1  # False Positive
+                    flag_0_bef = 1  # Change detected! This trace is done.
+            phase = 1 # After
+            if flag_0_aft == 0:
+                if (ocm0_all_r1[d, num, phase] < (ocm0_m_2[d] - 3 * ocm0_sd_2[d])) or ((ocm0_m_2[d] + 3 * ocm0_sd_2[d]) < ocm0_all_r1[d, num, phase]):
+                    ocm_aft_out[ocm][fidx] = ocm_aft_out[ocm][fidx] + 1  # True Positive
                     flag_0_aft = 1  # Change detected! This trace is done.
             ocm = 1
+            phase = 0  # Before
+            if flag_1_bef == 0:
+                if (ocm1_all_r1[d, num, phase] < (ocm1_m_2[d] - 3 * ocm1_sd_2[d])) or ((ocm1_m_2[d] + 3 * ocm1_sd_2[d]) < ocm1_all_r1[d, num, phase]):
+                    ocm_bef_out[ocm][fidx] = ocm_bef_out[ocm][fidx] + 1  # False Positive
+                    flag_1_bef = 1  # Change detected! This trace is done.
+            phase = 1 # After
             if flag_1_aft == 0:
-                if (ocm1_all_r1[d, num, phase] < (ocm1_m_2[d] - 3*ocm1_sd_2[d])) or ((ocm1_m_2[d] + 3*ocm1_sd_2[d]) < ocm1_all_r1[d, num, phase]):
-                    ocm_aft_out[ocm][fidx] = ocm_aft_out[ocm][fidx] + 1  # Anatomy changed!
+                if (ocm1_all_r1[d, num, phase] < (ocm1_m_2[d] - 3 * ocm1_sd_2[d])) or ((ocm1_m_2[d] + 3 * ocm1_sd_2[d]) < ocm1_all_r1[d, num, phase]):
+                    ocm_aft_out[ocm][fidx] = ocm_aft_out[ocm][fidx] + 1  # True Positive
                     flag_1_aft = 1  # Change detected! This trace is done.
             ocm = 2
+            phase = 0  # Before
+            if flag_2_bef == 0:
+                if (ocm2_all_r1[d, num, phase] < (ocm2_m_2[d] - 3 * ocm2_sd_2[d])) or ((ocm2_m_2[d] + 3 * ocm2_sd_2[d]) < ocm2_all_r1[d, num, phase]):
+                    ocm_bef_out[ocm][fidx] = ocm_bef_out[ocm][fidx] + 1  # False Positive
+                    flag_2_bef = 1  # Change detected! This trace is done.
+            phase = 1 # After
             if flag_2_aft == 0:
-                if (ocm2_all_r1[d, num, phase] < (ocm2_m_2[d] - 3*ocm2_sd_2[d])) or ((ocm2_m_2[d] + 3*ocm2_sd_2[d]) < ocm2_all_r1[d, num, phase]):
-                    ocm_aft_out[ocm][fidx] = ocm_aft_out[ocm][fidx] + 1  # Anatomy changed!
+                if (ocm2_all_r1[d, num, phase] < (ocm2_m_2[d] - 3 * ocm2_sd_2[d])) or ((ocm2_m_2[d] + 3 * ocm2_sd_2[d]) < ocm2_all_r1[d, num, phase]):
+                    ocm_aft_out[ocm][fidx] = ocm_aft_out[ocm][fidx] + 1  # True Positive
                     flag_2_aft = 1  # Change detected! This trace is done.
 
     print('fidx:', Sub_run)
-    for ocm in range(0,3):
-        TP = ocm_aft_out[ocm][fidx]  # After, change detected
-        FN = num_max - ocm_aft_out[ocm][fidx]  # After, change not detected
-        TN = int(num_max / 5) - ocm_bef_out[ocm][fidx]  # Before, change not detected
-        FP = ocm_bef_out[ocm][fidx]  # Before, change detected
+    TP = [0, 0, 0]
+    FN = [0, 0, 0]
+    TN = [0, 0, 0]
+    FP = [0, 0, 0]
 
-        print(Sub_run,', OCM', str(ocm))
-        print('TP,FN,TN,FP: ', '{:.3f}'.format(TP), ' ', '{:.3f}'.format(FN), ' ', '{:.3f}'.format(TN), ' ', '{:.3f}'.format(FP))
-        print('TPR,FNR,TNR,FPR: ', '{:.3f}'.format(TP/num_max), ' ', '{:.3f}'.format(FN/num_max), ' ', '{:.3f}'.format(TN/int(num_max/5)), ' ', '{:.3f}'.format(FP/int(num_max/5)))
-        print('Accuracy:', '{:.3f}'.format((TP+TN) / (TP + FP + FN + TN)))
-        print('Precision:', '{:.3f}'.format(TP / (TP + FP)))
-        print('Recall:', '{:.3f}'.format((TP / (TP + FN))))
-        print('')
+    for ocm in range(0,3):
+        TP[ocm] = ocm_aft_out[ocm][fidx]  # After, change detected
+        FN[ocm] = num_max - ocm_aft_out[ocm][fidx]  # After, change not detected
+        TN[ocm] = int(num_max / 1) - ocm_bef_out[ocm][fidx]  # Before, change not detected
+        FP[ocm] = ocm_bef_out[ocm][fidx]  # Before, change detected
+
+    print(Sub_run,', OCM', str(ocm))
+    #print('TP,FN,TN,FP: ', '{:.3f}'.format(TP), ' ', '{:.3f}'.format(FN), ' ', '{:.3f}'.format(TN), ' ', '{:.3f}'.format(FP))
+    print('TPR,FNR,Recall: ', '{:.3f}'.format(TP[0]/num_max), ' ', '{:.3f}'.format(FN[0]/num_max),
+          ' ', '{:.3f}'.format(TP[1]/num_max), ' ', '{:.3f}'.format(FN[1]/num_max),
+          ' ', '{:.3f}'.format(TP[2]/num_max), ' ', '{:.3f}'.format(FN[2]/num_max))
+    print('')
