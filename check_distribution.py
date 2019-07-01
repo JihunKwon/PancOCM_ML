@@ -165,7 +165,7 @@ for fidx in range(0,np.size(sr_list)):
 
 
     # ========================Visualize Distribution ==============================================
-    binwidth = 0.01
+    binwidth = 0.03
     fig2 = plt.figure(figsize=(12, 8))
     ax0 = fig2.add_subplot(331)
     ax0.hist(D_bef_100[0,:], bins=np.arange(min(D_bef_100[0,:]), max(D_bef_100[0,:]) + binwidth, binwidth), color='Blue', label="Before", alpha=0.5)

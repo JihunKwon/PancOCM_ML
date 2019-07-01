@@ -201,9 +201,9 @@ for fidx in range(0,np.size(sr_list)):
         FP[ocm] = ocm_bef_out[ocm][fidx]  # Before "test", change detected
 
     print('fidx:', Sub_run)
-#    print('TP,FN,TN,FP: ', '{:.3f}'.format(TP[0]), ' ', '{:.3f}'.format(FN[0]), ' ', '{:.3f}'.format(TN[0]), ' ', '{:.3f}'.format(FP[0])
-#          , ' ', '{:.3f}'.format(TP[1]), ' ', '{:.3f}'.format(FN[1]), ' ', '{:.3f}'.format(TN[1]), ' ', '{:.3f}'.format(FP[1])
-#          , ' ', '{:.3f}'.format(TP[2]), ' ', '{:.3f}'.format(FN[2]), ' ', '{:.3f}'.format(TN[2]), ' ', '{:.3f}'.format(FP[2]))
+    print('TP,FN,TN,FP: ', '{:.3f}'.format(TP[0]), ' ', '{:.3f}'.format(FN[0]), ' ', '{:.3f}'.format(TN[0]), ' ', '{:.3f}'.format(FP[0])
+          , ' ', '{:.3f}'.format(TP[1]), ' ', '{:.3f}'.format(FN[1]), ' ', '{:.3f}'.format(TN[1]), ' ', '{:.3f}'.format(FP[1])
+          , ' ', '{:.3f}'.format(TP[2]), ' ', '{:.3f}'.format(FN[2]), ' ', '{:.3f}'.format(TN[2]), ' ', '{:.3f}'.format(FP[2]))
     print('TPR,FNR,TNR,FPR: ', '{:.3f}'.format(TP[0]/num_max), ' ', '{:.3f}'.format(FN[0]/num_max), ' ', '{:.3f}'.format(TN[0]/int(num_max*ratio)), ' ', '{:.3f}'.format(FP[0]/int(num_max*ratio))
           , ' ', '{:.3f}'.format(TP[1]/num_max), ' ', '{:.3f}'.format(FN[1]/num_max), ' ', '{:.3f}'.format(TN[1]/int(num_max*ratio)), ' ', '{:.3f}'.format(FP[1]/int(num_max*ratio))
           , ' ', '{:.3f}'.format(TP[2]/num_max), ' ', '{:.3f}'.format(FN[2]/num_max), ' ', '{:.3f}'.format(TN[2]/int(num_max*ratio)), ' ', '{:.3f}'.format(FP[2]/int(num_max*ratio)))
