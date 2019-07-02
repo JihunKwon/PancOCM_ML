@@ -8,23 +8,24 @@ from scipy import signal
 import pickle
 import seaborn as sns
 import csv
+from sklearn import preprocessing
 
 plt.rcParams['font.family'] ='sans-serif'
 plt.rcParams['xtick.direction'] = 'in'
 plt.rcParams['ytick.direction'] = 'in'
 
-#sr_list = ['s1r1', 's1r2', 's2r1', 's2r2', 's3r1', 's3r2']
-sr_list = ['s1r1']
+sr_list = ['s1r1', 's1r2', 's2r1', 's2r2', 's3r1', 's3r2']
+#sr_list = ['s1r1']
 tole = 0  # tolerance level
 
-bh_train = 2
+bh_train = 4
 bh_test = 10 - bh_train
 
 
 for fidx in range(0, np.size(sr_list)):
     Sub_run = sr_list[fidx]
     sr_name = 'Raw_det_ocm012_' + Sub_run + '.pkl'  # raw
-    # sr_name = 'ocm012_' + Sub_run + '.pkl'  # filtered
+    #sr_name = 'ocm012_' + Sub_run + '.pkl'  # filtered
 
     with open(sr_name, 'rb') as f:
         ocm0_all, ocm1_all, ocm2_all = pickle.load(f)
@@ -40,12 +41,21 @@ for fidx in range(0, np.size(sr_list)):
     ocm1_ba = np.zeros([depth, 2 * ocm0_all.shape[1]])
     ocm2_ba = np.zeros([depth, 2 * ocm0_all.shape[1]])
 
+    ocm0_lp_bef = np.zeros([ocm0_all.shape[0], ocm0_all.shape[1]])
+    ocm1_lp_bef = np.zeros([ocm0_all.shape[0], ocm0_all.shape[1]])
+    ocm2_lp_bef = np.zeros([ocm0_all.shape[0], ocm0_all.shape[1]])
+    ocm0_lp_aft = np.zeros([ocm0_all.shape[0], ocm0_all.shape[1]])
+    ocm1_lp_aft = np.zeros([ocm0_all.shape[0], ocm0_all.shape[1]])
+    ocm2_lp_aft = np.zeros([ocm0_all.shape[0], ocm0_all.shape[1]])
+    f1 = np.ones([5])
+
     ocm0_ba[:, 0:num_max] = ocm0_all[:, :, 0]  # add "before"
     ocm1_ba[:, 0:num_max] = ocm1_all[:, :, 0]
     ocm2_ba[:, 0:num_max] = ocm2_all[:, :, 0]
     ocm0_ba[:, num_max:2 * num_max] = ocm0_all[:, :, 1]  # add "after"
     ocm1_ba[:, num_max:2 * num_max] = ocm1_all[:, :, 1]
     ocm2_ba[:, num_max:2 * num_max] = ocm2_all[:, :, 1]
+
 
     # Add to one variable
     ocm_ba = np.zeros([depth, 2 * num_max, 3])
@@ -152,7 +162,7 @@ for fidx in range(0, np.size(sr_list)):
 
     # test result with "before" data (TN and FP)
     for bh_cnt in range(0, bh_test-5):
-        print('bh=', bh_cnt + 1)
+        print('bh=', bh_cnt + bh_train + 1)
         print('TN,FP: ', '{:.3f}'.format(TN[bh_cnt][0]), ' ', '{:.3f}'.format(FP[bh_cnt][0])
               , ' ', '{:.3f}'.format(TN[bh_cnt][1]), ' ', '{:.3f}'.format(FP[bh_cnt][1])
               , ' ', '{:.3f}'.format(TN[bh_cnt][2]), ' ', '{:.3f}'.format(FP[bh_cnt][2]))
@@ -164,7 +174,7 @@ for fidx in range(0, np.size(sr_list)):
 
     # test result with "after" data (TP and FN)
     for bh_cnt in range(bh_test-5, bh_test):
-        print('bh=', bh_cnt + 1)
+        print('bh=', bh_cnt + bh_train + 1)
         print('TP,FN: ', '{:.3f}'.format(TP[bh_cnt][0]), ' ', '{:.3f}'.format(FN[bh_cnt][0])
               , ' ', '{:.3f}'.format(TP[bh_cnt][1]), ' ', '{:.3f}'.format(FN[bh_cnt][1])
               , ' ', '{:.3f}'.format(TP[bh_cnt][2]), ' ', '{:.3f}'.format(FN[bh_cnt][2]))
