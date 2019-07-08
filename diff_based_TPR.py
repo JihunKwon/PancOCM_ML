@@ -15,7 +15,7 @@ plt.rcParams['xtick.direction'] = 'in'
 plt.rcParams['ytick.direction'] = 'in'
 
 #sr_list = ['s1r1', 's1r2', 's2r1', 's2r2', 's3r1', 's3r2']
-sr_list = ['s1r1']
+sr_list = ['s2r1']
 tole = 10  # tolerance level
 
 bh_train = 3
@@ -119,6 +119,9 @@ for fidx in range(0, np.size(sr_list)):
 
     ## Check performance of "train" set
     outside_train = [0, 0, 0]
+    outside_train_cnt = np.zeros([bh * bh_train, 3])
+    outside_train_area = np.zeros([bh * bh_train, 3])
+    diff = 0
     for num in range(0, bh * bh_train):  # each traces
         # If any of the depth is out of the envelope, flag will be 1.
         flag = [0, 0, 0]
@@ -127,12 +130,22 @@ for fidx in range(0, np.size(sr_list)):
             for ocm in range(0, 3):
                 mean = train_diff_m[d, ocm]
                 sd = train_diff_sd[d, ocm]
+
                 if flag[ocm] <= tole:  # if no change has been detected in shallower region
                     # if (before < mean-3SD) or (mean+3SD < before)
                     if ((ocm_train_diff[num, d, ocm] < (mean - 3 * sd)) or ((mean + 3 * sd) < ocm_train_diff[num, d, ocm])):
                         flag[ocm] = flag[ocm] + 1  # Out of envelope!
                     if flag[ocm] > tole:
                         outside_train[ocm] = outside_train[ocm] + 1  # Store outside of envelope
+                '''
+                # if out of envelope
+                if ((ocm_train_diff[num, d, ocm] < (mean - 3 * sd)) or ((mean + 3 * sd) < ocm_train_diff[num, d, ocm])):
+                    diff = ((mean - 3 * sd) - ocm_train_diff[num, d, ocm])
+                    if diff < 0:  # if upper part is out of envelope
+                        diff = (ocm_train_diff[num, d, ocm] - (mean + 3 * sd))
+                    outside_train_cnt[n, ocm] = outside_train_cnt[n, ocm] + 1
+                    outside_train_area[n, ocm] = outside_train_area[n, ocm] + diff
+                    '''
 
     print('ocm_train_diff', ocm_train_diff.shape)
     print('out_1', outside_train[0])
@@ -143,6 +156,8 @@ for fidx in range(0, np.size(sr_list)):
     TN = np.zeros([10, 3])
     FP = np.zeros([10, 3])
     outside_test = np.zeros([bh_test, 3])
+    outside_test_cnt = np.zeros([bh * bh_test, 3])
+    outside_test_area = np.zeros([bh * bh_test, 3])
 
     print('###### Test begins #####')
     # Calculate mean of "test" (each bh separately)
@@ -154,14 +169,24 @@ for fidx in range(0, np.size(sr_list)):
             # Detect out of envelope
             for d in range(0, depth):
                 for ocm in range(0, 3):
-                    mean = ocm_train_m[d, ocm]
-                    sd = ocm_train_sd[d, ocm]
+                    mean = train_diff_m[d, ocm]
+                    sd = train_diff_sd[d, ocm]
+
                     if flag[ocm] <= tole:  # if no change has been detected in shallower region
-                        # if (before < mean-3SD) or (mean+3SD < before)
+                        # out of envelope
                         if ((ocm_test_diff[num, d, ocm] < (mean - 3 * sd)) or ((mean + 3 * sd) < ocm_test_diff[num, d, ocm])):
                             flag[ocm] = flag[ocm] + 1
                         if flag[ocm] > tole:
                             outside_test[bh_cnt][ocm] = outside_test[bh_cnt][ocm] + 1  # Store outside of envelope
+                    '''
+                    # if out of envelope
+                    if ((ocm_test_diff[num, d, ocm] < (mean - 3 * sd)) or ((mean + 3 * sd) < ocm_test_diff[num, d, ocm])):
+                        diff = ((mean - 3 * sd) - ocm_test_diff[num, d, ocm])
+                        if diff < 0:  # if upper part is out of envelope
+                            diff = (ocm_test_diff[num, d, ocm] - (mean + 3 * sd))
+                        outside_test_cnt[n, ocm] = outside_test_cnt[n, ocm] + 1
+                        outside_test_area[n, ocm] = outside_test_area[n, ocm] + diff
+                        '''
 
         # Gather each bh data
         if 0 <= bh_cnt < (bh_test-5):  # if "before water"
@@ -185,8 +210,6 @@ for fidx in range(0, np.size(sr_list)):
     a1 = ax1.plot(d, ocm_test_diff[0, :, ocm], linewidth=2, label='test0')
     a2 = ax1.plot(d, ocm_test_diff[1000, :, ocm], linewidth=2, label='test1')
     a3 = ax1.plot(d, ocm_test_diff[2000, :, ocm], linewidth=2, label='test2')
-    a4 = ax1.plot(d, ocm_test_diff[3000, :, ocm], linewidth=2, label='test3')
-    a5 = ax1.plot(d, ocm_test_diff[4000, :, ocm], linewidth=2, label='test4')
     ax1.set_title('OCM0, 3SD, Training')
     ax1.set_ylim(-1,1)
     ax1.set_xlabel('Depth')
@@ -200,8 +223,6 @@ for fidx in range(0, np.size(sr_list)):
     a1 = ax1.plot(d, ocm_test_diff[0, :, ocm], linewidth=2, label='test0')
     a2 = ax1.plot(d, ocm_test_diff[100, :, ocm], linewidth=2, label='test1')
     a3 = ax1.plot(d, ocm_test_diff[2000, :, ocm], linewidth=2, label='test2')
-    a4 = ax1.plot(d, ocm_test_diff[3000, :, ocm], linewidth=2, label='test3')
-    a5 = ax1.plot(d, ocm_test_diff[4000, :, ocm], linewidth=2, label='test4')
     ax1.set_title('OCM1, 3SD, Training')
     ax1.set_ylim(-1, 1)
     ax1.set_xlabel('Depth')
@@ -215,8 +236,6 @@ for fidx in range(0, np.size(sr_list)):
     a1 = ax1.plot(d, ocm_test_diff[0, :, ocm], linewidth=2, label='test0')
     a2 = ax1.plot(d, ocm_test_diff[1000, :, ocm], linewidth=2, label='test1')
     a3 = ax1.plot(d, ocm_test_diff[2000, :, ocm], linewidth=2, label='test2')
-    a4 = ax1.plot(d, ocm_test_diff[3000, :, ocm], linewidth=2, label='test3')
-    a5 = ax1.plot(d, ocm_test_diff[4000, :, ocm], linewidth=2, label='test4')
     ax1.set_title('OCM2, 3SD, Training')
     ax1.set_ylim(-1, 1)
     ax1.set_xlabel('Depth')
