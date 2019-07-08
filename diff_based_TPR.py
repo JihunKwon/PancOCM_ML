@@ -14,11 +14,11 @@ plt.rcParams['font.family'] ='sans-serif'
 plt.rcParams['xtick.direction'] = 'in'
 plt.rcParams['ytick.direction'] = 'in'
 
-#sr_list = ['s1r1', 's1r2', 's2r1', 's2r2', 's3r1', 's3r2']
-sr_list = ['s2r1']
+sr_list = ['s1r1', 's1r2', 's2r1', 's2r2', 's3r1', 's3r2']
+#sr_list = ['s2r1']
 tole = 10  # tolerance level
 
-bh_train = 3
+bh_train = 2
 bh_test = 10 - bh_train
 batch = 1000  # subset of OCM traces used to get local average
 
@@ -97,7 +97,7 @@ for fidx in range(0, np.size(sr_list)):
         for mini in range(0, round(bh_train*bh/batch)):
             ocm_train_mini_m[mini, :, ocm] = np.mean(ocm_train[mini*batch:(mini+1)*batch, :, ocm], axis=0)
 
-    # Calculate subtraction (mean_all - mean_batch) and get SD
+    # Calculate subtraction (mean_all - mean_batch)
     for mini in range(0, round(bh_train*bh/batch)):
         for d in range(0, depth):
             ocm_train_diff_mini[mini, d, :] = ocm_train_m[d, :] - ocm_train_mini_m[mini, d, :]
@@ -130,7 +130,7 @@ for fidx in range(0, np.size(sr_list)):
             for ocm in range(0, 3):
                 mean = train_diff_m[d, ocm]
                 sd = train_diff_sd[d, ocm]
-
+                '''
                 if flag[ocm] <= tole:  # if no change has been detected in shallower region
                     # if (before < mean-3SD) or (mean+3SD < before)
                     if ((ocm_train_diff[num, d, ocm] < (mean - 3 * sd)) or ((mean + 3 * sd) < ocm_train_diff[num, d, ocm])):
@@ -143,14 +143,11 @@ for fidx in range(0, np.size(sr_list)):
                     diff = ((mean - 3 * sd) - ocm_train_diff[num, d, ocm])
                     if diff < 0:  # if upper part is out of envelope
                         diff = (ocm_train_diff[num, d, ocm] - (mean + 3 * sd))
-                    outside_train_cnt[n, ocm] = outside_train_cnt[n, ocm] + 1
-                    outside_train_area[n, ocm] = outside_train_area[n, ocm] + diff
-                    '''
+                    outside_train_cnt[num, ocm] = outside_train_cnt[num, ocm] + 1
+                    outside_train_area[num, ocm] = outside_train_area[num, ocm] + diff
+
 
     print('ocm_train_diff', ocm_train_diff.shape)
-    print('out_1', outside_train[0])
-    print('out_2', outside_train[1])
-    print('out_3', outside_train[2])
     TP = np.zeros([10, 3])  # [bh_test, ocm]
     FN = np.zeros([10, 3])
     TN = np.zeros([10, 3])
@@ -158,6 +155,10 @@ for fidx in range(0, np.size(sr_list)):
     outside_test = np.zeros([bh_test, 3])
     outside_test_cnt = np.zeros([bh * bh_test, 3])
     outside_test_area = np.zeros([bh * bh_test, 3])
+    train_cnt_bh = np.zeros([10, bh * bh_train, 3])
+    train_area_bh = np.zeros([10, bh * bh_train, 3])
+    test_cnt_bh = np.zeros([10, bh * bh_test, 3])
+    test_area_bh = np.zeros([10, bh * bh_test, 3])
 
     print('###### Test begins #####')
     # Calculate mean of "test" (each bh separately)
@@ -171,7 +172,7 @@ for fidx in range(0, np.size(sr_list)):
                 for ocm in range(0, 3):
                     mean = train_diff_m[d, ocm]
                     sd = train_diff_sd[d, ocm]
-
+                    '''
                     if flag[ocm] <= tole:  # if no change has been detected in shallower region
                         # out of envelope
                         if ((ocm_test_diff[num, d, ocm] < (mean - 3 * sd)) or ((mean + 3 * sd) < ocm_test_diff[num, d, ocm])):
@@ -184,21 +185,121 @@ for fidx in range(0, np.size(sr_list)):
                         diff = ((mean - 3 * sd) - ocm_test_diff[num, d, ocm])
                         if diff < 0:  # if upper part is out of envelope
                             diff = (ocm_test_diff[num, d, ocm] - (mean + 3 * sd))
-                        outside_test_cnt[n, ocm] = outside_test_cnt[n, ocm] + 1
-                        outside_test_area[n, ocm] = outside_test_area[n, ocm] + diff
-                        '''
+                        outside_test_cnt[num, ocm] = outside_test_cnt[num, ocm] + 1
+                        outside_test_area[num, ocm] = outside_test_area[num, ocm] + diff
+
 
         # Gather each bh data
         if 0 <= bh_cnt < (bh_test-5):  # if "before water"
             for ocm in range(0, 3):
-                TN[bh_cnt][ocm] = bh - outside_test[bh_cnt][ocm]  # Before, change not detected
-                FP[bh_cnt][ocm] = outside_test[bh_cnt][ocm]  # Before, change detected
+                TN[bh_cnt, ocm] = bh - outside_test[bh_cnt, ocm]  # Before, change not detected
+                FP[bh_cnt, ocm] = outside_test[bh_cnt, ocm]  # Before, change detected
+                test_cnt_bh[bh_cnt, :, ocm] = outside_test_cnt[:, ocm]
+                test_area_bh[bh_cnt, :, ocm] = outside_test_area[:, ocm]
         elif (bh_test-5) <= bh_cnt:  # if "after water"
             for ocm in range(0, 3):
-                TP[bh_cnt][ocm] = outside_test[bh_cnt][ocm]  # After, change detected
-                FN[bh_cnt][ocm] = bh - outside_test[bh_cnt][ocm]  # After, change not detected
+                TP[bh_cnt, ocm] = outside_test[bh_cnt, ocm]  # After, change detected
+                FN[bh_cnt, ocm] = bh - outside_test[bh_cnt, ocm]  # After, change not detected
+                test_area_bh[bh_cnt, :, ocm] = outside_test_cnt[:, ocm]
+                test_area_bh[bh_cnt, :, ocm] = outside_test_area[:, ocm]
 
+    print('#### Test Ends ####')
+    print('test_cnt_bh:', test_cnt_bh.shape)
+    ## Visualize count and area of outlier
+    d = np.linspace(0, ocm0_all.shape[0] - 1, ocm0_all.shape[0])
+    binwidth = 0.03
+    fig2 = plt.figure(figsize=(12, 6))
+    ax0 = fig2.add_subplot(231)
+    ocm = 0
+    ax0.hist(test_area_bh[0, :, ocm], bins=np.arange(min(test_area_bh[0, :, ocm]), max(test_area_bh[0, :, ocm]) + binwidth, binwidth), label='bef3', alpha=0.5)
+    ax0.hist(test_area_bh[1, :, ocm], bins=np.arange(min(test_area_bh[1, :, ocm]), max(test_area_bh[1, :, ocm]) + binwidth, binwidth), label='bef4', alpha=0.5)
+    ax0.hist(test_area_bh[2, :, ocm], bins=np.arange(min(test_area_bh[2, :, ocm]), max(test_area_bh[2, :, ocm]) + binwidth, binwidth), label='bef5', alpha=0.5)
+    ax0.set_title('Area, OCM0, Before')
+    ax0.set_xlabel('Number of outliers')
+    ax0.set_ylabel('Frequency')
+    ax0.set_yscale('log')
+    ax0.set_ylim(0.5, 500)
+    plt.legend(loc='best')
+    print('1')
 
+    ax0 = fig2.add_subplot(232)
+    ocm = 1
+    ax0.hist(test_area_bh[0, :, ocm], bins=np.arange(min(test_area_bh[0, :, ocm]), max(test_area_bh[0, :, ocm]) + binwidth, binwidth), label='bef3', alpha=0.5)
+    ax0.hist(test_area_bh[1, :, ocm], bins=np.arange(min(test_area_bh[1, :, ocm]), max(test_area_bh[1, :, ocm]) + binwidth, binwidth), label='bef4', alpha=0.5)
+    ax0.hist(test_area_bh[2, :, ocm], bins=np.arange(min(test_area_bh[2, :, ocm]), max(test_area_bh[2, :, ocm]) + binwidth, binwidth), label='bef5', alpha=0.5)
+    ax0.set_title('Count, OCM1, test1,2')
+    ax0.set_xlabel('Number of outliers')
+    ax0.set_ylabel('Frequency')
+    ax0.set_yscale('log')
+    ax0.set_ylim(0.5, 500)
+    plt.legend(loc='best')
+    print('2')
+
+    ax0 = fig2.add_subplot(233)
+    ocm = 2
+    ax0.hist(test_area_bh[0, :, ocm], bins=np.arange(min(test_area_bh[0, :, ocm]), max(test_area_bh[0, :, ocm]) + binwidth, binwidth), label='bef3', alpha=0.5)
+    ax0.hist(test_area_bh[1, :, ocm], bins=np.arange(min(test_area_bh[1, :, ocm]), max(test_area_bh[1, :, ocm]) + binwidth, binwidth), label='bef4', alpha=0.5)
+    ax0.hist(test_area_bh[2, :, ocm], bins=np.arange(min(test_area_bh[2, :, ocm]), max(test_area_bh[2, :, ocm]) + binwidth, binwidth), label='bef5', alpha=0.5)
+    ax0.set_title('Count, OCM2, test1,2')
+    ax0.set_xlabel('Number of outliers')
+    ax0.set_ylabel('Frequency')
+    ax0.set_yscale('log')
+    ax0.set_ylim(0.5, 500)
+    plt.legend(loc='best')
+    print('3')
+
+    ax0 = fig2.add_subplot(234)
+    ocm = 0
+    ax0.hist(test_area_bh[3, :, ocm], bins=np.arange(min(test_area_bh[3, :, ocm]), max(test_area_bh[3, :, ocm]) + binwidth, binwidth), label='aft1', alpha=0.5)
+    ax0.hist(test_area_bh[4, :, ocm], bins=np.arange(min(test_area_bh[4, :, ocm]), max(test_area_bh[4, :, ocm]) + binwidth, binwidth), label='aft2', alpha=0.5)
+    ax0.hist(test_area_bh[5, :, ocm], bins=np.arange(min(test_area_bh[5, :, ocm]), max(test_area_bh[5, :, ocm]) + binwidth, binwidth), label='aft3', alpha=0.5)
+    ax0.hist(test_area_bh[6, :, ocm], bins=np.arange(min(test_area_bh[6, :, ocm]), max(test_area_bh[6, :, ocm]) + binwidth, binwidth), label='aft4', alpha=0.5)
+    ax0.hist(test_area_bh[7, :, ocm], bins=np.arange(min(test_area_bh[7, :, ocm]), max(test_area_bh[7, :, ocm]) + binwidth, binwidth), label='aft5', alpha=0.5)
+    ax0.set_title('Area, OCM0, After')
+    ax0.set_xlabel('Area out of envelop')
+    ax0.set_ylabel('Frequency')
+    ax0.set_yscale('log')
+    ax0.set_ylim(0.5, 500)
+    plt.legend(loc='best')
+    print('4')
+
+    ax0 = fig2.add_subplot(235)
+    ocm = 1
+    ax0.hist(test_area_bh[3, :, ocm], bins=np.arange(min(test_area_bh[3, :, ocm]), max(test_area_bh[3, :, ocm]) + binwidth, binwidth), label='aft1', alpha=0.5)
+    ax0.hist(test_area_bh[4, :, ocm], bins=np.arange(min(test_area_bh[4, :, ocm]), max(test_area_bh[4, :, ocm]) + binwidth, binwidth), label='aft2', alpha=0.5)
+    ax0.hist(test_area_bh[5, :, ocm], bins=np.arange(min(test_area_bh[5, :, ocm]), max(test_area_bh[5, :, ocm]) + binwidth, binwidth), label='aft3', alpha=0.5)
+    ax0.hist(test_area_bh[6, :, ocm], bins=np.arange(min(test_area_bh[6, :, ocm]), max(test_area_bh[6, :, ocm]) + binwidth, binwidth), label='aft4', alpha=0.5)
+    ax0.hist(test_area_bh[7, :, ocm], bins=np.arange(min(test_area_bh[7, :, ocm]), max(test_area_bh[7, :, ocm]) + binwidth, binwidth), label='aft5', alpha=0.5)
+    ax0.set_title('Area, OCM1, After')
+    ax0.set_xlabel('Area out of envelop')
+    ax0.set_ylabel('Frequency')
+    ax0.set_yscale('log')
+    ax0.set_ylim(0.5, 500)
+    plt.legend(loc='best')
+    print('5')
+
+    ax0 = fig2.add_subplot(236)
+    ocm = 2
+    ax0.hist(test_area_bh[3, :, ocm], bins=np.arange(min(test_area_bh[3, :, ocm]), max(test_area_bh[3, :, ocm]) + binwidth, binwidth), label='aft1', alpha=0.5)
+    ax0.hist(test_area_bh[4, :, ocm], bins=np.arange(min(test_area_bh[4, :, ocm]), max(test_area_bh[4, :, ocm]) + binwidth, binwidth), label='aft2', alpha=0.5)
+    ax0.hist(test_area_bh[5, :, ocm], bins=np.arange(min(test_area_bh[5, :, ocm]), max(test_area_bh[5, :, ocm]) + binwidth, binwidth), label='aft3', alpha=0.5)
+    ax0.hist(test_area_bh[6, :, ocm], bins=np.arange(min(test_area_bh[6, :, ocm]), max(test_area_bh[6, :, ocm]) + binwidth, binwidth), label='aft4', alpha=0.5)
+    ax0.hist(test_area_bh[7, :, ocm], bins=np.arange(min(test_area_bh[7, :, ocm]), max(test_area_bh[7, :, ocm]) + binwidth, binwidth), label='aft5', alpha=0.5)
+    ax0.set_title('Area, OCM2, After')
+    ax0.set_xlabel('Area out of envelop')
+    ax0.set_ylabel('Frequency')
+    ax0.set_yscale('log')
+    ax0.set_ylim(0.5, 500)
+    plt.legend(loc='best')
+    print('6')
+
+    fig2.tight_layout()
+    #fig2.show()
+    f_name = 'Histogram_cnt_Area_' + Sub_run + '.png'
+    plt.savefig(f_name)
+    print('Data:', Sub_run, ' has finished')
+
+    '''
     ## Visualize mean+-SD of "difference"
     d = np.linspace(0, ocm0_all.shape[0] - 1, ocm0_all.shape[0])
     fig = plt.figure(figsize=(18, 4))
@@ -245,9 +346,7 @@ for fidx in range(0, np.size(sr_list)):
     fig.show()
     f_name = ('Diff_meanSD_Train.png')
     plt.savefig(f_name)
-
-
-
+    
 
 
     print('TP.shape:', TP.shape)
@@ -305,3 +404,4 @@ for fidx in range(0, np.size(sr_list)):
             writer.writerow([bh_cnt + bh_train + 1, '{:.3f}'.format(TP[bh_cnt][0] / bh), '{:.3f}'.format(FN[bh_cnt][0] / bh),
                                  '{:.3f}'.format(TP[bh_cnt][1] / bh), '{:.3f}'.format(FN[bh_cnt][1] / bh),
                                  '{:.3f}'.format(TP[bh_cnt][2] / bh), '{:.3f}'.format(FN[bh_cnt][2] / bh)])
+'''
