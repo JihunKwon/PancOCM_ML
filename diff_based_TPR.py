@@ -15,13 +15,13 @@ plt.rcParams['xtick.direction'] = 'in'
 plt.rcParams['ytick.direction'] = 'in'
 
 sr_list = ['s1r1', 's1r2', 's2r1', 's2r2', 's3r1', 's3r2']
-#sr_list = ['s2r1']
+#sr_list = ['s2r2']
 tole = 10  # tolerance level
 
 bh_train = 2
 bh_test = 10 - bh_train
 batch = 1000  # subset of OCM traces used to get local average
-area_level = 0.8  # Threshold for area (larger than this level is considered as outlier)
+area_level = 0.1  # What FPR you want to get for first bh of test set.
 
 
 for fidx in range(0, np.size(sr_list)):
@@ -130,14 +130,6 @@ for fidx in range(0, np.size(sr_list)):
             for ocm in range(0, 3):
                 mean = train_diff_m[d, ocm]
                 sd = train_diff_sd[d, ocm]
-                '''
-                if flag[ocm] <= tole:  # if no change has been detected in shallower region
-                    # if (before < mean-3SD) or (mean+3SD < before)
-                    if ((ocm_train_diff[num, d, ocm] < (mean - 3 * sd)) or ((mean + 3 * sd) < ocm_train_diff[num, d, ocm])):
-                        flag[ocm] = flag[ocm] + 1  # Out of envelope!
-                    if flag[ocm] > tole:
-                        outside_train[ocm] = outside_train[ocm] + 1  # Store outside of envelope
-                '''
                 # if out of envelope
                 if ((ocm_train_diff[num, d, ocm] < (mean - 3 * sd)) or ((mean + 3 * sd) < ocm_train_diff[num, d, ocm])):
                     diff = ((mean - 3 * sd) - ocm_train_diff[num, d, ocm])
@@ -152,13 +144,57 @@ for fidx in range(0, np.size(sr_list)):
     TN = np.zeros([10, 3])
     FP = np.zeros([10, 3])
     outside_test = np.zeros([bh_test, 3])
-    outside_test_area = np.zeros([bh * bh_test, 3])
-    train_area_bh = np.zeros([10, bh * bh_train, 3])
+    outside_test_area = np.zeros([bh, 3])
+    train_area_bh = np.zeros([10, bh, 3])
     test_area_bh = np.zeros([10, bh * bh_test, 3])
     area_sort = [0, 0, 0]
     area_thr = [0, 0, 0]
+    target_idx = [0, 0, 0]
+    area_total = [0, 0, 0]
+    flag = [0, 0, 0]
+    area_cumulat = np.zeros([bh, 3])
+    area_sort = np.zeros(outside_test_area.shape)
 
-    print('###### Test begins ######')
+    print('###### Get Area Threshold ######')
+    # Using first bh of test set, set a threshold which defines outlier
+    bh_cnt = 0
+    for num in range(0, bh):
+        # If any of the depth is out of the envelope, flag will be 1.
+        flag = [0, 0, 0]
+        # Detect out of envelope
+        for d in range(0, depth):
+            for ocm in range(0, 3):
+                mean = train_diff_m[d, ocm]
+                sd = train_diff_sd[d, ocm]
+                # if out of envelope
+                if ((ocm_test_diff[num, d, ocm] < (mean - 3 * sd)) or ((mean + 3 * sd) < ocm_test_diff[num, d, ocm])):
+                    diff = ((mean - 3 * sd) - ocm_test_diff[num, d, ocm])  # if lower part is out of envelope
+                    if diff < 0:  # if upper part is out of envelope
+                        diff = (ocm_test_diff[num, d, ocm] - (mean + 3 * sd))
+                    outside_test_area[num, ocm] = outside_test_area[num, ocm] + diff
+
+    print('outside_test_area', outside_test_area.shape)
+    # start searching threshold here
+    for ocm in range(0, 3):
+        area_sort[:, ocm] = sorted(outside_test_area[:, ocm])  # sort
+        area_total[ocm] = sum(outside_test_area[:, ocm])
+        print('area_total', ocm, ':', area_total[0])
+
+        for a in range(0, outside_test_area.shape[0]):
+            # pile up area and get when it becomes equal to threshold
+            area_cumulat[a, ocm] = area_cumulat[a-1, ocm] + area_sort[a, ocm]
+            if flag[ocm] < 1:
+                if (area_cumulat[a, ocm] > area_total[ocm] * area_level):
+                    target_idx[ocm] = a  # This is the "index" of array where the cumulative area meets the area_level
+                    flag[ocm] = flag[ocm] + 1
+
+        area_thr[ocm] = area_sort[target_idx[ocm], ocm]
+        print('target_idx', ocm, ':', target_idx[ocm])
+        print('area_thr', ocm, ': ', area_thr[ocm])
+
+
+    print('###### Test Start ######')
+    outside_test_area_fin = np.zeros([bh * bh_test, 3])
     # Calculate mean of "test" (each bh separately)
     for bh_cnt in range(0, bh_test):
         ## Check performance of "test" set
@@ -168,146 +204,39 @@ for fidx in range(0, np.size(sr_list)):
             # Detect out of envelope
             for d in range(0, depth):
                 for ocm in range(0, 3):
-                    mean = train_diff_m[d, ocm]
-                    sd = train_diff_sd[d, ocm]
-                    '''
-                    if flag[ocm] <= tole:  # if no change has been detected in shallower region
-                        # out of envelope
+                    if flag[ocm] < 1:
+                        mean = train_diff_m[d, ocm]
+                        sd = train_diff_sd[d, ocm]
+                        # if out of envelope
                         if ((ocm_test_diff[num, d, ocm] < (mean - 3 * sd)) or ((mean + 3 * sd) < ocm_test_diff[num, d, ocm])):
-                            flag[ocm] = flag[ocm] + 1
-                        if flag[ocm] > tole:
-                            outside_test[bh_cnt][ocm] = outside_test[bh_cnt][ocm] + 1  # Store outside of envelope
-                    '''
-                    # if out of envelope
-                    if ((ocm_test_diff[num, d, ocm] < (mean - 3 * sd)) or ((mean + 3 * sd) < ocm_test_diff[num, d, ocm])):
-                        diff = ((mean - 3 * sd) - ocm_test_diff[num, d, ocm])
-                        if diff < 0:  # if upper part is out of envelope
-                            diff = (ocm_test_diff[num, d, ocm] - (mean + 3 * sd))
-                        outside_test_area[num, ocm] = outside_test_area[num, ocm] + diff
-
-        # if first bh of test set has finished
-        target = [0, 0, 0]
-        area_total = [0, 0, 0]
-        area_cumulat0 = np.zeros([bh])
-        area_cumulat1 = np.zeros([bh])
-        area_cumulat2 = np.zeros([bh])
-
-        if bh_cnt == 0:
-            outside_test_area_0 = outside_test_area[:, 0]
-            outside_test_area_1 = outside_test_area[:, 1]
-            outside_test_area_2 = outside_test_area[:, 2]
-            area_sort_0 = sorted(outside_test_area_0)  # get sum of outliers
-            area_sort_1 = sorted(outside_test_area_1)
-            area_sort_2 = sorted(outside_test_area_2)
-
-            area_sort_filt0 = np.trim_zeros(area_sort_0)
-            area_sort_filt1 = np.trim_zeros(area_sort_1)
-            area_sort_filt2 = np.trim_zeros(area_sort_2)
-            print('area_sort_filt0', np.size(area_sort_filt0))
-            print('area_sort_filt1', np.size(area_sort_filt1))
-            print('area_sort_filt2', np.size(area_sort_filt2))
-
-            area_total[0] = sum(area_sort_filt0[:])
-            area_total[1] = sum(area_sort_filt1[:])
-            area_total[2] = sum(area_sort_filt2[:])
-
-            print('area_total0', np.size(area_total[0]))
-            print('area_total1', np.size(area_total[1]))
-            print('area_total2', np.size(area_total[2]))
-            flag0 = 0
-            flag1 = 0
-            flag2 = 0
-            for a in range(0, np.size(area_sort_filt0)):
-                area_cumulat0[a] = area_cumulat0[a-1] + area_sort_filt0[a]
-                if flag0 < 1:
-                    if (area_cumulat0[a] > (area_total[0]*area_level)):
-                        target[0] = a
-                        flag0 = flag0 + 1
-            for a in range(0, np.size(area_sort_filt1)):
-                area_cumulat1[a] = area_cumulat1[a-1] + area_sort_filt1[a]
-                if flag1 < 1:
-                    if (area_cumulat1[a] > (area_total[1]*area_level)):
-                        target[1] = a
-                        flag1 = flag1 + 1
-            for a in range(0, np.size(area_sort_filt2)):
-                area_cumulat2[a] = area_cumulat2[a-1] + area_sort_filt2[a]
-                if flag2 < 1:
-                    if (area_cumulat2[a] > (area_total[2]*area_level)):
-                        target[2] = a
-                        flag2 = flag2 + 1
-
-            print('target0', target[0])
-            print('target1', target[1])
-            print('target2', target[2])
-
-            area_thr[0] = area_sort_filt0[target[0]]
-            area_thr[1] = area_sort_filt1[target[1]]
-            area_thr[2] = area_sort_filt2[target[2]]
-            print('area_thr0', area_thr[0])
-            print('area_thr1', area_thr[1])
-            print('area_thr2', area_thr[2])
-
-
-
-
-
-        # Gather each bh data
+                            diff = ((mean - 3 * sd) - ocm_test_diff[num, d, ocm])
+                            if diff < 0:  # if upper part is out of envelope
+                                diff = (ocm_test_diff[num, d, ocm] - (mean + 3 * sd))
+                            outside_test_area_fin[num, ocm] = outside_test_area_fin[num, ocm] + diff
+                            # if area outside of envelope for this trace became larger than the predefined area_thr, consider it as an outlier
+                            if outside_test_area_fin[num, ocm] >= area_thr[ocm]:
+                                outside_test[bh_cnt, ocm] = outside_test[bh_cnt, ocm] + 1
+                                flag[ocm] = flag[ocm] + 1
+    ## Gather each bh data
         if 0 <= bh_cnt < (bh_test-5):  # if "before water"
             for ocm in range(0, 3):
                 TN[bh_cnt, ocm] = bh - outside_test[bh_cnt, ocm]  # Before, change not detected
                 FP[bh_cnt, ocm] = outside_test[bh_cnt, ocm]  # Before, change detected
-                test_area_bh[bh_cnt, :, ocm] = outside_test_area[:, ocm]
+                test_area_bh[bh_cnt, :, ocm] = outside_test_area_fin[:, ocm]
         elif (bh_test-5) <= bh_cnt:  # if "after water"
             for ocm in range(0, 3):
                 TP[bh_cnt, ocm] = outside_test[bh_cnt, ocm]  # After, change detected
                 FN[bh_cnt, ocm] = bh - outside_test[bh_cnt, ocm]  # After, change not detected
-                test_area_bh[bh_cnt, :, ocm] = outside_test_area[:, ocm]
+                test_area_bh[bh_cnt, :, ocm] = outside_test_area_fin[:, ocm]
 
     print('#### Test Ends ####')
     print('test_area_bh:', test_area_bh.shape)
+
+    '''
     ## Visualize count and area of outlier
     d = np.linspace(0, ocm0_all.shape[0] - 1, ocm0_all.shape[0])
     binwidth = 0.03
     fig2 = plt.figure(figsize=(12, 6))
-    ax0 = fig2.add_subplot(231)
-    ocm = 0
-    ax0.hist(test_area_bh[0, :, ocm], bins=np.arange(min(test_area_bh[0, :, ocm]), max(test_area_bh[0, :, ocm]) + binwidth, binwidth), label='bef3', alpha=0.5)
-    ax0.hist(test_area_bh[1, :, ocm], bins=np.arange(min(test_area_bh[1, :, ocm]), max(test_area_bh[1, :, ocm]) + binwidth, binwidth), label='bef4', alpha=0.5)
-    ax0.hist(test_area_bh[2, :, ocm], bins=np.arange(min(test_area_bh[2, :, ocm]), max(test_area_bh[2, :, ocm]) + binwidth, binwidth), label='bef5', alpha=0.5)
-    ax0.set_title('Area, OCM0, Before')
-    ax0.set_xlabel('Area out of envelop')
-    ax0.set_ylabel('Frequency')
-    ax0.set_yscale('log')
-    ax0.set_ylim(0.5, 500)
-    plt.legend(loc='best')
-    print('1')
-
-    ax0 = fig2.add_subplot(232)
-    ocm = 1
-    ax0.hist(test_area_bh[0, :, ocm], bins=np.arange(min(test_area_bh[0, :, ocm]), max(test_area_bh[0, :, ocm]) + binwidth, binwidth), label='bef3', alpha=0.5)
-    ax0.hist(test_area_bh[1, :, ocm], bins=np.arange(min(test_area_bh[1, :, ocm]), max(test_area_bh[1, :, ocm]) + binwidth, binwidth), label='bef4', alpha=0.5)
-    ax0.hist(test_area_bh[2, :, ocm], bins=np.arange(min(test_area_bh[2, :, ocm]), max(test_area_bh[2, :, ocm]) + binwidth, binwidth), label='bef5', alpha=0.5)
-    ax0.set_title('Count, OCM1, test1,2')
-    ax0.set_xlabel('Area out of envelop')
-    ax0.set_ylabel('Frequency')
-    ax0.set_yscale('log')
-    ax0.set_ylim(0.5, 500)
-    plt.legend(loc='best')
-    print('2')
-
-    ax0 = fig2.add_subplot(233)
-    ocm = 2
-    ax0.hist(test_area_bh[0, :, ocm], bins=np.arange(min(test_area_bh[0, :, ocm]), max(test_area_bh[0, :, ocm]) + binwidth, binwidth), label='bef3', alpha=0.5)
-    ax0.hist(test_area_bh[1, :, ocm], bins=np.arange(min(test_area_bh[1, :, ocm]), max(test_area_bh[1, :, ocm]) + binwidth, binwidth), label='bef4', alpha=0.5)
-    ax0.hist(test_area_bh[2, :, ocm], bins=np.arange(min(test_area_bh[2, :, ocm]), max(test_area_bh[2, :, ocm]) + binwidth, binwidth), label='bef5', alpha=0.5)
-    ax0.set_title('Count, OCM2, test1,2')
-    ax0.set_xlabel('Area out of envelop')
-    ax0.set_ylabel('Frequency')
-    ax0.set_yscale('log')
-    ax0.set_ylim(0.5, 500)
-    plt.legend(loc='best')
-    print('3')
-
     ax0 = fig2.add_subplot(234)
     ocm = 0
     ax0.hist(test_area_bh[3, :, ocm], bins=np.arange(min(test_area_bh[3, :, ocm]), max(test_area_bh[3, :, ocm]) + binwidth, binwidth), label='aft1', alpha=0.5)
@@ -318,10 +247,13 @@ for fidx in range(0, np.size(sr_list)):
     ax0.set_title('Area, OCM0, After')
     ax0.set_xlabel('Area out of envelop')
     ax0.set_ylabel('Frequency')
-    ax0.set_yscale('log')
-    ax0.set_ylim(0.5, 500)
+    #ax0.set_yscale('log')
+    Xmin_0, Xmax_0 = ax0.get_xlim()
+    Ymin_0, Ymax_0 = ax0.get_ylim()
+    ax0.set_xlim(0, Xmax_0)
+    ax0.set_ylim(0, 50)
     plt.legend(loc='best')
-    print('4')
+    print('1')
 
     ax0 = fig2.add_subplot(235)
     ocm = 1
@@ -333,10 +265,13 @@ for fidx in range(0, np.size(sr_list)):
     ax0.set_title('Area, OCM1, After')
     ax0.set_xlabel('Area out of envelop')
     ax0.set_ylabel('Frequency')
-    ax0.set_yscale('log')
-    ax0.set_ylim(0.5, 500)
+    #ax0.set_yscale('log')
+    Xmin_1, Xmax_1 = ax0.get_xlim()
+    Ymin_1, Ymax_1 = ax0.get_ylim()
+    ax0.set_xlim(0, Xmax_1)
+    ax0.set_ylim(0, 50)
     plt.legend(loc='best')
-    print('5')
+    print('2')
 
     ax0 = fig2.add_subplot(236)
     ocm = 2
@@ -348,8 +283,52 @@ for fidx in range(0, np.size(sr_list)):
     ax0.set_title('Area, OCM2, After')
     ax0.set_xlabel('Area out of envelop')
     ax0.set_ylabel('Frequency')
-    ax0.set_yscale('log')
-    ax0.set_ylim(0.5, 500)
+    #ax0.set_yscale('log')
+    Xmin_2, Xmax_2 = ax0.get_xlim()
+    Ymin_2, Ymax_2 = ax0.get_ylim()
+    ax0.set_xlim(0, Xmax_2)
+    ax0.set_ylim(0, 50)
+    plt.legend(loc='best')
+    print('3')
+
+    ax0 = fig2.add_subplot(231)
+    ocm = 0
+    ax0.hist(test_area_bh[0, :, ocm], bins=np.arange(min(test_area_bh[0, :, ocm]), max(test_area_bh[0, :, ocm]) + binwidth, binwidth), label='bef3', alpha=0.5)
+    ax0.hist(test_area_bh[1, :, ocm], bins=np.arange(min(test_area_bh[1, :, ocm]), max(test_area_bh[1, :, ocm]) + binwidth, binwidth), label='bef4', alpha=0.5)
+    ax0.hist(test_area_bh[2, :, ocm], bins=np.arange(min(test_area_bh[2, :, ocm]), max(test_area_bh[2, :, ocm]) + binwidth, binwidth), label='bef5', alpha=0.5)
+    ax0.set_title('Area, OCM0, Before')
+    ax0.set_xlabel('Area out of envelop')
+    ax0.set_ylabel('Frequency')
+    ax0.set_xlim(0, Xmax_0)
+    ax0.set_ylim(0, 50)
+    plt.legend(loc='best')
+    print('4')
+
+    ax0 = fig2.add_subplot(232)
+    ocm = 1
+    ax0.hist(test_area_bh[0, :, ocm], bins=np.arange(min(test_area_bh[0, :, ocm]), max(test_area_bh[0, :, ocm]) + binwidth, binwidth), label='bef3', alpha=0.5)
+    ax0.hist(test_area_bh[1, :, ocm], bins=np.arange(min(test_area_bh[1, :, ocm]), max(test_area_bh[1, :, ocm]) + binwidth, binwidth), label='bef4', alpha=0.5)
+    ax0.hist(test_area_bh[2, :, ocm], bins=np.arange(min(test_area_bh[2, :, ocm]), max(test_area_bh[2, :, ocm]) + binwidth, binwidth), label='bef5', alpha=0.5)
+    ax0.set_title('Area, OCM1, Before')
+    ax0.set_xlabel('Area out of envelop')
+    ax0.set_ylabel('Frequency')
+    #ax0.set_yscale('log')
+    ax0.set_xlim(0, Xmax_1)
+    ax0.set_ylim(0, 50)
+    plt.legend(loc='best')
+    print('5')
+
+    ax0 = fig2.add_subplot(233)
+    ocm = 2
+    ax0.hist(test_area_bh[0, :, ocm], bins=np.arange(min(test_area_bh[0, :, ocm]), max(test_area_bh[0, :, ocm]) + binwidth, binwidth), label='bef3', alpha=0.5)
+    ax0.hist(test_area_bh[1, :, ocm], bins=np.arange(min(test_area_bh[1, :, ocm]), max(test_area_bh[1, :, ocm]) + binwidth, binwidth), label='bef4', alpha=0.5)
+    ax0.hist(test_area_bh[2, :, ocm], bins=np.arange(min(test_area_bh[2, :, ocm]), max(test_area_bh[2, :, ocm]) + binwidth, binwidth), label='bef5', alpha=0.5)
+    ax0.set_title('Area, OCM2, Before')
+    ax0.set_xlabel('Area out of envelop')
+    ax0.set_ylabel('Frequency')
+    #ax0.set_yscale('log')
+    ax0.set_xlim(0, Xmax_2)
+    ax0.set_ylim(0, 50)
     plt.legend(loc='best')
     print('6')
 
@@ -358,6 +337,7 @@ for fidx in range(0, np.size(sr_list)):
     f_name = 'Histogram_cnt_Area_' + Sub_run + '.png'
     plt.savefig(f_name)
     print('Data:', Sub_run, ' has finished')
+    '''
 
     '''
     ## Visualize mean+-SD of "difference"
@@ -406,7 +386,7 @@ for fidx in range(0, np.size(sr_list)):
     fig.show()
     f_name = ('Diff_meanSD_Train.png')
     plt.savefig(f_name)
-    
+    '''
 
 
     print('TP.shape:', TP.shape)
@@ -464,4 +444,3 @@ for fidx in range(0, np.size(sr_list)):
             writer.writerow([bh_cnt + bh_train + 1, '{:.3f}'.format(TP[bh_cnt][0] / bh), '{:.3f}'.format(FN[bh_cnt][0] / bh),
                                  '{:.3f}'.format(TP[bh_cnt][1] / bh), '{:.3f}'.format(FN[bh_cnt][1] / bh),
                                  '{:.3f}'.format(TP[bh_cnt][2] / bh), '{:.3f}'.format(FN[bh_cnt][2] / bh)])
-'''
