@@ -21,7 +21,7 @@ tole = 10  # tolerance level
 bh_train = 2
 bh_test = 10 - bh_train
 batch = 1000  # subset of OCM traces used to get local average
-area_level = 0.1  # What FPR you want to get for first bh of test set.
+area_level = 0.5  # What FPR you want to get for first bh of test set.
 
 
 for fidx in range(0, np.size(sr_list)):
@@ -175,6 +175,7 @@ for fidx in range(0, np.size(sr_list)):
 
     print('outside_test_area', outside_test_area.shape)
     # start searching threshold here
+    flag = [0, 0, 0]
     for ocm in range(0, 3):
         area_sort[:, ocm] = sorted(outside_test_area[:, ocm])  # sort
         area_total[ocm] = sum(outside_test_area[:, ocm])
@@ -388,7 +389,7 @@ for fidx in range(0, np.size(sr_list)):
     plt.savefig(f_name)
     '''
 
-
+    ## Output begins
     print('TP.shape:', TP.shape)
     print('fidx:', Sub_run)
     print('training set')
@@ -425,7 +426,7 @@ for fidx in range(0, np.size(sr_list)):
               , ' ', '{:.3f}'.format(TP[bh_cnt][2] / bh), ' ', '{:.3f}'.format(FN[bh_cnt][2] / bh))
     print('End of After water')
 
-    f_name = 'result2_' + Sub_run + '.csv'
+    f_name = 'result2_' + Sub_run + '_' + str(area_level) + '.csv'
     with open(f_name, mode='w',newline='') as file:
         writer = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
