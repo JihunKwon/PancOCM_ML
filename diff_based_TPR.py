@@ -22,7 +22,7 @@ bh_train = 3
 bh_test = 10 - bh_train
 batch = 1000  # subset of OCM traces used to get local average
 area_level = 0.9  # What FPR you want to get for first bh of test set.
-fpr_level = 0.1
+fpr_level = 0.5
 
 
 for fidx in range(0, np.size(sr_list)):
@@ -252,7 +252,6 @@ for fidx in range(0, np.size(sr_list)):
                                 flag[ocm] = flag[ocm] + 1
 
     for bh_cnt in range(0, bh_test):
-        print('bh_cnt:', bh_cnt)
         ## Gather each bh data
         if bh_test == 10-bh_train:
             end_bef = bh_test-5
@@ -292,9 +291,9 @@ for fidx in range(0, np.size(sr_list)):
               , ' ', '{:.3f}'.format(TN[bh_cnt][1]), ' ', '{:.3f}'.format(FP[bh_cnt][1])
               , ' ', '{:.3f}'.format(TN[bh_cnt][2]), ' ', '{:.3f}'.format(FP[bh_cnt][2]))
 
-        print('TNR,FPR: ', '{:.3f}'.format(TN[bh_cnt][0] / bh), ' ', '{:.3f}'.format(FP[bh_cnt][0] / bh)
-              , ' ', '{:.3f}'.format(TN[bh_cnt][1] / bh), ' ', '{:.3f}'.format(FP[bh_cnt][1] / bh)
-              , ' ', '{:.3f}'.format(TN[bh_cnt][2] / bh), ' ', '{:.3f}'.format(FP[bh_cnt][2] / bh))
+        print('TNR,FPR: ', '{:.3f}'.format(TN[bh_cnt][0] / (bh*bh_train)), ' ', '{:.3f}'.format(FP[bh_cnt][0] / (bh*bh_train))
+              , ' ', '{:.3f}'.format(TN[bh_cnt][1] / (bh*bh_train)), ' ', '{:.3f}'.format(FP[bh_cnt][1] / (bh*bh_train))
+              , ' ', '{:.3f}'.format(TN[bh_cnt][2] / (bh*bh_train)), ' ', '{:.3f}'.format(FP[bh_cnt][2] / (bh*bh_train)))
     print('End of Before water')
 
     # test result with "after" data (TP and FN)
@@ -319,9 +318,9 @@ for fidx in range(0, np.size(sr_list)):
 
         writer.writerow(['TNR,FPR_test:'])
         for bh_cnt in range(0, end_bef):
-            writer.writerow([bh_cnt + bh_train + 1, '{:.3f}'.format(TN[bh_cnt][0] / bh), '{:.3f}'.format(FP[bh_cnt][0] / bh),
-                                 '{:.3f}'.format(TN[bh_cnt][1] / bh), '{:.3f}'.format(FP[bh_cnt][1] / bh),
-                                 '{:.3f}'.format(TN[bh_cnt][2] / bh), '{:.3f}'.format(FP[bh_cnt][2] / bh)])
+            writer.writerow([bh_cnt + bh_train + 1, '{:.3f}'.format(TN[bh_cnt][0] / (bh*bh_train)), '{:.3f}'.format(FP[bh_cnt][0] / (bh*bh_train)),
+                                 '{:.3f}'.format(TN[bh_cnt][1] / (bh*bh_train)), '{:.3f}'.format(FP[bh_cnt][1] / (bh*bh_train)),
+                                 '{:.3f}'.format(TN[bh_cnt][2] / (bh*bh_train)), '{:.3f}'.format(FP[bh_cnt][2] / (bh*bh_train))])
 
         writer.writerow(['TPR,FNR:'])
         for bh_cnt in range(end_bef, bh_test):
