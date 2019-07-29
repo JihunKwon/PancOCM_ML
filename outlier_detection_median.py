@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy import signal
 import statistics
 import matplotlib.animation as animation
+from sklearn import metrics
 
 plt.close('all')
 
@@ -27,8 +28,8 @@ num_subject = 1
 num_bh = 5
 batch = 3 # Divide each bh into three separate groups
 num_ocm = 3 # # of OCM
-rep_list = [8196, 8196]
-#rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
+#rep_list = [8196, 8196]
+rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
 
 #these store data for each transducer, 5 breath holds, 15 runs
 t0 = np.zeros([20,5,np.size(rep_list)])
@@ -43,13 +44,13 @@ d2 = np.zeros([5,np.size(rep_list)])
 d3 = np.zeros([5,np.size(rep_list)])
 
 # stores TPR and FPR3
-thr_max = 1000  # of threshold bin
-tpr_0 = np.zeros([thr_max - 1])
-tpr_1 = np.zeros([thr_max - 1])
-tpr_2 = np.zeros([thr_max - 1])
-fpr_0 = np.zeros([thr_max - 1])
-fpr_1 = np.zeros([thr_max - 1])
-fpr_2 = np.zeros([thr_max - 1])
+thr_max = 100  # of threshold bin
+tpr_0 = np.zeros([thr_max])
+tpr_1 = np.zeros([thr_max])
+tpr_2 = np.zeros([thr_max])
+fpr_0 = np.zeros([thr_max])
+fpr_1 = np.zeros([thr_max])
+fpr_2 = np.zeros([thr_max])
 
 for fidx in range(0,np.size(rep_list)):
     in_filename = out_list[fidx]
@@ -70,6 +71,10 @@ for fidx in range(0,np.size(rep_list)):
     mag_norm_medi0 = np.ones([s, num_bh*batch])  # Normalized
     mag_norm_medi1 = np.ones([s, num_bh*batch])  # Normalized
     mag_norm_medi2 = np.ones([s, num_bh*batch])  # Normalized
+    diff0 = np.zeros([num_bh*batch])
+    diff1 = np.zeros([num_bh*batch])
+    diff2 = np.zeros([num_bh*batch])
+
     f1 = np.ones([5])
     max_p = 0
     ocm_mag = np.ones([s, t])  # store the magnitude of the filtered signal
@@ -153,92 +158,6 @@ for fidx in range(0,np.size(rep_list)):
     # Get Threshold
     width = 5  # tolerance
     target = 2
-    '''
-    # ===============OCM0===========================================================
-    # Plot Baseline
-    fig = plt.figure()
-    ims = []
-    plt.plot(d, base0[:, 0], 'g', linewidth=2, linestyle='dashed', label="OCM0, baseline")
-    plt.plot(d, base0[:, 0] + width * base_sd0[:], 'r', linewidth=2, linestyle='dashed', label="OCM0, baseline")
-    plt.title("Median signal, Baseline")
-    plt.xlabel("Depth")
-    plt.ylabel("Magnitude (a.u.)")
-    for p in range(0, 100):
-        im = plt.plot(d, ocm0[:, p], 'b', linewidth=1, linestyle='solid')
-        ims.append(im)
-    ani = animation.ArtistAnimation(fig, ims, interval=100)
-    ani.save("OCM0_baseline.gif", writer="imagemagic")
-    # Plot Test set
-    fig = plt.figure()
-    ims = []
-    plt.plot(d, base0[:, 0], 'g', linewidth=2, linestyle='dashed', label="OCM0, baseline")
-    plt.plot(d, base0[:, 0] + width * base_sd0[:], 'r', linewidth=2, linestyle='dashed', label="OCM0, baseline")
-    plt.title("Median signal, State 2")
-    plt.xlabel("Depth")
-    plt.ylabel("Magnitude (a.u.)")
-    for p in range(t_sub*target, t_sub*target+100):
-        im = plt.plot(d, ocm0[:, p], 'b', linewidth=1, linestyle='solid')
-        ims.append(im)
-    ani = animation.ArtistAnimation(fig, ims, interval=100)
-    ani.save("OCM0_test.gif", writer="imagemagic")
-    # =============================================================================
-    # ===============OCM1===========================================================
-    # Plot Baseline
-    fig = plt.figure()
-    ims = []
-    plt.plot(d, base1[:, 0], 'g', linewidth=2, linestyle='dashed', label="OCM0, baseline")
-    plt.plot(d, base1[:, 0] + width * base_sd1[:], 'r', linewidth=2, linestyle='dashed', label="OCM1, baseline")
-    plt.title("Median signal, Baseline")
-    plt.xlabel("Depth")
-    plt.ylabel("Magnitude (a.u.)")
-    for p in range(0, 100):
-        im = plt.plot(d, ocm1[:, p], 'b', linewidth=1, linestyle='solid')
-        ims.append(im)
-    ani = animation.ArtistAnimation(fig, ims, interval=100)
-    ani.save("OCM1_baseline.gif", writer="imagemagic")
-    # Plot Test set
-    fig = plt.figure()
-    ims = []
-    plt.plot(d, base1[:, 0], 'g', linewidth=2, linestyle='dashed', label="OCM0, baseline")
-    plt.plot(d, base1[:, 0] + width * base_sd1[:], 'r', linewidth=2, linestyle='dashed', label="OCM1, baseline")
-    plt.title("Median signal, State 2")
-    plt.xlabel("Depth")
-    plt.ylabel("Magnitude (a.u.)")
-    for p in range(t_sub*target, t_sub*target+100):
-        im = plt.plot(d, ocm1[:, p], 'b', linewidth=1, linestyle='solid')
-        ims.append(im)
-    ani = animation.ArtistAnimation(fig, ims, interval=100)
-    ani.save("OCM1_test.gif", writer="imagemagic")
-    # =============================================================================
-    # ===============OCM2===========================================================
-    # Plot Baseline
-    fig = plt.figure()
-    ims = []
-    plt.plot(d, base2[:, 0], 'g', linewidth=2, linestyle='dashed', label="OCM0, baseline")
-    plt.plot(d, base2[:, 0] + width * base_sd2[:], 'r', linewidth=2, linestyle='dashed', label="OCM2, baseline")
-    plt.title("Median signal, Baseline")
-    plt.xlabel("Depth")
-    plt.ylabel("Magnitude (a.u.)")
-    for p in range(0, 100):
-        im = plt.plot(d, ocm2[:, p], 'b', linewidth=1, linestyle='solid')
-        ims.append(im)
-    ani = animation.ArtistAnimation(fig, ims, interval=100)
-    ani.save("OCM2_baseline.gif", writer="imagemagic")
-    # Plot Test set
-    fig = plt.figure()
-    ims = []
-    plt.plot(d, base2[:, 0], 'g', linewidth=2, linestyle='dashed', label="OCM0, baseline")
-    plt.plot(d, base2[:, 0] + width * base_sd2[:], 'r', linewidth=2, linestyle='dashed', label="OCM2, baseline")
-    plt.title("Median signal, State 2")
-    plt.xlabel("Depth")
-    plt.ylabel("Magnitude (a.u.)")
-    for p in range(t_sub*target, t_sub*target+100):
-        im = plt.plot(d, ocm2[:, p], 'b', linewidth=1, linestyle='solid')
-        ims.append(im)
-    ani = animation.ArtistAnimation(fig, ims, interval=100)
-    ani.save("OCM2_test.gif", writer="imagemagic")
-    # =============================================================================
-    '''
 
     ##### Get area outisde of the envelope #####
     out_area0 = np.zeros([num_bh*batch])  # store the cummulative area outside of the envelope
@@ -247,26 +166,33 @@ for fidx in range(0,np.size(rep_list)):
     flag0 = np.zeros(([thr_max]))
     flag1 = np.zeros(([thr_max]))
     flag2 = np.zeros(([thr_max]))
-
-    # Compute the area above the envelope
+    '''
+    if fidx % 2 == 0:  # if state 1, first sub_bh has to be removed because it is used for training
+        bh = num_bh*batch-1
+        diff0 = np.zeros([bh])
+        diff1 = np.zeros([bh])
+        diff2 = np.zeros([bh])
+    else:
+        bh = num_bh * batch
+        diff0 = np.zeros([bh])
+        diff1 = np.zeros([bh])
+        diff2 = np.zeros([bh])
+    '''
+    # Compute the absolute difference between Medi_base and Medi_test
     for n in range(0, num_bh*batch):
         for d in range(0, s):
-            if mag_norm_medi0[d, n] > (base0[d, 0] + width * base_sd0[d]):
-                out_area0[n] = out_area0[n] + mag_norm_medi0[d, n] - width * base_sd0[d]
-            if mag_norm_medi1[d, n] > (base1[d, 0] + width * base_sd1[d]):
-                out_area1[n] = out_area1[n] + mag_norm_medi1[d, n] - width * base_sd1[d]
-            if mag_norm_medi2[d, n] > (base2[d, 0] + width * base_sd2[d]):
-                out_area2[n] = out_area2[n] + mag_norm_medi2[d, n] - width * base_sd2[d]
+            diff0[n] = diff0[n] + abs(mag_norm_medi0[d, n] - base0[d, 0])
+            diff1[n] = diff1[n] + abs(mag_norm_medi1[d, n] - base1[d, 0])
+            diff2[n] = diff2[n] + abs(mag_norm_medi2[d, n] - base2[d, 0])
 
     # Count the number of sub-bh above threshold
-    out_max = 100
-    for m in range(1, thr_max):
-        for n in range(0, num_bh*batch):
-            if out_area0[n] >= out_max/m:  # check outlier with different thresholds
+    for m in range(0, thr_max):
+        for n in range(0, num_bh * batch):
+            if diff0[n] > m:  # check outlier with different thresholds
                 flag0[m] = flag0[m] + 1
-            if out_area1[n] >= out_max/m:
+            if diff1[n] > m:
                 flag1[m] = flag1[m] + 1
-            if out_area2[n] >= out_max/m:
+            if diff2[n] > m:
                 flag2[m] = flag2[m] + 1
 
     ### draw out_area and threshold
@@ -274,8 +200,8 @@ for fidx in range(0,np.size(rep_list)):
     fig = plt.figure()
     total_bh = np.linspace(0, num_bh*batch-1, num_bh*batch)
     ax1 = fig.add_subplot(121)
-    ax1.plot(total_bh, out_area0[:], 'r', linewidth=2, linestyle='solid', label="OCM0, out_area")
-    ax1.set_title("Area outisde of envelope")
+    ax1.plot(total_bh, diff0[:], 'r', linewidth=2, linestyle='solid', label="OCM0, out_area")
+    ax1.set_title("Absolute difference with baseline")
     ax1.set_xlabel("BH")
     ax1.set_ylabel("Area (a.u.)")
 
@@ -283,8 +209,8 @@ for fidx in range(0,np.size(rep_list)):
     ax2 = fig.add_subplot(122)
     ax2.plot(total_thr, flag0[:], 'r', linewidth=2, linestyle='solid', label="OCM0, count")
     ax2.set_title("# of BH higher than threshold")
-    ax2.set_xlabel("Num of threshold")
-    ax2.set_ylabel("Num of outlier detected")
+    ax2.set_xlabel("Area threshold")
+    ax2.set_ylabel("Num of outlier bh detected")
 
     fig.tight_layout()
     fig.show()
@@ -293,7 +219,7 @@ for fidx in range(0,np.size(rep_list)):
     # =============================================================================
 
     cnt = fidx // 2
-    for m in range(1, thr_max-1):  # add fidx=0,1 to cnt=0, fidx=2,3 to cnt=1, ...
+    for m in range(0, thr_max):  # add fidx=0,1 to cnt=0, fidx=2,3 to cnt=1, ...
         if fidx % 2 == 0:  # if fidx is an even number, it is state 1 (before water). i.e. flag is FP
             fpr_0[m] = flag0[m] / (num_bh*batch-1)  # if state 1, first sub_bh is used for training
             fpr_1[m] = flag1[m] / (num_bh*batch-1)
@@ -303,18 +229,20 @@ for fidx in range(0,np.size(rep_list)):
             tpr_1[m] = flag1[m] / (num_bh*batch)
             tpr_2[m] = flag2[m] / (num_bh*batch)
 
-        if m==thr_max-2 and fidx % 2 == 1:
+        if m==thr_max-1 and fidx % 2 == 1:
             fig = plt.figure()
             ax1 = fig.add_subplot(111)
-            ax1.plot(fpr_0, tpr_0, 'r', linewidth=1, linestyle='solid', label="OCM0")
-            ax1.plot(fpr_1, tpr_1, 'g', linewidth=1, linestyle='solid', label="OCM1")
-            ax1.plot(fpr_2, tpr_2, 'b', linewidth=1, linestyle='solid', label="OCM2")
-            ax1.set_title("ROC curve, OCM0")
+            ax1.plot(fpr_0, tpr_0, 'r', linewidth=1.5, linestyle='solid', label="OCM0 (AUC = {:.3f})".format(metrics.auc(fpr_0, tpr_0)))
+            ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='solid', label="OCM1 (AUC = {:.3f})".format(metrics.auc(fpr_1, tpr_1)))
+            ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='solid', label="OCM2 (AUC = {:.3f})".format(metrics.auc(fpr_2, tpr_2)))
+            ax1.set_title("ROC curve")
             ax1.set_xlabel("FPR")
             ax1.set_ylabel("TPR")
             ax1.set_aspect('equal','box')
-            ax1.set_xlim(0, 1)
-            ax1.set_ylim(0, 1)
+            plt.plot([0, 1], [0, 1], 'k--')
+            #ax1.set_xlim(0, 1)
+            #ax1.set_ylim(0, 1)
+            plt.legend(loc='lower right')
             fig.show()
             f_name = 'roc_subject' + str(cnt) + '.png'
             plt.savefig(f_name)
