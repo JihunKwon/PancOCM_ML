@@ -24,7 +24,6 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2.npy")
 
 #these are where the runs end in each OCM file
-num_subject = 1
 num_bh = 5
 batch = 3 # Divide each bh into three separate groups
 num_ocm = 3 # # of OCM
@@ -127,37 +126,37 @@ for fidx in range(0,np.size(rep_list)):
             mag_norm_medi1[depth, sub] = statistics.median(ocm1[depth, sub*t_sub:(sub+1)*t_sub])
             mag_norm_medi2[depth, sub] = statistics.median(ocm2[depth, sub*t_sub:(sub+1)*t_sub])
 
+    # if state 1, calculate baseline difference and SD. SD is used later for thresholding
     if fidx%2==0:
         base0 = mag_norm_medi0
         base1 = mag_norm_medi1
         base2 = mag_norm_medi2
 
-    print('mag_norm_medi:', mag_norm_medi0[10, 0])
-    print('mag_norm_medi.shape:', mag_norm_medi0.shape)
+        # State 1 and 2 use the same baseline. So initialized when state 1 is called,
+        base_diff0 = np.ones([s, t_sub])
+        base_diff1 = np.ones([s, t_sub])
+        base_diff2 = np.ones([s, t_sub])
+        base_diff0_sum = np.ones([t_sub])
+        base_diff1_sum = np.ones([t_sub])
+        base_diff2_sum = np.ones([t_sub])
 
-    ###### Get Threshold ######
-    base_diff0 = np.ones([s, t_sub])
-    base_diff1 = np.ones([s, t_sub])
-    base_diff2 = np.ones([s, t_sub])
-    base_sd0 = np.ones([s])
-    base_sd1 = np.ones([s])
-    base_sd2 = np.ones([s])
+        # Calculate "absolute" difference between median of baseline and each trace in baseline
+        for depth in range(0, s):
+            for p in range(0, t_sub):
+                base_diff0[depth, p] = abs(base0[depth, 0] - ocm0[depth, p])
+                base_diff1[depth, p] = abs(base1[depth, 0] - ocm1[depth, p])
+                base_diff2[depth, p] = abs(base2[depth, 0] - ocm2[depth, p])
 
-    # Calculate difference between median of baseline and each trace in baseline
-    for depth in range(0, s):
+        # Get total difference of each trace
         for p in range(0, t_sub):
-            base_diff0[depth, p] = base0[depth, 0] - ocm0[depth, p]
-            base_diff1[depth, p] = base1[depth, 0] - ocm1[depth, p]
-            base_diff2[depth, p] = base2[depth, 0] - ocm2[depth, p]
+            base_diff0_sum[p] = np.sum(base_diff0[:, p], axis=0)
+            base_diff1_sum[p] = np.sum(base_diff1[:, p], axis=0)
+            base_diff2_sum[p] = np.sum(base_diff2[:, p], axis=0)
 
-    # Calculate SD of difference
-    base_sd0[:] = np.std(base_diff0[:, :], axis=1)
-    base_sd1[:] = np.std(base_diff1[:, :], axis=1)
-    base_sd2[:] = np.std(base_diff2[:, :], axis=1)
-
-    # Get Threshold
-    width = 5  # tolerance
-    target = 2
+        # Calculate SD of total difference
+        base_sd0 = np.std(base_diff0_sum[:])
+        base_sd1 = np.std(base_diff1_sum[:])
+        base_sd2 = np.std(base_diff2_sum[:])
 
     ##### Get area outisde of the envelope #####
     out_area0 = np.zeros([num_bh*batch])  # store the cummulative area outside of the envelope
@@ -166,18 +165,7 @@ for fidx in range(0,np.size(rep_list)):
     flag0 = np.zeros(([thr_max]))
     flag1 = np.zeros(([thr_max]))
     flag2 = np.zeros(([thr_max]))
-    '''
-    if fidx % 2 == 0:  # if state 1, first sub_bh has to be removed because it is used for training
-        bh = num_bh*batch-1
-        diff0 = np.zeros([bh])
-        diff1 = np.zeros([bh])
-        diff2 = np.zeros([bh])
-    else:
-        bh = num_bh * batch
-        diff0 = np.zeros([bh])
-        diff1 = np.zeros([bh])
-        diff2 = np.zeros([bh])
-    '''
+
     # Compute the absolute difference between Medi_base and Medi_test
     for n in range(0, num_bh*batch):
         for d in range(0, s):
@@ -195,24 +183,35 @@ for fidx in range(0,np.size(rep_list)):
             if diff2[n] > m:
                 flag2[m] = flag2[m] + 1
 
-    ### draw out_area and threshold
-    # ===============OCM0===========================================================
+    # Count the number of sub-bh above "SD based" threshold
+    width = 3  # tolerance
+    flag0_thr = 0
+    flag1_thr = 0
+    flag2_thr = 0
+    for n in range(0, num_bh * batch):
+        if diff0[n] > width * base_sd0:  # check outlier with different thresholds
+            flag0_thr = flag0_thr + 1
+        if diff1[n] > width * base_sd1:
+            flag1_thr = flag1_thr + 1
+        if diff2[n] > width * base_sd2:
+            flag2_thr = flag2_thr + 1
+
+    print('fidx:', fidx, 'base_sd0:', base_sd0, 'base_sd1:', base_sd1, 'base_sd2:', base_sd2)
+    print('fidx:', fidx, 'width * base_sd0:', width * base_sd0, 'width * base_sd1:', width * base_sd1, 'width * base_sd2:', width * base_sd2)
+    print('fidx:', fidx, 'flag0_thr:', flag0_thr, 'flag1_thr:', flag1_thr, 'flag2_thr:', flag2_thr)
+
+    # =============== draw out_area ===========================================================
     fig = plt.figure()
     total_bh = np.linspace(0, num_bh*batch-1, num_bh*batch)
-    ax1 = fig.add_subplot(121)
-    ax1.plot(total_bh, diff0[:], 'r', linewidth=2, linestyle='solid', label="OCM0, out_area")
+    ax1 = fig.add_subplot(111)
+    ax1.plot(total_bh, diff0[:], 'r', linewidth=2, linestyle='solid', label="OCM0")
+    ax1.plot(total_bh, diff1[:], 'g', linewidth=2, linestyle='solid', label="OCM1")
+    ax1.plot(total_bh, diff2[:], 'b', linewidth=2, linestyle='solid', label="OCM2")
     ax1.set_title("Absolute difference with baseline")
     ax1.set_xlabel("BH")
     ax1.set_ylabel("Area (a.u.)")
+    plt.legend(loc='lower right')
 
-    total_thr = np.linspace(1, thr_max-1, thr_max)
-    ax2 = fig.add_subplot(122)
-    ax2.plot(total_thr, flag0[:], 'r', linewidth=2, linestyle='solid', label="OCM0, count")
-    ax2.set_title("# of BH higher than threshold")
-    ax2.set_xlabel("Area threshold")
-    ax2.set_ylabel("Num of outlier bh detected")
-
-    fig.tight_layout()
     fig.show()
     f_name = 'Out_area' + str(fidx) + '.png'
     plt.savefig(f_name)
@@ -224,17 +223,33 @@ for fidx in range(0,np.size(rep_list)):
             fpr_0[m] = flag0[m] / (num_bh*batch-1)  # if state 1, first sub_bh is used for training
             fpr_1[m] = flag1[m] / (num_bh*batch-1)
             fpr_2[m] = flag2[m] / (num_bh*batch-1)
+            FPR0 = flag0_thr / (num_bh*batch-1)
+            FPR1 = flag1_thr / (num_bh*batch-1)
+            FPR2 = flag2_thr / (num_bh*batch-1)
+            FP0 = flag0_thr
+            FP1 = flag1_thr
+            FP2 = flag2_thr
         else:  # state 2 (after water)
             tpr_0[m] = flag0[m] / (num_bh*batch)
             tpr_1[m] = flag1[m] / (num_bh*batch)
             tpr_2[m] = flag2[m] / (num_bh*batch)
+            TPR0 = flag0_thr / (num_bh*batch)
+            TPR1 = flag1_thr / (num_bh*batch)
+            TPR2 = flag2_thr / (num_bh*batch)
+            TP0 = flag0_thr
+            TP1 = flag1_thr
+            TP2 = flag2_thr
 
         if m==thr_max-1 and fidx % 2 == 1:
             fig = plt.figure()
             ax1 = fig.add_subplot(111)
-            ax1.plot(fpr_0, tpr_0, 'r', linewidth=1.5, linestyle='solid', label="OCM0 (AUC = {:.3f})".format(metrics.auc(fpr_0, tpr_0)))
-            ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='solid', label="OCM1 (AUC = {:.3f})".format(metrics.auc(fpr_1, tpr_1)))
-            ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='solid', label="OCM2 (AUC = {:.3f})".format(metrics.auc(fpr_2, tpr_2)))
+            if fidx != 11:
+                ax1.plot(fpr_0, tpr_0, 'r', linewidth=1.5, linestyle='solid', label="OCM0 (AUC = {:.3f})".format(metrics.auc(fpr_0, tpr_0)))
+                ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='solid', label="OCM1 (AUC = {:.3f})".format(metrics.auc(fpr_1, tpr_1)))
+                ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='solid', label="OCM2 (AUC = {:.3f})".format(metrics.auc(fpr_2, tpr_2)))
+            else:  # signal from OCM0 for fidx=11 (s3r2) is strange and we neglect this.
+                ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='solid', label="OCM1 (AUC = {:.3f})".format(metrics.auc(fpr_1, tpr_1)))
+                ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='solid', label="OCM2 (AUC = {:.3f})".format(metrics.auc(fpr_2, tpr_2)))
             ax1.set_title("ROC curve")
             ax1.set_xlabel("FPR")
             ax1.set_ylabel("TPR")
@@ -246,3 +261,22 @@ for fidx in range(0,np.size(rep_list)):
             fig.show()
             f_name = 'roc_subject' + str(cnt) + '.png'
             plt.savefig(f_name)
+
+'''
+            print('fidx:', fidx)
+            print('width:', width)
+            print('TPR0:', TPR0, 'TPR1:', TPR1, 'TPR2:', TPR2, 'FPR0:', FPR0, 'FPR1:', FPR1, 'FPR2:', FPR2)
+            print('Accuracy0:', (TP0+(num_bh*batch-1)-FP0)/((num_bh*batch)+(num_bh*batch-1)))
+            print('Accuracy1:', (TP1+(num_bh*batch-1)-FP1)/((num_bh*batch)+(num_bh*batch-1)))
+            print('Accuracy2:', (TP2+(num_bh*batch-1)-FP2)/((num_bh*batch)+(num_bh*batch-1)))
+            print('Precision0:', (TP0/(TP0+FP0)))
+            print('Precision1:', (TP1/(TP1+FP1)))
+            print('Precision2:', (TP2/(TP2+FP2)))
+            print('Recall0:', (TP0/(num_bh*batch)))
+            print('Recall1:', (TP1/(num_bh*batch)))
+            print('Recall2:', (TP2/(num_bh*batch)))
+            print('F-score0:', (2*TP0/(num_bh*batch)*(TP0/(TP0+FP0)) / (TP0/(num_bh*batch)+TP0/(TP0+FP0))))
+            print('F-score1:', (2*TP1/(num_bh*batch)*(TP1/(TP1+FP1)) / (TP1/(num_bh*batch)+TP1/(TP1+FP1))))
+            print('F-score2:', (2*TP2/(num_bh*batch)*(TP2/(TP2+FP2)) / (TP2/(num_bh*batch)+TP2/(TP2+FP2))))
+
+'''
