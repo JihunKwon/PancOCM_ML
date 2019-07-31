@@ -43,7 +43,7 @@ d2 = np.zeros([5,np.size(rep_list)])
 d3 = np.zeros([5,np.size(rep_list)])
 
 # stores TPR and FPR3
-thr_max = 100  # of threshold bin
+thr_max = 1000  # of threshold bin
 tpr_0 = np.zeros([thr_max])
 tpr_1 = np.zeros([thr_max])
 tpr_2 = np.zeros([thr_max])
@@ -70,11 +70,11 @@ for fidx in range(0,np.size(rep_list)):
     mag_norm_medi0 = np.ones([s, num_bh*batch])  # Normalized
     mag_norm_medi1 = np.ones([s, num_bh*batch])  # Normalized
     mag_norm_medi2 = np.ones([s, num_bh*batch])  # Normalized
-    diff0 = np.zeros([num_bh*batch])
-    diff1 = np.zeros([num_bh*batch])
-    diff2 = np.zeros([num_bh*batch])
+    diff0 = np.zeros([s, num_bh*batch])
+    diff1 = np.zeros([s, num_bh*batch])
+    diff2 = np.zeros([s, num_bh*batch])
 
-    f1 = np.ones([5])
+    f1 = np.ones([3])
     max_p = 0
     ocm_mag = np.ones([s, t])  # store the magnitude of the filtered signal
     median_sub = np.ones([s, batch*num_bh])  # store the magnitude of the filtered signal
@@ -111,7 +111,7 @@ for fidx in range(0,np.size(rep_list)):
     s, c1 = np.shape(ocm1)
     s, c2 = np.shape(ocm2)
     print('ocm0:', ocm0.shape)
-    t_sub = int(c0 / batch / num_bh)  # t_sub: # of traces in sub-region of the bh
+    t_sub = int(c0 / batch / num_bh)
     Thr0 = np.ones([t_sub])
     Thr1 = np.ones([t_sub])
     Thr2 = np.ones([t_sub])
@@ -136,9 +136,9 @@ for fidx in range(0,np.size(rep_list)):
         base_diff0 = np.ones([s, t_sub])
         base_diff1 = np.ones([s, t_sub])
         base_diff2 = np.ones([s, t_sub])
-        base_diff0_sum = np.ones([t_sub])
-        base_diff1_sum = np.ones([t_sub])
-        base_diff2_sum = np.ones([t_sub])
+        base_sd0 = np.ones([s])
+        base_sd1 = np.ones([s])
+        base_sd2 = np.ones([s])
 
         # Calculate "absolute" difference between median of baseline and each trace in baseline
         for depth in range(0, s):
@@ -146,45 +146,67 @@ for fidx in range(0,np.size(rep_list)):
                 base_diff0[depth, p] = abs(base0[depth, 0] - ocm0[depth, p])
                 base_diff1[depth, p] = abs(base1[depth, 0] - ocm1[depth, p])
                 base_diff2[depth, p] = abs(base2[depth, 0] - ocm2[depth, p])
-
-        # Get total difference of each trace
-        for p in range(0, t_sub):
-            base_diff0_sum[p] = np.sum(base_diff0[:, p], axis=0)
-            base_diff1_sum[p] = np.sum(base_diff1[:, p], axis=0)
-            base_diff2_sum[p] = np.sum(base_diff2[:, p], axis=0)
-
-        # Calculate SD of total difference
-        base_sd0 = np.std(base_diff0_sum[:])
-        base_sd1 = np.std(base_diff1_sum[:])
-        base_sd2 = np.std(base_diff2_sum[:])
+            base_sd0[depth] = np.std(base_diff0[depth, :], axis=0)
+            base_sd1[depth] = np.std(base_diff1[depth, :], axis=0)
+            base_sd2[depth] = np.std(base_diff2[depth, :], axis=0)
 
     ##### Get area outisde of the envelope #####
-    out_area0 = np.zeros([num_bh*batch])  # store the cummulative area outside of the envelope
-    out_area1 = np.zeros([num_bh*batch])
-    out_area2 = np.zeros([num_bh*batch])
     flag0 = np.zeros(([thr_max]))
     flag1 = np.zeros(([thr_max]))
     flag2 = np.zeros(([thr_max]))
 
     # Compute the absolute difference between Medi_base and Medi_test
     for n in range(0, num_bh*batch):
-        for d in range(0, s):
-            diff0[n] = diff0[n] + abs(mag_norm_medi0[d, n] - base0[d, 0])
-            diff1[n] = diff1[n] + abs(mag_norm_medi1[d, n] - base1[d, 0])
-            diff2[n] = diff2[n] + abs(mag_norm_medi2[d, n] - base2[d, 0])
+        for depth in range(0, s):
+            diff0[depth, n] = diff0[depth, n] + abs(mag_norm_medi0[depth, n] - base0[depth, 0])
+            diff1[depth, n] = diff1[depth, n] + abs(mag_norm_medi1[depth, n] - base1[depth, 0])
+            diff2[depth, n] = diff2[depth, n] + abs(mag_norm_medi2[depth, n] - base2[depth, 0])
+    '''
+    # ===============OCM0===========================================================
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    if fidx%2==0:
+        ax1.plot(d, diff0[:, 0], 'b', linewidth=1, linestyle='solid', label="baseline")
+    ax1.plot(d, diff0[:, 2], 'b', linewidth=1, linestyle='solid', label="sub_bh2")
+    ax1.plot(d, diff0[:, 4], 'b', linewidth=1, linestyle='solid', label="sub_bh4")
+    ax1.plot(d, diff0[:, 6], 'b', linewidth=1, linestyle='solid', label="sub_bh6")
+    ax1.plot(d, diff0[:, 8], 'b', linewidth=1, linestyle='solid', label="sub_bh8")
+    ax1.plot(d, base_sd0[:], 'r', linewidth=2, linestyle='dashed', label="1SD")
+    ax1.plot(d, 3 * base_sd0[:], 'r', linewidth=2, linestyle='dashed', label="3SD")
+    ax1.plot(d, 5 * base_sd0[:], 'r', linewidth=2, linestyle='dashed', label="5SD")
+    ax1.set_title("Absolute difference with baseline")
+    ax1.set_xlabel("depth")
+    ax1.set_ylabel("Absolute Difference (a.u.)")
+    plt.legend(loc='lower right')
+
+    fig.tight_layout()
+    fig.show()
+    f_name = 'Diff_area' + str(fidx) + '.png'
+    plt.savefig(f_name)
+    # =============================================================================
+    '''
+
 
     # Count the number of sub-bh above threshold
-    for m in range(0, thr_max):
+    for m in range(0, thr_max):  # check outlier with different thresholds
         for n in range(0, num_bh * batch):
-            if diff0[n] > m:  # check outlier with different thresholds
-                flag0[m] = flag0[m] + 1
-            if diff1[n] > m:
-                flag1[m] = flag1[m] + 1
-            if diff2[n] > m:
-                flag2[m] = flag2[m] + 1
+            cnt0 = 0
+            cnt1 = 0
+            cnt2 = 0
+            for depth in range(0, s):
+                if cnt0 < 1 and diff0[depth, n] > base_sd0[depth] * m:
+                    flag0[m] = flag0[m] + 1
+                    cnt0 = cnt0 + 1  # if this trace is classified as an outlier, raise a flag and don't check deeper trace
+                if cnt1 < 1 and diff1[depth, n] > base_sd1[depth] * m:
+                    flag1[m] = flag1[m] + 1
+                    cnt1 = cnt1 + 1
+                if cnt2 < 1 and diff2[depth, n] > base_sd2[depth] * m:
+                    flag2[m] = flag2[m] + 1
+                    cnt2 = cnt2 + 1
 
+    '''
     # Count the number of sub-bh above "SD based" threshold
-    width = 3  # tolerance
+    width = 2  # tolerance
     flag0_thr = 0
     flag1_thr = 0
     flag2_thr = 0
@@ -199,23 +221,7 @@ for fidx in range(0,np.size(rep_list)):
     print('fidx:', fidx, 'base_sd0:', base_sd0, 'base_sd1:', base_sd1, 'base_sd2:', base_sd2)
     print('fidx:', fidx, 'width * base_sd0:', width * base_sd0, 'width * base_sd1:', width * base_sd1, 'width * base_sd2:', width * base_sd2)
     print('fidx:', fidx, 'flag0_thr:', flag0_thr, 'flag1_thr:', flag1_thr, 'flag2_thr:', flag2_thr)
-
-    # =============== draw out_area ===========================================================
-    fig = plt.figure()
-    total_bh = np.linspace(0, num_bh*batch-1, num_bh*batch)
-    ax1 = fig.add_subplot(111)
-    ax1.plot(total_bh, diff0[:], 'r', linewidth=2, linestyle='solid', label="OCM0")
-    ax1.plot(total_bh, diff1[:], 'g', linewidth=2, linestyle='solid', label="OCM1")
-    ax1.plot(total_bh, diff2[:], 'b', linewidth=2, linestyle='solid', label="OCM2")
-    ax1.set_title("Absolute difference with baseline")
-    ax1.set_xlabel("BH")
-    ax1.set_ylabel("Area (a.u.)")
-    plt.legend(loc='lower right')
-
-    fig.show()
-    f_name = 'Out_area' + str(fidx) + '.png'
-    plt.savefig(f_name)
-    # =============================================================================
+    '''
 
     cnt = fidx // 2
     for m in range(0, thr_max):  # add fidx=0,1 to cnt=0, fidx=2,3 to cnt=1, ...
@@ -223,22 +229,26 @@ for fidx in range(0,np.size(rep_list)):
             fpr_0[m] = flag0[m] / (num_bh*batch-1)  # if state 1, first sub_bh is used for training
             fpr_1[m] = flag1[m] / (num_bh*batch-1)
             fpr_2[m] = flag2[m] / (num_bh*batch-1)
+            '''
             FPR0 = flag0_thr / (num_bh*batch-1)
             FPR1 = flag1_thr / (num_bh*batch-1)
             FPR2 = flag2_thr / (num_bh*batch-1)
             FP0 = flag0_thr
             FP1 = flag1_thr
             FP2 = flag2_thr
+            '''
         else:  # state 2 (after water)
             tpr_0[m] = flag0[m] / (num_bh*batch)
             tpr_1[m] = flag1[m] / (num_bh*batch)
             tpr_2[m] = flag2[m] / (num_bh*batch)
+            '''
             TPR0 = flag0_thr / (num_bh*batch)
             TPR1 = flag1_thr / (num_bh*batch)
             TPR2 = flag2_thr / (num_bh*batch)
             TP0 = flag0_thr
             TP1 = flag1_thr
             TP2 = flag2_thr
+            '''
 
         if m==thr_max-1 and fidx % 2 == 1:
             fig = plt.figure()
@@ -259,8 +269,9 @@ for fidx in range(0,np.size(rep_list)):
             #ax1.set_ylim(0, 1)
             plt.legend(loc='lower right')
             fig.show()
-            f_name = 'roc_subject' + str(cnt) + '.png'
+            f_name = 'roc_subject' + str(cnt) + '_batch' + str(batch) + '.png'
             plt.savefig(f_name)
+
 
 '''
             print('fidx:', fidx)
