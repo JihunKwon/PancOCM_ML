@@ -30,18 +30,6 @@ num_ocm = 3 # # of OCM
 #rep_list = [8196, 8196]
 rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
 
-#these store data for each transducer, 5 breath holds, 15 runs
-t0 = np.zeros([20,5,np.size(rep_list)])
-t1 = np.zeros([20,5,np.size(rep_list)])
-t2 = np.zeros([20,5,np.size(rep_list)])
-t3 = np.zeros([20,5,np.size(rep_list)])
-
-#stores mean squared difference
-d0 = np.zeros([5,np.size(rep_list)])
-d1 = np.zeros([5,np.size(rep_list)])
-d2 = np.zeros([5,np.size(rep_list)])
-d3 = np.zeros([5,np.size(rep_list)])
-
 # stores TPR and FPR3
 thr_max = 1000  # of threshold bin
 tpr_0 = np.zeros([thr_max])
@@ -74,7 +62,7 @@ for fidx in range(0,np.size(rep_list)):
     diff1 = np.zeros([s, num_bh*batch])
     diff2 = np.zeros([s, num_bh*batch])
 
-    f1 = np.ones([3])
+    f1 = np.ones([5])
     max_p = 0
     ocm_mag = np.ones([s, t])  # store the magnitude of the filtered signal
     median_sub = np.ones([s, batch*num_bh])  # store the magnitude of the filtered signal
@@ -94,7 +82,8 @@ for fidx in range(0,np.size(rep_list)):
         if max_p < max_temp:
             max_p = max_temp
 
-        mag_norm[:,p] = np.divide(mag[:,p],np.max(mag[:,p]))
+        #mag_norm[:,p] = np.divide(mag[:,p],np.max(mag[:,p]))
+        mag_norm[:,p] = mag[:,p]
 
     print('mag_norm:', mag_norm.shape)  # mag_norm: (350, 166211)
 
@@ -161,31 +150,32 @@ for fidx in range(0,np.size(rep_list)):
             diff0[depth, n] = diff0[depth, n] + abs(mag_norm_medi0[depth, n] - base0[depth, 0])
             diff1[depth, n] = diff1[depth, n] + abs(mag_norm_medi1[depth, n] - base1[depth, 0])
             diff2[depth, n] = diff2[depth, n] + abs(mag_norm_medi2[depth, n] - base2[depth, 0])
-    '''
-    # ===============OCM0===========================================================
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)
-    if fidx%2==0:
-        ax1.plot(d, diff0[:, 0], 'b', linewidth=1, linestyle='solid', label="baseline")
-    ax1.plot(d, diff0[:, 2], 'b', linewidth=1, linestyle='solid', label="sub_bh2")
-    ax1.plot(d, diff0[:, 4], 'b', linewidth=1, linestyle='solid', label="sub_bh4")
-    ax1.plot(d, diff0[:, 6], 'b', linewidth=1, linestyle='solid', label="sub_bh6")
-    ax1.plot(d, diff0[:, 8], 'b', linewidth=1, linestyle='solid', label="sub_bh8")
-    ax1.plot(d, base_sd0[:], 'r', linewidth=2, linestyle='dashed', label="1SD")
-    ax1.plot(d, 3 * base_sd0[:], 'r', linewidth=2, linestyle='dashed', label="3SD")
-    ax1.plot(d, 5 * base_sd0[:], 'r', linewidth=2, linestyle='dashed', label="5SD")
-    ax1.set_title("Absolute difference with baseline")
-    ax1.set_xlabel("depth")
-    ax1.set_ylabel("Absolute Difference (a.u.)")
-    plt.legend(loc='lower right')
 
-    fig.tight_layout()
-    fig.show()
-    f_name = 'Diff_area' + str(fidx) + '.png'
-    plt.savefig(f_name)
-    # =============================================================================
-    '''
+    # visualize difference between Medi_base and Medi_test
+    if fidx%2 == 1:  # if state 2
+        # ===============OCM1===========================================================
+        depth_my = np.linspace(2.3, 4.9, s)  # My Depth
+        fig = plt.figure(figsize=(6,5))
+        ax1 = fig.add_subplot(211)
+        ax1.plot(depth_my, base1[:, 0], 'k', linewidth=1, linestyle='solid', label="Baseline")
+        ax1.plot(depth_my, mag_norm_medi1[:, 0], 'b', linewidth=1, linestyle='solid', label="state 2")
+        ax1.set_title("Magnitude")
+        ax1.set_xlabel("depth (cm)")
+        ax1.set_ylabel("Magnitude (a.u.)")
+        plt.legend(loc='upper right')
 
+        ax2 = fig.add_subplot(212)
+        ax2.plot(depth_my, diff1[:, 0], 'r', linewidth=1, linestyle='solid', label="Absolute Difference")
+        ax2.plot(depth_my, base_sd1[:], 'g', linewidth=0.5, linestyle='dashed', label="Baseline, SD")
+        ax2.set_title("Absolute difference with baseline")
+        ax2.set_xlabel("depth (cm)")
+        ax2.set_ylabel("Absolute Difference")
+        plt.legend(loc='upper right')
+        fig.tight_layout()
+        fig.show()
+        f_name = 'Median1_' + str(fidx) + '_unnorm.png'
+        plt.savefig(f_name)
+        # =============================================================================
 
     # Count the number of sub-bh above threshold
     for m in range(0, thr_max):  # check outlier with different thresholds
@@ -217,7 +207,6 @@ for fidx in range(0,np.size(rep_list)):
             flag1_thr = flag1_thr + 1
         if diff2[n] > width * base_sd2:
             flag2_thr = flag2_thr + 1
-
     print('fidx:', fidx, 'base_sd0:', base_sd0, 'base_sd1:', base_sd1, 'base_sd2:', base_sd2)
     print('fidx:', fidx, 'width * base_sd0:', width * base_sd0, 'width * base_sd1:', width * base_sd1, 'width * base_sd2:', width * base_sd2)
     print('fidx:', fidx, 'flag0_thr:', flag0_thr, 'flag1_thr:', flag1_thr, 'flag2_thr:', flag2_thr)
@@ -269,7 +258,7 @@ for fidx in range(0,np.size(rep_list)):
             #ax1.set_ylim(0, 1)
             plt.legend(loc='lower right')
             fig.show()
-            f_name = 'roc_subject' + str(cnt) + '_batch' + str(batch) + '.png'
+            f_name = 'roc_subject' + str(cnt) + '_batch' + str(batch) + '_unnorm.png'
             plt.savefig(f_name)
 
 
@@ -289,5 +278,4 @@ for fidx in range(0,np.size(rep_list)):
             print('F-score0:', (2*TP0/(num_bh*batch)*(TP0/(TP0+FP0)) / (TP0/(num_bh*batch)+TP0/(TP0+FP0))))
             print('F-score1:', (2*TP1/(num_bh*batch)*(TP1/(TP1+FP1)) / (TP1/(num_bh*batch)+TP1/(TP1+FP1))))
             print('F-score2:', (2*TP2/(num_bh*batch)*(TP2/(TP2+FP2)) / (TP2/(num_bh*batch)+TP2/(TP2+FP2))))
-
 '''
