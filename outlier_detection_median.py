@@ -9,6 +9,11 @@ plt.close('all')
 
 out_list = []
 
+plt.rcParams['font.family'] ='sans-serif'
+plt.rcParams['xtick.direction'] = 'in'
+plt.rcParams['ytick.direction'] = 'in'
+plt.rcParams["font.size"] = 12
+
 #Jihun Local
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy") #Before water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy") #After water
@@ -28,7 +33,10 @@ num_bh = 5
 batch = 3 # Divide each bh into three separate groups
 num_ocm = 3 # # of OCM
 #rep_list = [8196, 8196]
+#sr_list = ['s1_run1']
+
 rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
+sr_list = ['s1_run1', 's1_run2', 's2_run1', 's2_run2', 's3_run1', 's3_run2']
 
 # stores TPR and FPR3
 thr_max = 1000  # of threshold bin
@@ -38,6 +46,8 @@ tpr_2 = np.zeros([thr_max])
 fpr_0 = np.zeros([thr_max])
 fpr_1 = np.zeros([thr_max])
 fpr_2 = np.zeros([thr_max])
+
+auc = np.zeros([num_ocm, len(sr_list)])
 
 for fidx in range(0,np.size(rep_list)):
     in_filename = out_list[fidx]
@@ -62,7 +72,7 @@ for fidx in range(0,np.size(rep_list)):
     diff1 = np.zeros([s, num_bh*batch])
     diff2 = np.zeros([s, num_bh*batch])
 
-    f1 = np.ones([5])
+    f1 = np.ones([7])
     max_p = 0
     ocm_mag = np.ones([s, t])  # store the magnitude of the filtered signal
     median_sub = np.ones([s, batch*num_bh])  # store the magnitude of the filtered signal
@@ -73,10 +83,12 @@ for fidx in range(0,np.size(rep_list)):
         tr1 = ocm[:,p]
         hptr[:,p] = np.convolve(tr1,[1,-1],'same')
         tr2 = hptr[:,p]
-        lptr[:,p] = np.convolve(tr2,f1,'same')
+        #lptr[:,p] = np.convolve(tr2,f1,'same')
+        lptr[:,p] = np.convolve(tr1,f1,'same')  # it's turned out that without high-pass filter works better.
         tr3 = lptr[:,p]
         # get magnitude
         mag[:,p] = np.abs(tr3)
+        #mag[:,p] = np.abs(tr1)
         # normalize
         max_temp = np.max(mag[:,p])
         if max_p < max_temp:
@@ -152,30 +164,43 @@ for fidx in range(0,np.size(rep_list)):
             diff2[depth, n] = diff2[depth, n] + abs(mag_norm_medi2[depth, n] - base2[depth, 0])
 
     # visualize difference between Medi_base and Medi_test
+
     if fidx%2 == 1:  # if state 2
+
         # ===============OCM1===========================================================
         depth_my = np.linspace(2.3, 4.9, s)  # My Depth
         fig = plt.figure(figsize=(6,5))
-        ax1 = fig.add_subplot(211)
-        ax1.plot(depth_my, base1[:, 0], 'k', linewidth=1, linestyle='solid', label="Baseline")
-        ax1.plot(depth_my, mag_norm_medi1[:, 0], 'b', linewidth=1, linestyle='solid', label="state 2")
-        ax1.set_title("Magnitude")
-        ax1.set_xlabel("depth (cm)")
-        ax1.set_ylabel("Magnitude (a.u.)")
-        plt.legend(loc='upper right')
+        ax1 = plt.subplot2grid((3,1), (0, 0), colspan=2, rowspan=1)
+        ax2 = plt.subplot2grid((3,1), (1, 0), colspan=2, sharex=ax1)
 
-        ax2 = fig.add_subplot(212)
+        plt.subplots_adjust(hspace=0)
+        ax1 = plt.subplot(211)
+        ax2 = plt.subplot(212, sharex=ax1)
+
+        ax1.plot(depth_my, base1[:, 0], 'k', linewidth=1, linestyle='solid', label="Baseline ($\it{M_{B}}$)")
+        ax1.plot(depth_my, mag_norm_medi1[:, 0], 'b', linewidth=1, linestyle='dashed', label="Test set ($\it{M_{n}}$)")
+        #ax1.set_title("Magnitude")
+        ax1.set_ylabel("Magnitude (a.u.)")
+        ax1.legend(loc='upper right')
+
         ax2.plot(depth_my, diff1[:, 0], 'r', linewidth=1, linestyle='solid', label="Absolute Difference")
-        ax2.plot(depth_my, base_sd1[:], 'g', linewidth=0.5, linestyle='dashed', label="Baseline, SD")
-        ax2.set_title("Absolute difference with baseline")
-        ax2.set_xlabel("depth (cm)")
+        ax2.plot(depth_my, base_sd1[:], 'g', linewidth=1, linestyle='dashed', label="Threshold (m*SD, m=1)")
+        ax2.set_xlabel("Depth (cm)")
         ax2.set_ylabel("Absolute Difference")
-        plt.legend(loc='upper right')
-        fig.tight_layout()
-        fig.show()
+        ax2.legend(loc='upper right')
+
+        fig.subplots_adjust(hspace=0)
+        #fig.tight_layout()
+
+        xticklabels = ax1.get_xticklabels()
+        plt.setp(xticklabels, visible=False)
+        plt.subplots_adjust(left=0.14, right=0.98, top=0.98)
+        #plt.show()
         f_name = 'Median1_' + str(fidx) + '_unnorm.png'
         plt.savefig(f_name)
         # =============================================================================
+
+
 
     # Count the number of sub-bh above threshold
     for m in range(0, thr_max):  # check outlier with different thresholds
@@ -240,22 +265,36 @@ for fidx in range(0,np.size(rep_list)):
             '''
 
         if m==thr_max-1 and fidx % 2 == 1:
+            ## Plot ROC curve
+            plt.rcParams["font.size"] = 14
             fig = plt.figure()
             ax1 = fig.add_subplot(111)
             if fidx != 11:
-                ax1.plot(fpr_0, tpr_0, 'r', linewidth=1.5, linestyle='solid', label="OCM0 (AUC = {:.3f})".format(metrics.auc(fpr_0, tpr_0)))
-                ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='solid', label="OCM1 (AUC = {:.3f})".format(metrics.auc(fpr_1, tpr_1)))
-                ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='solid', label="OCM2 (AUC = {:.3f})".format(metrics.auc(fpr_2, tpr_2)))
+                #ax1.plot(fpr_0, tpr_0, 'r', linewidth=1.5, linestyle='solid', label="OCM0 (AUC = {:.3f})".format(metrics.auc(fpr_0, tpr_0)))
+                #ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='dashed', label="OCM1 (AUC = {:.3f})".format(metrics.auc(fpr_1, tpr_1)))
+                #ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='dashdot', label="OCM2 (AUC = {:.3f})".format(metrics.auc(fpr_2, tpr_2)))
+                ax1.plot(fpr_0, tpr_0, 'r', linewidth=1.5, linestyle='solid', label="OCM0".format(metrics.auc(fpr_0, tpr_0)))
+                ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='dashed', label="OCM1".format(metrics.auc(fpr_1, tpr_1)))
+                ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='dashdot', label="OCM2".format(metrics.auc(fpr_2, tpr_2)))
+                auc[0, fidx//2] = metrics.auc(fpr_0, tpr_0)  # store auc values
+                auc[1, fidx//2] = metrics.auc(fpr_1, tpr_1)
+                auc[2, fidx//2] = metrics.auc(fpr_2, tpr_2)
             else:  # signal from OCM0 for fidx=11 (s3r2) is strange and we neglect this.
-                ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='solid', label="OCM1 (AUC = {:.3f})".format(metrics.auc(fpr_1, tpr_1)))
-                ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='solid', label="OCM2 (AUC = {:.3f})".format(metrics.auc(fpr_2, tpr_2)))
-            ax1.set_title("ROC curve")
-            ax1.set_xlabel("FPR")
-            ax1.set_ylabel("TPR")
+                #ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='dashed', label="OCM1 (AUC = {:.3f})".format(metrics.auc(fpr_1, tpr_1)))
+                #ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='dashdot', label="OCM2 (AUC = {:.3f})".format(metrics.auc(fpr_2, tpr_2)))
+                ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='dashed', label="OCM1".format(metrics.auc(fpr_1, tpr_1)))
+                ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='dashdot', label="OCM2".format(metrics.auc(fpr_2, tpr_2)))
+                auc[1, fidx//2] = metrics.auc(fpr_1, tpr_1)  # store auc values
+                auc[2, fidx//2] = metrics.auc(fpr_2, tpr_2)
+            roc_name = 'ROC curve, ' + sr_list[fidx//2]
+            #ax1.set_title(roc_name)
+            ax1.set_xlabel("False Positive Rate")
+            ax1.set_ylabel("True Positive Rate")
             ax1.set_aspect('equal','box')
             plt.plot([0, 1], [0, 1], 'k--')
             #ax1.set_xlim(0, 1)
             #ax1.set_ylim(0, 1)
+            plt.tight_layout()
             plt.legend(loc='lower right')
             fig.show()
             f_name = 'roc_subject' + str(cnt) + '_batch' + str(batch) + '_unnorm.png'
@@ -279,3 +318,7 @@ for fidx in range(0,np.size(rep_list)):
             print('F-score1:', (2*TP1/(num_bh*batch)*(TP1/(TP1+FP1)) / (TP1/(num_bh*batch)+TP1/(TP1+FP1))))
             print('F-score2:', (2*TP2/(num_bh*batch)*(TP2/(TP2+FP2)) / (TP2/(num_bh*batch)+TP2/(TP2+FP2))))
 '''
+
+print('AUC0:', np.mean(auc[0, :]), 'std0: ', np.std(auc[0, :-2]))
+print('AUC1:', np.mean(auc[1, :]), 'std1: ', np.std(auc[1, :]))
+print('AUC2:', np.mean(auc[2, :]), 'std2: ', np.std(auc[2, :]))
