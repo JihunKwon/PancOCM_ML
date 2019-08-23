@@ -35,13 +35,13 @@ sr_list = ['s1r1', 's1r2', 's2r1', 's2r2', 's3r1', 's3r2']
 rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
 '''
 
-out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy") #Before water
-out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy") #After water
-sr_list = ['s1r1']
-rep_list = [8196]
+out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_02_20181220\\run1.npy")
+out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_02_20181220\\run2.npy")
+sr_list = ['s1r1', 's1r1']
+rep_list = [1000, 1000]
 
 
-tole = 0.01  # What FPR you want to get for test set.
+tole = 0.9  # What FPR you want to get for test set.
 
 bh_train = 1
 bh_test = 10 - bh_train
@@ -63,18 +63,22 @@ for fidx in range(0,np.size(rep_list)):
     median0 = np.zeros([s, num_bh])  # median
     median1 = np.zeros([s, num_bh])
     median2 = np.zeros([s, num_bh])
-    median0_base = np.zeros([s])  # median of filtered signal
-    median1_base = np.zeros([s])
-    median2_base = np.zeros([s])
+    if fidx % 2 == 0:
+        median0_base = np.zeros([s])  # median of filtered signal
+        median1_base = np.zeros([s])
+        median2_base = np.zeros([s])
+        sd0 = np.zeros([s])  # sd of (median - train)
+        sd1 = np.zeros([s])
+        sd2 = np.zeros([s])
+        thr0 = np.zeros([s])  # threshold
+        thr1 = np.zeros([s])
+        thr2 = np.zeros([s])
     ocm0_filt = np.zeros([s, t])  # filtered signal (median based filtering)
     ocm1_filt = np.zeros([s, t])
     ocm2_filt = np.zeros([s, t])
-    sd0 = np.zeros([s])  # sd of (median - train)
-    sd1 = np.zeros([s])
-    sd2 = np.zeros([s])
-    thr0 = np.zeros([s])  # threshold
-    thr1 = np.zeros([s])
-    thr2 = np.zeros([s])
+    out0_test = np.zeros([num_bh])  # output test result
+    out1_test = np.zeros([num_bh])
+    out2_test = np.zeros([num_bh])
 
     # divide the data into each OCM and store absolute value
     b = np.linspace(0, t-1, t)
@@ -140,7 +144,8 @@ for fidx in range(0,np.size(rep_list)):
         flag1_m = 0
         flag2_m = 0
         for m in range(0, m_max):
-            #print('m:', m)
+            if m % 10 == 0:
+                print('m:', m)
             thr0[:] = np.abs(median0_base[:]) + m / scale * sd0[:]
             thr1[:] = np.abs(median1_base[:]) + m / scale * sd1[:]
             thr2[:] = np.abs(median2_base[:]) + m / scale * sd2[:]
@@ -179,7 +184,57 @@ for fidx in range(0,np.size(rep_list)):
         print('m0:', m0, 'm1:', m1, 'm2:', m2)
 
 
+    #### Performance Evaluation with remaining data####
+    # set threshold
+    thr0[:] = np.abs(median0_base[:]) + m0 * sd0[:]
+    thr1[:] = np.abs(median1_base[:]) + m1 * sd1[:]
+    thr2[:] = np.abs(median2_base[:]) + m2 * sd2[:]
+    # Check test data
+    for bh in range(0, num_bh):
+        print('bh', bh, ' starting')
+        for p in range(0, t_sub):
+            flag0 = 0
+            flag1 = 0
+            flag2 = 0
+            for depth in range(0, s):
+                # if not detected yet
+                if flag0 < 1:  # OCM0
+                    # check every depth and count if it's larger than the threshold
+                    if ocm0_filt[depth, bh*t_sub+p] > thr0[depth]:
+                        out0_test[bh] = out0_test[bh] + 1
+                        flag0 = 1
+                if flag1 < 1:  # OCM1
+                    if ocm1_filt[depth, bh*t_sub+p] > thr1[depth]:
+                        out1_test[bh] = out1_test[bh] + 1
+                        flag1 = 1
+                if flag2 < 1:  # OCM2
+                    if ocm2_filt[depth, bh*t_sub+p] > thr2[depth]:
+                        out2_test[bh] = out2_test[bh] + 1
+                        flag2 = 1
 
+    # if state 1, bh=1 (baseline) has to be subtracted
+    total = 100 / rep_list[fidx]
+    if fidx % 2 == 0:
+        print('OCM0 detection number:', 'bh1:', out0_test[0], 'bh2:', out0_test[1], 'bh3:', out0_test[2], 'bh4:', out0_test[3], 'bh5:', out0_test[4])
+        print('OCM1 detection number:', 'bh1:', out1_test[0], 'bh2:', out1_test[1], 'bh3:', out1_test[2], 'bh4:', out1_test[3], 'bh5:', out1_test[4])
+        print('OCM2 detection number:', 'bh1:', out2_test[0], 'bh2:', out2_test[1], 'bh3:', out2_test[2], 'bh4:', out2_test[3], 'bh5:', out2_test[4])
+        print('OCM0 detection rate:', 'bh1:', '{:.3f}'.format(out0_test[0] * total), 'bh2:', '{:.3f}'.format(out0_test[1] * total),
+              'bh3:', '{:.3f}'.format(out0_test[2] * total), 'bh4:', '{:.3f}'.format(out0_test[3] * total), 'bh5:', '{:.3f}'.format(out0_test[4] * total))
+        print('OCM1 detection rate:', 'bh1:', '{:.3f}'.format(out1_test[0] * total), 'bh2:', '{:.3f}'.format(out1_test[1] * total),
+              'bh3:', '{:.3f}'.format(out1_test[2] * total), 'bh4:', '{:.3f}'.format(out1_test[3] * total), 'bh5:', '{:.3f}'.format(out1_test[4] * total))
+        print('OCM2 detection rate:', 'bh1:', '{:.3f}'.format(out2_test[0] * total), 'bh2:', '{:.3f}'.format(out2_test[1] * total),
+              'bh3:', '{:.3f}'.format(out2_test[2] * total), 'bh4:', '{:.3f}'.format(out2_test[3] * total), 'bh5:', '{:.3f}'.format(out2_test[4] * total))
+    else:
+        print('OCM0 detection number:', 'bh6:', out0_test[0], 'bh7:', out0_test[1], 'bh8:', out0_test[2], 'bh9:', out0_test[3], 'bh10:', out0_test[4])
+        print('OCM1 detection number:', 'bh6:', out1_test[0], 'bh7:', out1_test[1], 'bh8:', out1_test[2], 'bh9:', out1_test[3], 'bh10:', out1_test[4])
+        print('OCM2 detection number:', 'bh6:', out2_test[0], 'bh7:', out2_test[1], 'bh8:', out2_test[2], 'bh9:', out2_test[3], 'bh10:', out2_test[4])
+        print('OCM0 detection rate:', 'bh6:', out0_test[0] * total, 'bh7:', out0_test[1] * total, 'bh8:', out0_test[2] * total, 'bh9:', out0_test[3] * total, 'bh10:', out0_test[4] * total)
+        print('OCM1 detection rate:', 'bh6:', out1_test[0] * total, 'bh7:', out1_test[1] * total, 'bh8:', out1_test[2] * total, 'bh9:', out1_test[3] * total, 'bh10:', out1_test[4] * total)
+        print('OCM2 detection rate:', 'bh6:', out2_test[0] * total, 'bh7:', out2_test[1] * total, 'bh8:', out2_test[2] * total, 'bh9:', out2_test[3] * total, 'bh10:', out2_test[4] * total)
+
+
+
+    '''
         # ========================Visualize==============================================
         d = np.linspace(2.3, 4.9, s)  # My Depth
         fig = plt.figure(figsize=(7, 4))
@@ -215,3 +270,4 @@ for fidx in range(0,np.size(rep_list)):
         fig.show()
         f_name = 'm_dist_' + Sub_run + '.png'
         plt.savefig(f_name)
+    '''
