@@ -35,16 +35,17 @@ sr_list = ['s1r1', 's1r2', 's2r1', 's2r2', 's3r1', 's3r2']
 rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
 
 '''
-out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run1.npy")
-out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run2.npy")
-sr_list = ['s1r2']
-rep_list = [8192]
+out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy")  #Before water
+out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy")  #After water
+sr_list = ['s1r1', 's1r1']
+rep_list = [8192, 8192]
 
 tole = 0.01
-num_train = 1
+num_train = 2
 num_test = 10 - num_train
 num_ocm = 3
 num_bh = 5 # number of bh in each state
+str_norm = '_norm'
 
 for fidx in range(0,np.size(rep_list)):
     if fidx % 2 == 0:
@@ -95,49 +96,54 @@ for fidx in range(0,np.size(rep_list)):
         ocm0_filt = np.zeros([s, c0_new])  # filtered signal (median based filtering)
         ocm1_filt = np.zeros([s, c0_new])
         ocm2_filt = np.zeros([s, c0_new])
-        out0_test = np.zeros([num_bh])  # output test result
-        out1_test = np.zeros([num_bh])
-        out2_test = np.zeros([num_bh])
         ocm0_norm = np.zeros([s, c0_new])  # Absolute and Normalized
         ocm1_norm = np.zeros([s, c0_new])
         ocm2_norm = np.zeros([s, c0_new])
 
         #### Normalization ####
-        for p in range(0, c0_new):
-            # Get absolute value and normalize
-            ocm0_norm[:, p] = np.divide(np.abs(ocm0[:, p]), np.max(np.abs(ocm0[:, p])))
-            ocm1_norm[:, p] = np.divide(np.abs(ocm1[:, p]), np.max(np.abs(ocm1[:, p])))
-            ocm2_norm[:, p] = np.divide(np.abs(ocm2[:, p]), np.max(np.abs(ocm2[:, p])))
+        if str_norm is '_norm':
+            for p in range(0, c0_new):
+                # Get absolute value and normalize
+                ocm0_norm[:, p] = np.divide(np.abs(ocm0[:, p]), np.max(np.abs(ocm0[:, p])))
+                ocm1_norm[:, p] = np.divide(np.abs(ocm1[:, p]), np.max(np.abs(ocm1[:, p])))
+                ocm2_norm[:, p] = np.divide(np.abs(ocm2[:, p]), np.max(np.abs(ocm2[:, p])))
+            for bh in range(0, num_bh):
+                for depth in range(0, s):
+                    # When want to use normalized
+                    median0[depth, bh] = statistics.median(ocm0_norm[depth, bh*t_sub:(bh+1)*t_sub])
+                    median1[depth, bh] = statistics.median(ocm1_norm[depth, bh*t_sub:(bh+1)*t_sub])
+                    median2[depth, bh] = statistics.median(ocm2_norm[depth, bh*t_sub:(bh+1)*t_sub])
+            # Median-based filtering
+            bh = -1
+            for p in range(0, c0_new):
+                if p % rep_list[fidx] == 0:
+                    bh = bh + 1
+                # filtering all traces with median trace
+                for depth in range(0, s):
+                    # filter the signal (subtract median from each trace of corresponding bh)
+                    ocm0_filt[depth, p] = np.abs(ocm0_norm[depth, p] - median0[depth, bh])
+                    ocm1_filt[depth, p] = np.abs(ocm1_norm[depth, p] - median1[depth, bh])
+                    ocm2_filt[depth, p] = np.abs(ocm2_norm[depth, p] - median2[depth, bh])
 
-        #### Median-based filtering ####
-        for bh in range(0, num_bh):
-            for depth in range(0, s):
-                # get median for each bh
-                median0[depth, bh] = statistics.median(ocm0[depth, bh*t_sub:(bh+1)*t_sub])
-                median1[depth, bh] = statistics.median(ocm1[depth, bh*t_sub:(bh+1)*t_sub])
-                median2[depth, bh] = statistics.median(ocm2[depth, bh*t_sub:(bh+1)*t_sub])
-                '''
-                # When want to use normalized
-                median0[depth, bh] = statistics.median(ocm0_norm[depth, bh*t_sub:(bh+1)*t_sub])
-                median1[depth, bh] = statistics.median(ocm1_norm[depth, bh*t_sub:(bh+1)*t_sub])
-                median2[depth, bh] = statistics.median(ocm2_norm[depth, bh*t_sub:(bh+1)*t_sub])
-                '''
-        # filtering all traces with median trace
-        bh = -1
-        for p in range(0, c0_new):
-            if p % rep_list[fidx] == 0:
-                bh = bh + 1
-            for depth in range(0, s):
-                # filter the signal (subtract median from each trace of corresponding bh)
-                ocm0_filt[depth, p] = np.abs(ocm0[depth, p] - median0[depth, bh])
-                ocm1_filt[depth, p] = np.abs(ocm1[depth, p] - median1[depth, bh])
-                ocm2_filt[depth, p] = np.abs(ocm2[depth, p] - median2[depth, bh])
-                '''
-                # When want to use normalized
-                ocm0_filt[depth, p] = np.abs(ocm0_norm[depth, p] - median0[depth, bh])
-                ocm1_filt[depth, p] = np.abs(ocm1_norm[depth, p] - median1[depth, bh])
-                ocm2_filt[depth, p] = np.abs(ocm2_norm[depth, p] - median2[depth, bh])
-                '''
+        elif str_norm is '_unnorm':
+            #### Normalization ####
+            # Median-based filtering
+            for bh in range(0, num_bh):
+                for depth in range(0, s):
+                    # get median for each bh
+                    median0[depth, bh] = statistics.median(ocm0[depth, bh*t_sub:(bh+1)*t_sub])
+                    median1[depth, bh] = statistics.median(ocm1[depth, bh*t_sub:(bh+1)*t_sub])
+                    median2[depth, bh] = statistics.median(ocm2[depth, bh*t_sub:(bh+1)*t_sub])
+            # filtering all traces with median trace
+            bh = -1
+            for p in range(0, c0_new):
+                if p % rep_list[fidx] == 0:
+                    bh = bh + 1
+                for depth in range(0, s):
+                    # filter the signal (subtract median from each trace of corresponding bh)
+                    ocm0_filt[depth, p] = np.abs(ocm0[depth, p] - median0[depth, bh])
+                    ocm1_filt[depth, p] = np.abs(ocm1[depth, p] - median1[depth, bh])
+                    ocm2_filt[depth, p] = np.abs(ocm2[depth, p] - median2[depth, bh])
 
         #### Threshold generation ####
         # if state 1
@@ -189,10 +195,11 @@ for fidx in range(0,np.size(rep_list)):
                             count2[m] = count2[m] + 1
                             flag2 = 1
 
-        fname = 'm012_' + str(Sub_run) + '_max' + str(m_max) + '_scale' + str(scale) + '_train' + str(num_train) + '_tole'+ str(tole) +'_test.pkl'
+        fname = 'm012_' + str(Sub_run) + '_max' + str(m_max) + '_scale' + str(scale) + '_train' + str(num_train) + '_tole'+ str(tole) + str_norm + '.pkl'
         with open(fname, 'wb') as f:
             pickle.dump([count0, count1, count2, median0_base, median1_base, median2_base, sd0, sd1, sd2], f)
 
+'''
         # ========================Visualize==============================================
         m_ = np.linspace(0, m_max/scale, m_max)  # My m
         fig = plt.figure(figsize=(7, 4))
@@ -208,3 +215,4 @@ for fidx in range(0,np.size(rep_list)):
         fig.show()
         f_name = 'm_dist_' + Sub_run + '.png'
         plt.savefig(f_name)
+'''
