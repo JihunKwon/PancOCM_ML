@@ -38,7 +38,7 @@ rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 36
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run1.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run2.npy")
 sr_list = ['s1r2']
-rep_list = [8192]
+rep_list = [4000]
 
 
 tole = 0.01  # What FPR you want to get for test set.
@@ -47,6 +47,7 @@ num_train = 1
 num_test = 10 - num_train
 num_ocm = 3
 num_bh = 5 # number of bh in each state
+str_norm = '_norm'
 
 
 for fidx in range(0,np.size(rep_list)):
@@ -100,23 +101,75 @@ for fidx in range(0,np.size(rep_list)):
     ocm0_filt = np.zeros([s, c0_new])  # filtered signal (median based filtering)
     ocm1_filt = np.zeros([s, c0_new])
     ocm2_filt = np.zeros([s, c0_new])
-    #### Median-based filtering ####
-    for bh in range(0, num_bh):
-        for depth in range(0, s):
-            # get median for each bh
-            median0[depth, bh] = statistics.median(ocm0[depth, bh*t_sub:(bh+1)*t_sub])
-            median1[depth, bh] = statistics.median(ocm1[depth, bh*t_sub:(bh+1)*t_sub])
-            median2[depth, bh] = statistics.median(ocm2[depth, bh*t_sub:(bh+1)*t_sub])
-    # filtering all traces with median trace
-    bh = -1
-    for p in range(0, c0_new):
-        if p % rep_list[fidx] == 0:
-            bh = bh + 1
-        for depth in range(0, s):
-            # filter the signal (subtract median from each trace of corresponding bh)
-            ocm0_filt[depth, p] = np.abs(ocm0[depth, p] - median0[depth, bh])
-            ocm1_filt[depth, p] = np.abs(ocm1[depth, p] - median1[depth, bh])
-            ocm2_filt[depth, p] = np.abs(ocm2[depth, p] - median2[depth, bh])
+    ocm0_norm = np.zeros([s, c0_new])  # Absolute and Normalized
+    ocm1_norm = np.zeros([s, c0_new])
+    ocm2_norm = np.zeros([s, c0_new])
+    offset0 = np.zeros([s])
+    offset1 = np.zeros([s])
+    offset2 = np.zeros([s])
+    ocm0_off = np.zeros([s, c0_new])  # offset corrected OCM
+    ocm1_off = np.zeros([s, c0_new])
+    ocm2_off = np.zeros([s, c0_new])
+    ocm0_norm_off = np.zeros([s, c0_new])  # offset corrected normalized OCM
+    ocm1_norm_off = np.zeros([s, c0_new])
+    ocm2_norm_off = np.zeros([s, c0_new])
+
+    #### Normalization ####
+    if str_norm is '_norm':
+        for p in range(0, c0_new):
+            # Get absolute value and normalize
+            ocm0_norm[:, p] = np.divide(np.abs(ocm0[:, p]), np.max(np.abs(ocm0[:, p])))
+            ocm1_norm[:, p] = np.divide(np.abs(ocm1[:, p]), np.max(np.abs(ocm1[:, p])))
+            ocm2_norm[:, p] = np.divide(np.abs(ocm2[:, p]), np.max(np.abs(ocm2[:, p])))
+            tr0 = ocm0_norm[:, p]
+            tr1 = ocm1_norm[:, p]
+            tr2 = ocm2_norm[:, p]
+            offset0 = signal.detrend(tr0)
+            offset1 = signal.detrend(tr1)
+            offset2 = signal.detrend(tr2)
+            ocm0_off[:, p] = offset0
+            ocm1_off[:, p] = offset1
+            ocm2_off[:, p] = offset2
+            ocm0_norm_off[:, p] = np.divide(np.abs(ocm0_off[:, p]), np.max(np.abs(ocm0_off[:, p])))
+            ocm1_norm_off[:, p] = np.divide(np.abs(ocm1_off[:, p]), np.max(np.abs(ocm1_off[:, p])))
+            ocm2_norm_off[:, p] = np.divide(np.abs(ocm2_off[:, p]), np.max(np.abs(ocm2_off[:, p])))
+        for bh in range(0, num_bh):
+            for depth in range(0, s):
+                # When want to use normalized
+                median0[depth, bh] = statistics.median(ocm0_norm[depth, bh*t_sub:(bh+1)*t_sub])
+                median1[depth, bh] = statistics.median(ocm1_norm[depth, bh*t_sub:(bh+1)*t_sub])
+                median2[depth, bh] = statistics.median(ocm2_norm[depth, bh*t_sub:(bh+1)*t_sub])
+        # Median-based filtering
+        bh = -1
+        for p in range(0, c0_new):
+            if p % rep_list[fidx] == 0:
+                bh = bh + 1
+            # filtering all traces with median trace
+            for depth in range(0, s):
+                # filter the signal (subtract median from each trace of corresponding bh)
+                ocm0_filt[depth, p] = np.abs(ocm0_norm[depth, p] - median0[depth, bh])
+                ocm1_filt[depth, p] = np.abs(ocm1_norm[depth, p] - median1[depth, bh])
+                ocm2_filt[depth, p] = np.abs(ocm2_norm[depth, p] - median2[depth, bh])
+
+    elif str_norm is '_unnorm':
+        #### Normalization ####
+        # Median-based filtering
+        for bh in range(0, num_bh):
+            for depth in range(0, s):
+                # get median for each bh
+                median0[depth, bh] = statistics.median(ocm0[depth, bh*t_sub:(bh+1)*t_sub])
+                median1[depth, bh] = statistics.median(ocm1[depth, bh*t_sub:(bh+1)*t_sub])
+                median2[depth, bh] = statistics.median(ocm2[depth, bh*t_sub:(bh+1)*t_sub])
+        # filtering all traces with median trace
+        bh = -1
+        for p in range(0, c0_new):
+            if p % rep_list[fidx] == 0:
+                bh = bh + 1
+            for depth in range(0, s):
+                # filter the signal (subtract median from each trace of corresponding bh)
+                ocm0_filt[depth, p] = np.abs(ocm0[depth, p] - median0[depth, bh])
+                ocm1_filt[depth, p] = np.abs(ocm1[depth, p] - median1[depth, bh])
+                ocm2_filt[depth, p] = np.abs(ocm2[depth, p] - median2[depth, bh])
 
     #### Threshold generation ####
     # if state 1
