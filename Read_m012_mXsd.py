@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from scipy import signal
 import csv
 import statistics
+import pickle
 
 plt.close('all')
 out_list = []
@@ -15,11 +16,9 @@ out_list = []
 plt.rcParams['font.family'] ='sans-serif'
 plt.rcParams['xtick.direction'] = 'in'
 plt.rcParams['ytick.direction'] = 'in'
-
 '''
-#Jihun Local
-out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy") #Before water
-out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy") #After water
+out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy")  #Before water
+out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy")  #After water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run1.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run2.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_02_20181102\\run1.npy")
@@ -30,7 +29,6 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190228\\run1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190228\\run2.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run1.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2.npy")
-
 sr_list = ['s1r1', 's1r2', 's2r1', 's2r2', 's3r1', 's3r2']
 rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
 
@@ -48,7 +46,6 @@ num_test = 10 - num_train
 num_ocm = 3
 num_bh = 5 # number of bh in each state
 
-
 for fidx in range(0,np.size(rep_list)):
     Sub_run = sr_list[fidx]
     plt.rcParams["font.size"] = 11
@@ -64,12 +61,6 @@ for fidx in range(0,np.size(rep_list)):
     median1 = np.zeros([s, num_bh])
     median2 = np.zeros([s, num_bh])
     if fidx % 2 == 0:
-        median0_base = np.zeros([s])  # median of filtered signal
-        median1_base = np.zeros([s])
-        median2_base = np.zeros([s])
-        sd0 = np.zeros([s])  # sd of (median - train)
-        sd1 = np.zeros([s])
-        sd2 = np.zeros([s])
         thr0 = np.zeros([s])  # threshold
         thr1 = np.zeros([s])
         thr2 = np.zeros([s])
@@ -100,6 +91,7 @@ for fidx in range(0,np.size(rep_list)):
     ocm0_filt = np.zeros([s, c0_new])  # filtered signal (median based filtering)
     ocm1_filt = np.zeros([s, c0_new])
     ocm2_filt = np.zeros([s, c0_new])
+
     #### Median-based filtering ####
     for bh in range(0, num_bh):
         for depth in range(0, s):
@@ -120,25 +112,18 @@ for fidx in range(0,np.size(rep_list)):
 
     #### Threshold generation ####
     # if state 1
+    print('start searching for m')
     if fidx % 2 == 0:
-        # Median-based filtering
-        for depth in range(0, s):
-            # Calculate median of baseline signal
-            median0_base[depth] = statistics.median(ocm0_filt[depth, 0:t_sub*num_train])
-            median1_base[depth] = statistics.median(ocm1_filt[depth, 0:t_sub*num_train])
-            median2_base[depth] = statistics.median(ocm2_filt[depth, 0:t_sub*num_train])
-            # Get SD of (Median - train)
-            sd0[depth] = np.std(median0_base[depth] - ocm0_filt[depth, 0:t_sub*num_train])
-            sd1[depth] = np.std(median1_base[depth] - ocm1_filt[depth, 0:t_sub*num_train])
-            sd2[depth] = np.std(median2_base[depth] - ocm2_filt[depth, 0:t_sub*num_train])
-
         #### Get parameter m ####
         # m and OoE (out of envelop) distribution
         m_max = 100
         scale = 10  # number divides m
-        count0 = np.zeros([m_max])
-        count1 = np.zeros([m_max])
-        count2 = np.zeros([m_max])
+        print('Reading file...')
+        #fname = 'm012_' + str(Sub_run) + '_max' + str(m_max) + '_scale' + str(scale) + '_train' + str(num_train) + '_tole'+ str(tole) +'.pkl'
+        fname = 'm012_s1r2_max100_scale10_train1_tole0.01_test.pkl'
+        with open(fname, 'rb') as f:
+            count0, count1, count2, median0_base, median1_base, median2_base, sd0, sd1, sd2 = pickle.load(f)
+
         flag0_m = 0
         flag1_m = 0
         flag2_m = 0
@@ -147,32 +132,6 @@ for fidx in range(0,np.size(rep_list)):
         m2=0
 
         for m in range(0, m_max):
-            if m % 10 == 0:
-                print('m:', m)
-            thr0[:] = np.abs(median0_base[:]) + m / scale * sd0[:]
-            thr1[:] = np.abs(median1_base[:]) + m / scale * sd1[:]
-            thr2[:] = np.abs(median2_base[:]) + m / scale * sd2[:]
-            # loop inside the training set
-            for p in range(0, t_sub*num_train):
-                flag0 = 0
-                flag1 = 0
-                flag2 = 0
-                for depth in range(0, s):
-                    # if not detected yet
-                    if flag0 < 1:  # OCM0
-                        # check every depth and count if it's larger than the threshold
-                        if ocm0_filt[depth, p] > thr0[depth]:
-                            count0[m] = count0[m] + 1
-                            flag0 = 1
-                    if flag1 < 1:  # OCM1
-                        if ocm1_filt[depth, p] > thr1[depth]:
-                            count1[m] = count1[m] + 1
-                            flag1 = 1
-                    if flag2 < 1:  # OCM2
-                        if ocm2_filt[depth, p] > thr2[depth]:
-                            count2[m] = count2[m] + 1
-                            flag2 = 1
-
             # Get m if EoF is below predefined FPR
             if (count0[m] < rep_list[fidx] * tole) and (flag0_m == 0):
                 m0 = m / scale
@@ -187,17 +146,43 @@ for fidx in range(0,np.size(rep_list)):
         print('m0:', m0, 'm1:', m1, 'm2:', m2)
         print('count0:', count0[int(m0*10)], 'count1:', count1[int(m1*10)], 'count2:', count2[int(m2*10)])
 
-
     #### Performance Evaluation with remaining data####
     # set threshold
     thr0[:] = np.abs(median0_base[:]) + m0 * sd0[:]
     thr1[:] = np.abs(median1_base[:]) + m1 * sd1[:]
     thr2[:] = np.abs(median2_base[:]) + m2 * sd2[:]
-
     print('thr0:', thr0[0:20])
     print('sd0:', sd0[0:20])
     print('m0:', m0)
     print('median0_base:', median0_base[0:20])
+
+    # ========================Visualize==============================================
+    d = np.linspace(2.3, 4.9, s)  # My Depth
+    fig = plt.figure(figsize=(7, 4))
+    # OCM1
+    ax1 = fig.add_subplot(111)
+    a0 = ax1.plot(d, ocm0_filt[:,0], linewidth=1, label="filt")
+    a0 = ax1.plot(d, ocm0_filt[:,500], linewidth=1, label="filt")
+    a0 = ax1.plot(d, ocm0_filt[:,1000], linewidth=1, label="filt")
+    a0 = ax1.plot(d, ocm0_filt[:,1500], linewidth=1, label="filt")
+    a0 = ax1.plot(d, ocm0_filt[:,2000], linewidth=1, label="filt")
+    a0 = ax1.plot(d, ocm0_filt[:,2500], linewidth=1, label="filt")
+    a0 = ax1.plot(d, ocm0_filt[:,3000], linewidth=1, label="filt")
+    a0 = ax1.plot(d, ocm0_filt[:,3500], linewidth=1, label="filt")
+    a0 = ax1.plot(d, ocm0_filt[:,4000], linewidth=1, label="filt")
+    a0 = ax1.plot(d, ocm0_filt[:,4500], linewidth=1, label="filt")
+    a0 = ax1.plot(d, median0_base[:], color='black', linewidth=2, label="0")
+    a0 = ax1.plot(d, median0_base[:] + sd0[:], color='black', linewidth=1, label="0")
+    ax1.set_title('Distribution of parameter m')
+    ax1.set_xlabel('Depth')
+    ax1.set_ylabel('Intensity')
+    plt.legend(loc='upper right')
+    fig.show()
+    f_name = 'Signal_check_' + Sub_run + '.png'
+    plt.savefig(f_name)
+    # ========================Visualize==============================================
+
+
     # Check test data
     for bh in range(0, num_bh):
         print('bh', bh, ' starting')
@@ -224,6 +209,7 @@ for fidx in range(0,np.size(rep_list)):
     # if state 1, bh=1 (baseline) has to be subtracted
     total = 100 / rep_list[fidx]
     if fidx % 2 == 0:
+        print('### ', Sub_run, ' Results ###')
         print('OCM0 number:', 'bh1:', out0_test[0], 'bh2:', out0_test[1], 'bh3:', out0_test[2], 'bh4:', out0_test[3], 'bh5:', out0_test[4])
         print('OCM1 number:', 'bh1:', out1_test[0], 'bh2:', out1_test[1], 'bh3:', out1_test[2], 'bh4:', out1_test[3], 'bh5:', out1_test[4])
         print('OCM2 number:', 'bh1:', out2_test[0], 'bh2:', out2_test[1], 'bh3:', out2_test[2], 'bh4:', out2_test[3], 'bh5:', out2_test[4])
@@ -241,40 +227,3 @@ for fidx in range(0,np.size(rep_list)):
         print('OCM1 rate:', 'bh6:', '{:.3f}'.format(out1_test[0] * total), 'bh7:', '{:.3f}'.format(out1_test[1] * total), 'bh8:', '{:.3f}'.format(out1_test[2] * total), 'bh9:', '{:.3f}'.format(out1_test[3] * total), 'bh10:', '{:.3f}'.format(out1_test[4] * total))
         print('OCM2 rate:', 'bh6:', '{:.3f}'.format(out2_test[0] * total), 'bh7:', '{:.3f}'.format(out2_test[1] * total), 'bh8:', '{:.3f}'.format(out2_test[2] * total), 'bh9:', '{:.3f}'.format(out2_test[3] * total), 'bh10:', '{:.3f}'.format(out2_test[4] * total))
 
-
-    '''
-        # ========================Visualize==============================================
-        d = np.linspace(2.3, 4.9, s)  # My Depth
-        fig = plt.figure(figsize=(7, 4))
-        # OCM1
-        ax1 = fig.add_subplot(111)
-        a0 = ax1.plot(d, ocm1_filt[:, 0], linewidth=1, label="0")
-        a1 = ax1.plot(d, ocm1_filt[:, 10], linewidth=1, label="10")
-        a2 = ax1.plot(d, ocm1_filt[:, 20], linewidth=1, label="20")
-        a3 = ax1.plot(d, ocm1_filt[:, 30], linewidth=1, label="30")
-        a4 = ax1.plot(d, ocm1_filt[:, 40], linewidth=1, label="40")
-        a5 = ax1.plot(d, median1_base[:], 'g', linewidth=1, label="median")
-        a6 = ax1.plot(d, median1_base[:]+sd1[:], 'b', linewidth=1, label="med+sd")
-        ax1.set_title('Distribution of parameter m')
-        ax1.set_xlabel('Depth')
-        ax1.set_ylabel('Intensity')
-        plt.legend(loc='upper right')
-        fig.show()
-        f_name = 'Signal_check_' + Sub_run + '.png'
-        plt.savefig(f_name)
-        # ========================Visualize==============================================
-        m_ = np.linspace(0, m_max/scale, m_max)  # My m
-        fig = plt.figure(figsize=(7, 4))
-        # OCM1
-        ax1 = fig.add_subplot(111)
-        a0 = ax1.plot(m_, count0[:], 'r', linewidth=1, label="count0")
-        a1 = ax1.plot(m_, count1[:], 'g', linewidth=1, label="count1")
-        a2 = ax1.plot(m_, count2[:], 'b', linewidth=1, label="count2")
-        ax1.set_title('Distribution of parameter m')
-        ax1.set_xlabel('m')
-        ax1.set_ylabel('Number of traces above threshold')
-        plt.legend(loc='upper right')
-        fig.show()
-        f_name = 'm_dist_' + Sub_run + '.png'
-        plt.savefig(f_name)
-    '''
