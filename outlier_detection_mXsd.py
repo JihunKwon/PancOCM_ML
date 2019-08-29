@@ -33,8 +33,8 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2.npy")
 
 sr_list = ['s1r1', 's1r1', 's1r2', 's1r2', 's2r1', 's2r1', 's2r2', 's2r2', 's3r1', 's3r1', 's3r2', 's3r2']
-rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
-#rep_list = [300, 300, 300, 300, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
+#rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
+rep_list = [100, 100, 100, 100, 100, 100, 100, 3690, 3401, 3401, 3690, 3690]
 
 '''
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy") #Before water
@@ -50,13 +50,13 @@ num_test = 10 - num_train
 num_ocm = 3
 num_bh = 5 # number of bh in each state
 
-tole_list = [0.1, 0.05, 0.01]
+tole_list = [0.5, 0.1, 0.05, 0.01]
 train_list = [2,3,4]
 for x in range(0, np.size(tole_list)):
     for y in range(0, np.size(train_list)):
         for fidx in range(0,np.size(rep_list)):
-            #tole = tole_list[x]
-            #num_train = train_list[y]
+            tole = tole_list[x]
+            num_train = train_list[y]
             Sub_run_name = sr_list[fidx]
             print('Status: tole'+str(tole)+'_train'+str(num_train)+'_'+Sub_run_name)
             plt.rcParams["font.size"] = 11
@@ -183,7 +183,7 @@ for x in range(0, np.size(tole_list)):
 
                 #### Get parameter m ####
                 # m and OoE (out of envelop) distribution
-                m_max = 300
+                m_max = 1000
                 scale = 100  # number divides m
                 count0 = np.zeros([m_max])
                 count1 = np.zeros([m_max])
