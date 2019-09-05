@@ -49,8 +49,8 @@ num_train = 2
 num_test = 10 - num_train
 num_ocm = 3
 num_bh = 5 # number of bh in each state
-bin = 1000
-scale = 100  # number divides m
+bin = 100
+scale = 10  # number divides m
 
 for fidx in range(0, np.size(rep_list)):
     if fidx%2 == 0:
@@ -118,13 +118,17 @@ for fidx in range(0, np.size(rep_list)):
         ocm1_filt = np.zeros([s, c0_new])
         ocm2_filt = np.zeros([s, c0_new])
 
+        ocm0_abs = np.abs(ocm0_new)
+        ocm1_abs = np.abs(ocm1)
+        ocm2_abs = np.abs(ocm2)
+
         # Median-based filtering
         for bh in range(0, num_bh):
             for depth in range(0, s):
                 # get median for each bh
-                median0[depth, bh] = statistics.median(ocm0_new[depth, bh*t_sub_removed:(bh+1)*t_sub_removed])
-                median1[depth, bh] = statistics.median(ocm1[depth, bh*t_sub:(bh+1)*t_sub])
-                median2[depth, bh] = statistics.median(ocm2[depth, bh*t_sub:(bh+1)*t_sub])
+                median0[depth, bh] = statistics.median(np.abs(ocm0_abs[depth, bh * t_sub_removed:(bh + 1) * t_sub_removed]))
+                median1[depth, bh] = statistics.median(np.abs(ocm1_abs[depth, bh * t_sub:(bh + 1) * t_sub]))
+                median2[depth, bh] = statistics.median(np.abs(ocm2_abs[depth, bh * t_sub:(bh + 1) * t_sub]))
         # filtering all traces with median trace
         # The size of ocm0 is different with ocm1 and ocm2. Has to be filtered separately.
         ## OCM0
@@ -135,7 +139,7 @@ for fidx in range(0, np.size(rep_list)):
                 bh = bh + 1
             for depth in range(0, s):
                 # filter the signal (subtract median from each trace of corresponding bh)
-                ocm0_filt[depth, p] = ocm0_new[depth, p] - median0[depth, bh]
+                ocm0_filt[depth, p] = np.abs(ocm0_abs[depth, p] - median0[depth, bh])
 
         ## OCM1 and 2
         bh = -1
@@ -144,8 +148,8 @@ for fidx in range(0, np.size(rep_list)):
                 bh = bh + 1
             for depth in range(0, s):
                 # filter the signal (subtract median from each trace of corresponding bh)
-                ocm1_filt[depth, p] = ocm1[depth, p] - median1[depth, bh]
-                ocm2_filt[depth, p] = ocm2[depth, p] - median2[depth, bh]
+                ocm1_filt[depth, p] = np.abs(ocm1_abs[depth, p] - median1[depth, bh])
+                ocm2_filt[depth, p] = np.abs(ocm2_abs[depth, p] - median2[depth, bh])
 
         #### Threshold generation ####
         # if state 1
@@ -153,9 +157,9 @@ for fidx in range(0, np.size(rep_list)):
             # Median-based filtering
             for depth in range(0, s):
                 # Calculate median of baseline signal
-                median0_base[depth] = statistics.median(ocm0_filt[depth, 0:t_sub_removed*num_train])
-                median1_base[depth] = statistics.median(ocm1_filt[depth, 0:t_sub*num_train])
-                median2_base[depth] = statistics.median(ocm2_filt[depth, 0:t_sub*num_train])
+                median0_base[depth] = statistics.median(ocm0_abs[depth, 0:t_sub_removed*num_train])
+                median1_base[depth] = statistics.median(ocm1_abs[depth, 0:t_sub_removed*num_train])
+                median2_base[depth] = statistics.median(ocm2_abs[depth, 0:t_sub_removed*num_train])
                 # Get SD of (Median - train)
                 sd0[depth] = np.abs(np.std(median0_base[depth] - ocm0_filt[depth, 0:t_sub_removed*num_train]))
                 sd1[depth] = np.abs(np.std(median1_base[depth] - ocm1_filt[depth, 0:t_sub*num_train]))
@@ -197,10 +201,6 @@ for fidx in range(0, np.size(rep_list)):
                 thr1[:] = m / scale * sd1[:]
                 thr2[:] = m / scale * sd2[:]
 
-                #thr0[:] = np.abs(median0_base[:]) + m / scale * sd0[:]
-                #thr1[:] = np.abs(median1_base[:]) + m / scale * sd1[:]
-                #thr2[:] = np.abs(median2_base[:]) + m / scale * sd2[:]
-
                 # loop inside the training set
                 # OCM0
                 for p in range(0, t_sub_removed*num_train):
@@ -234,8 +234,6 @@ for fidx in range(0, np.size(rep_list)):
             pickle.dump([count0, count1, count2, median0_base, median1_base, median2_base, sd0, sd1, sd2], f)
 
 
-
-
     # ========================Visualize==============================================
     m_ = np.linspace(0, bin/scale, bin)  # My m
     fig = plt.figure(figsize=(7, 4))
@@ -249,5 +247,5 @@ for fidx in range(0, np.size(rep_list)):
     ax1.set_ylabel('Number of traces above threshold')
     plt.legend(loc='upper right')
     fig.show()
-    f_name = 'm_dist_train' + str(num_train) + '_' + Sub_run_name + '_test.png'
+    f_name = 'm_dist_train' + str(num_train) + '_' + Sub_run_name + '.png'
     plt.savefig(f_name)
