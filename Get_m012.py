@@ -32,11 +32,11 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190228\\run2
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run1.npy")
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2.npy")
 
+#sr_list = ['s1r1', 's1r1', 's1r2', 's1r2']
+#rep_list = [8196, 8196, 8192, 8192]
 sr_list = ['s1r1', 's1r1', 's1r2', 's1r2', 's2r1', 's2r1', 's2r2', 's2r2', 's3r1', 's3r1', 's3r2', 's3r2']
 rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
-#rep_list = [100, 100, 100, 100, 100, 100, 100, 3690, 3401, 3401, 3690, 3690]
-
-
+#rep_list = [200, 200, 200, 100, 100, 100, 100, 3690, 3401, 3401, 3690, 3690]
 
 '''
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy") #Before water
@@ -45,7 +45,7 @@ sr_list = ['s1r1']
 rep_list = [100]
 '''
 
-num_train = 2
+num_train = 1
 num_test = 10 - num_train
 num_ocm = 3
 num_bh = 5 # number of bh in each state
@@ -111,24 +111,21 @@ for fidx in range(0, np.size(rep_list)):
         print('ocm0 new_removed:', ocm0_new.shape)
         print(str(dif), 'was removed. It is', '{:.2f}'.format(dif*100/ocm0.shape[1]), '%')
 
-        ocm0_abs = np.zeros([s, c0_new_removed])  # Absolute difference
-        ocm1_abs = np.zeros([s, c0_new])
-        ocm2_abs = np.zeros([s, c0_new])
         ocm0_filt = np.zeros([s, c0_new_removed])  # filtered signal (median based filtering)
         ocm1_filt = np.zeros([s, c0_new])
         ocm2_filt = np.zeros([s, c0_new])
-
-        ocm0_abs = np.abs(ocm0_new)
-        ocm1_abs = np.abs(ocm1)
-        ocm2_abs = np.abs(ocm2)
+        ocm0_low = np.zeros([s, c0_new_removed])  # low pass
+        ocm1_low = np.zeros([s, c0_new])
+        ocm2_low = np.zeros([s, c0_new])
+        f1 = np.ones([10])  # low pass kernel
 
         # Median-based filtering
         for bh in range(0, num_bh):
             for depth in range(0, s):
                 # get median for each bh
-                median0[depth, bh] = statistics.median(np.abs(ocm0_abs[depth, bh * t_sub_removed:(bh + 1) * t_sub_removed]))
-                median1[depth, bh] = statistics.median(np.abs(ocm1_abs[depth, bh * t_sub:(bh + 1) * t_sub]))
-                median2[depth, bh] = statistics.median(np.abs(ocm2_abs[depth, bh * t_sub:(bh + 1) * t_sub]))
+                median0[depth, bh] = statistics.median(ocm0_new[depth, bh * t_sub_removed:(bh + 1) * t_sub_removed])
+                median1[depth, bh] = statistics.median(ocm1[depth, bh * t_sub:(bh + 1) * t_sub])
+                median2[depth, bh] = statistics.median(ocm2[depth, bh * t_sub:(bh + 1) * t_sub])
         # filtering all traces with median trace
         # The size of ocm0 is different with ocm1 and ocm2. Has to be filtered separately.
         ## OCM0
@@ -139,7 +136,9 @@ for fidx in range(0, np.size(rep_list)):
                 bh = bh + 1
             for depth in range(0, s):
                 # filter the signal (subtract median from each trace of corresponding bh)
-                ocm0_filt[depth, p] = np.abs(ocm0_abs[depth, p] - median0[depth, bh])
+                ocm0_filt[depth, p] = ocm0[depth, p] - median0[depth, bh]
+            tr0 = ocm0_filt[:, p]
+            ocm0_low[:, p] = np.convolve(np.sqrt(np.square(tr0)), f1, 'same')
 
         ## OCM1 and 2
         bh = -1
@@ -148,8 +147,12 @@ for fidx in range(0, np.size(rep_list)):
                 bh = bh + 1
             for depth in range(0, s):
                 # filter the signal (subtract median from each trace of corresponding bh)
-                ocm1_filt[depth, p] = np.abs(ocm1_abs[depth, p] - median1[depth, bh])
-                ocm2_filt[depth, p] = np.abs(ocm2_abs[depth, p] - median2[depth, bh])
+                ocm1_filt[depth, p] = ocm1[depth, p] - median1[depth, bh]
+                ocm2_filt[depth, p] = ocm2[depth, p] - median2[depth, bh]
+            tr1 = ocm1_filt[:, p]
+            tr2 = ocm2_filt[:, p]
+            ocm1_low[:, p] = np.convolve(np.sqrt(np.square(tr1)), f1, 'same')
+            ocm2_low[:, p] = np.convolve(np.sqrt(np.square(tr2)), f1, 'same')
 
         #### Threshold generation ####
         # if state 1
@@ -157,13 +160,13 @@ for fidx in range(0, np.size(rep_list)):
             # Median-based filtering
             for depth in range(0, s):
                 # Calculate median of baseline signal
-                median0_base[depth] = statistics.median(ocm0_abs[depth, 0:t_sub_removed*num_train])
-                median1_base[depth] = statistics.median(ocm1_abs[depth, 0:t_sub_removed*num_train])
-                median2_base[depth] = statistics.median(ocm2_abs[depth, 0:t_sub_removed*num_train])
+                median0_base[depth] = statistics.median(ocm0_low[depth, 0:t_sub_removed*num_train])
+                median1_base[depth] = statistics.median(ocm1_low[depth, 0:t_sub_removed*num_train])
+                median2_base[depth] = statistics.median(ocm2_low[depth, 0:t_sub_removed*num_train])
                 # Get SD of (Median - train)
-                sd0[depth] = np.abs(np.std(median0_base[depth] - ocm0_filt[depth, 0:t_sub_removed*num_train]))
-                sd1[depth] = np.abs(np.std(median1_base[depth] - ocm1_filt[depth, 0:t_sub*num_train]))
-                sd2[depth] = np.abs(np.std(median2_base[depth] - ocm2_filt[depth, 0:t_sub*num_train]))
+                sd0[depth] = np.abs(np.std(median0_base[depth] - ocm0_low[depth, 0:t_sub_removed*num_train]))
+                sd1[depth] = np.abs(np.std(median1_base[depth] - ocm1_low[depth, 0:t_sub*num_train]))
+                sd2[depth] = np.abs(np.std(median2_base[depth] - ocm2_low[depth, 0:t_sub*num_train]))
 
             '''
             ### visualization
@@ -209,7 +212,7 @@ for fidx in range(0, np.size(rep_list)):
                         # if not detected yet
                         if flag0 < 1:  # OCM0
                             # check every depth and count if it's larger than the threshold
-                            if np.abs(ocm0_filt[depth, p] - median0_base[depth]) > thr0[depth]:
+                            if np.abs(ocm0_low[depth, p] - median0_base[depth]) > thr0[depth]:
                                 count0[m] = count0[m] + 1
                                 flag0 = 1
 
@@ -220,11 +223,11 @@ for fidx in range(0, np.size(rep_list)):
                     for depth in range(0, s):
                         # if not detected yet
                         if flag1 < 1:  # OCM1
-                            if np.abs(ocm1_filt[depth, p] - median1_base[depth]) > thr1[depth]:
+                            if np.abs(ocm1_low[depth, p] - median1_base[depth]) > thr1[depth]:
                                 count1[m] = count1[m] + 1
                                 flag1 = 1
                         if flag2 < 1:  # OCM2
-                            if np.abs(ocm2_filt[depth, p] - median2_base[depth]) > thr2[depth]:
+                            if np.abs(ocm2_low[depth, p] - median2_base[depth]) > thr2[depth]:
                                 count2[m] = count2[m] + 1
                                 flag2 = 1
 
@@ -239,9 +242,9 @@ for fidx in range(0, np.size(rep_list)):
     fig = plt.figure(figsize=(7, 4))
     # OCM1
     ax1 = fig.add_subplot(111)
-    a0 = ax1.plot(m_, count0[:], 'r', linewidth=1, label="count0")
-    a1 = ax1.plot(m_, count1[:], 'g', linewidth=1, label="count1")
-    a2 = ax1.plot(m_, count2[:], 'b', linewidth=1, label="count2")
+    a0 = ax1.plot(m_, count0[:], 'ro-', linewidth=1, label="ocm0")
+    a1 = ax1.plot(m_, count1[:], 'go-', linewidth=1, label="ocm1")
+    a2 = ax1.plot(m_, count2[:], 'bo-', linewidth=1, label="ocm2")
     ax1.set_title('Distribution of parameter m')
     ax1.set_xlabel('m')
     ax1.set_ylabel('Number of traces above threshold')
