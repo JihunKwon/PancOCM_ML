@@ -45,7 +45,7 @@ sr_list = ['s1r1']
 rep_list = [100]
 '''
 
-num_train = 1
+num_train = 3
 num_test = 10 - num_train
 num_ocm = 3
 num_bh = 5 # number of bh in each state
@@ -136,7 +136,7 @@ for fidx in range(0, np.size(rep_list)):
                 bh = bh + 1
             for depth in range(0, s):
                 # filter the signal (subtract median from each trace of corresponding bh)
-                ocm0_filt[depth, p] = ocm0[depth, p] - median0[depth, bh]
+                ocm0_filt[depth, p] = ocm0_new[depth, p] - median0[depth, bh]
             tr0 = ocm0_filt[:, p]
             ocm0_low[:, p] = np.convolve(np.sqrt(np.square(tr0)), f1, 'same')
 
