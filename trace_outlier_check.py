@@ -12,13 +12,13 @@ def outlier_remove(Sub_run_name, c0, ocm0):  # input subject and run name
 
     elif Sub_run_name is 's1r2':
         for p in range(0, c0):
-            if ocm0[0, p] < 4000 and ocm0[-1, p] < 4000:
+            if ocm0[0, p] < 3000 and ocm0[-1, p] < 3000:
                 ocm0_new[:, count] = ocm0[:, p]
                 count = count + 1
 
     elif Sub_run_name is 's2r1':
         for p in range(0, c0):
-            if ocm0[0, p] < 4000 and ocm0[-1, p] < 4000:
+            if ocm0[0, p] < 4000 and ocm0[-1, p] < 4500:
                 ocm0_new[:, count] = ocm0[:, p]
                 count = count + 1
 
@@ -30,7 +30,7 @@ def outlier_remove(Sub_run_name, c0, ocm0):  # input subject and run name
 
     elif Sub_run_name is 's3r1':
         for p in range(0, c0):
-            if ocm0[-1, p] < 3000:
+            if ocm0[-1, p] < 3000 and ocm0[40, p] < 4500:
                 ocm0_new[:, count] = ocm0[:, p]
                 count = count + 1
 
