@@ -116,6 +116,9 @@ for y in range(0, np.size(tole_list)):
         ocm0_low = np.zeros([s, c0_new_removed])  # low pass
         ocm1_low = np.zeros([s, c0_new])
         ocm2_low = np.zeros([s, c0_new])
+        median0_low = np.zeros([s, num_bh])
+        median1_low = np.zeros([s, num_bh])
+        median2_low = np.zeros([s, num_bh])
         f1 = np.ones([10])  # low pass kernel
 
         # Median-based filtering
@@ -125,6 +128,18 @@ for y in range(0, np.size(tole_list)):
                 median0[depth, bh] = statistics.median(ocm0_new[depth, bh * t_sub_removed:(bh + 1) * t_sub_removed])
                 median1[depth, bh] = statistics.median(ocm1[depth, bh * t_sub:(bh + 1) * t_sub])
                 median2[depth, bh] = statistics.median(ocm2[depth, bh * t_sub:(bh + 1) * t_sub])
+
+        # Filter the median
+        length = 50  # size of low pass filter
+        f1_medi = np.ones([length])
+        for bh in range(0, num_bh):
+            tr0_medi = median0[:, bh]
+            tr1_medi = median1[:, bh]
+            tr2_medi = median2[:, bh]
+            median0_low[:, bh] = np.convolve(tr0_medi, f1_medi, 'same') / length
+            median1_low[:, bh] = np.convolve(tr1_medi, f1_medi, 'same') / length
+            median2_low[:, bh] = np.convolve(tr2_medi, f1_medi, 'same') / length
+
         # filtering all traces with median trace
         # The size of ocm0 is different with ocm1 and ocm2. Has to be filtered separately.
         ## OCM0
@@ -135,7 +150,7 @@ for y in range(0, np.size(tole_list)):
                 bh = bh + 1
             for depth in range(0, s):
                 # filter the signal (subtract median from each trace of corresponding bh)
-                ocm0_filt[depth, p] = ocm0_new[depth, p] - median0[depth, bh]
+                ocm0_filt[depth, p] = ocm0_new[depth, p] - median0_low[depth, bh]
             tr0 = ocm0_filt[:, p]
             ocm0_low[:, p] = np.convolve(np.sqrt(np.square(tr0)), f1, 'same')
 
@@ -146,8 +161,8 @@ for y in range(0, np.size(tole_list)):
                 bh = bh + 1
             for depth in range(0, s):
                 # filter the signal (subtract median from each trace of corresponding bh)
-                ocm1_filt[depth, p] = ocm1[depth, p] - median1[depth, bh]
-                ocm2_filt[depth, p] = ocm2[depth, p] - median2[depth, bh]
+                ocm1_filt[depth, p] = ocm1[depth, p] - median1_low[depth, bh]
+                ocm2_filt[depth, p] = ocm2[depth, p] - median2_low[depth, bh]
             tr1 = ocm1_filt[:, p]
             tr2 = ocm2_filt[:, p]
             ocm1_low[:, p] = np.convolve(np.sqrt(np.square(tr1)), f1, 'same')
