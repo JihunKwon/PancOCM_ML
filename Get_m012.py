@@ -49,8 +49,8 @@ num_train = 3
 num_test = 10 - num_train
 num_ocm = 3
 num_bh = 5 # number of bh in each state
-bin = 100
-scale = 10  # number divides m
+bin = 1000
+scale = 50  # number divides m
 
 for fidx in range(0, np.size(rep_list)):
     if fidx%2 == 0:
@@ -129,7 +129,7 @@ for fidx in range(0, np.size(rep_list)):
                 median0[depth, bh] = statistics.median(ocm0_new[depth, bh * t_sub_removed:(bh + 1) * t_sub_removed])
                 median1[depth, bh] = statistics.median(ocm1[depth, bh * t_sub:(bh + 1) * t_sub])
                 median2[depth, bh] = statistics.median(ocm2[depth, bh * t_sub:(bh + 1) * t_sub])
-        
+
         # Filter the median
         length = 50  # size of low pass filter
         f1_medi = np.ones([length])

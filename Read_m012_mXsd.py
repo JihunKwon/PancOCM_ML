@@ -17,7 +17,7 @@ out_list = []
 plt.rcParams['font.family'] ='sans-serif'
 plt.rcParams['xtick.direction'] = 'in'
 plt.rcParams['ytick.direction'] = 'in'
-
+'''
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy")  #Before water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy")  #After water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run1.npy")
@@ -33,8 +33,12 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2
 
 sr_list = ['s1r1', 's1r1', 's1r2', 's1r2', 's2r1', 's2r1', 's2r2', 's2r2', 's3r1', 's3r1', 's3r2', 's3r2']
 rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
+'''
 
-#rep_list = [300, 300, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
+out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run1.npy")
+out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run2.npy")
+sr_list = ['s1r2', 's1r2']
+rep_list = [8192, 8192]
 
 '''
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy")  #Before water
@@ -43,14 +47,14 @@ sr_list = ['s1r1', 's1r1']
 rep_list = [8192, 8192]
 '''
 
-num_train = 2
+num_train = 3
 num_test = 10 - num_train
 num_ocm = 3
 num_bh = 5 # number of bh in each state
-bin = 100
-scale = 10  # number divides m
+bin = 1000
+scale = 50  # number divides m
 
-tole_list = [0.05, 0.1]
+tole_list = [0.000001]
 
 for y in range(0, np.size(tole_list)):
     for fidx in range(0, np.size(rep_list)):
@@ -199,8 +203,8 @@ for y in range(0, np.size(tole_list)):
                     m2 = m / scale
                     flag2_m = 1
 
-            #print('m0:', m0, 'm1:', m1, 'm2:', m2)
-            #print('count0:', count0[int(m0*scale)], 'count1:', count1[int(m1*scale)], 'count2:', count2[int(m2*scale)])
+            print('m0:', m0, 'm1:', m1, 'm2:', m2)
+            print('count0:', count0[int(m0*scale)], 'count1:', count1[int(m1*scale)], 'count2:', count2[int(m2*scale)])
 
         #### Performance Evaluation with remaining data####
         # set threshold
