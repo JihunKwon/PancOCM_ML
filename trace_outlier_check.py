@@ -25,8 +25,8 @@ def outlier_remove(Sub_run_name, c0, ocm0):  # input subject and run name
 
     elif Sub_run_name is 's2r2':
         for p in range(0, c0):
-            #if ocm0[-1, p] < 1500:  # are we sure we need this?
-            if ocm0[-1, p] < 15000:
+            if ocm0[-1, p] < 1500:  # are we sure we need this?
+            #if ocm0[-1, p] < 15000:  # it turned out that no cleaning works better for this case
                 ocm0_new[:, count] = ocm0[:, p]
                 count = count + 1
 

@@ -17,7 +17,7 @@ out_list = []
 plt.rcParams['font.family'] ='sans-serif'
 plt.rcParams['xtick.direction'] = 'in'
 plt.rcParams['ytick.direction'] = 'in'
-'''
+
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy")  #Before water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy")  #After water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run1.npy")
@@ -33,12 +33,6 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2
 
 sr_list = ['s1r1', 's1r1', 's1r2', 's1r2', 's2r1', 's2r1', 's2r2', 's2r2', 's3r1', 's3r1', 's3r2', 's3r2']
 rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
-'''
-
-out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run1.npy")
-out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run2.npy")
-sr_list = ['s1r2', 's1r2']
-rep_list = [8192, 8192]
 
 '''
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy")  #Before water
@@ -54,10 +48,11 @@ num_bh = 5 # number of bh in each state
 bin = 1000
 scale = 50  # number divides m
 
-tole_list = [0.000001]
+tole_list = [0.000000000001, 0.00000000000001]
 
 for y in range(0, np.size(tole_list)):
     for fidx in range(0, np.size(rep_list)):
+    #for fidx in range(6, 8):
         tole = tole_list[y]
         Sub_run_name = sr_list[fidx]
         if fidx%2==0:
@@ -178,6 +173,7 @@ for y in range(0, np.size(tole_list)):
         if fidx % 2 == 0:
             #### Get parameter m ####
             # m and OoE (out of envelop) distribution
+            #fname = 'm012_' + str(Sub_run_name) + '_bin' + str(bin) + '_scale' + str(scale) + '_train' + str(num_train) + '_pr.pkl'
             fname = 'm012_' + str(Sub_run_name) + '_bin' + str(bin) + '_scale' + str(scale) + '_train' + str(num_train) + '_pr.pkl'
             #fname = 'm012_s1r1_bin500_scale50_train2.pkl'
             #print('Reading file: ', fname)
