@@ -44,7 +44,8 @@ scale = 50  # number divides m
 tole_list = [0.000001]
 
 for y in range(0, np.size(tole_list)):
-    for fidx in range(0, np.size(rep_list)):
+    #for fidx in range(0, np.size(rep_list)):
+    for fidx in range(2, 4):
         tole = tole_list[y]
         Sub_run_name = sr_list[fidx]
         if fidx%2==0:
@@ -134,7 +135,7 @@ for y in range(0, np.size(tole_list)):
         # filtering all traces with median trace
         # The size of ocm0 is different with ocm1 and ocm2. Has to be filtered separately.
         ## OCM0
-        
+        '''
         bh = -1
         for p in range(0, c0_new_removed):
             # have to consider the number of traces removed
@@ -145,6 +146,7 @@ for y in range(0, np.size(tole_list)):
                 ocm0_filt[depth, p] = ocm0_new[depth, p] - median0_low[depth, bh]
             tr0 = ocm0_filt[:, p]
             ocm0_low[:, p] = np.convolve(np.sqrt(np.square(tr0)), f1, 'same')
+        '''
         
 
         ## OCM1 and 2
@@ -173,42 +175,6 @@ for y in range(0, np.size(tole_list)):
 
 
         if fidx%2 == 0:
-            # ===============OCM0===========================================================
-            depth_my = np.linspace(2.3, 4.9, s)  # My Depth
-            fig = plt.figure(figsize=(6, 5))
-            ax1 = plt.subplot2grid((3, 1), (0, 0), colspan=2, rowspan=1)
-            ax2 = plt.subplot2grid((3, 1), (1, 0), colspan=2, sharex=ax1)
-
-            plt.subplots_adjust(hspace=0)
-            ax1 = plt.subplot(211)
-            ax2 = plt.subplot(212, sharex=ax1)
-            target = 3  # target=1 is very good, but chose the data from the different bh may be better
-
-            ax1.plot(depth_my, median0_base[:], 'k', linewidth=1, linestyle='solid', label="Baseline ($\it{M_{B}}$)")
-            ax1.plot(depth_my, ocm0_low[:, target], 'b', linewidth=1, linestyle='dashed',
-                     label="Test set ($\it{M_{n}}$)")
-            ax1.set_title("Model Generation, State 1")
-            ax1.set_ylabel("Magnitude (a.u.)")
-            ax1.legend(loc='upper right')
-            #ax1.set_ylim(-700, 100000)
-
-            ax2.plot(depth_my, np.abs(ocm0_low[:, target] - median0_base[:]), 'r', linewidth=1, linestyle='solid', label="Absolute Difference")
-            ax2.plot(depth_my, sd0[:], 'g', linewidth=1, linestyle='dashed', label="Threshold (m*SD, m=1)")
-            ax2.plot(depth_my, 5 * sd0[:], 'g', linewidth=1.5, linestyle='dashdot', label="Threshold (m*SD, m=5)")
-            ax2.set_xlabel("Depth (cm)")
-            ax2.set_ylabel("Absolute Difference")
-            ax2.legend(loc='upper right')
-
-            fig.subplots_adjust(hspace=0)
-            # fig.tight_layout()
-
-            xticklabels = ax1.get_xticklabels()
-            plt.setp(xticklabels, visible=False)
-            plt.subplots_adjust(left=0.15, right=0.98, top=0.92)
-            # plt.show()
-            f_name = 'trace_' + str(fidx // 2) + '_state1_ocm0.png'
-            plt.savefig(f_name)
-            # =============================================================================
             # ===============OCM1===========================================================
             depth_my = np.linspace(2.3, 4.9, s)  # My Depth
             fig = plt.figure(figsize=(6, 5))
@@ -221,19 +187,24 @@ for y in range(0, np.size(tole_list)):
             target = 3  # target=1 is very good, but chose the data from the different bh may be better
 
             ax1.plot(depth_my, median1_base[:], 'k', linewidth=1, linestyle='solid', label="Baseline ($\it{M_{B}}$)")
-            ax1.plot(depth_my, ocm1_low[:, target], 'b', linewidth=1, linestyle='dashed',
-                     label="Test set ($\it{M_{n}}$)")
+            #ax1.plot(depth_my, ocm1_low[:, num_train*t_sub+target], 'b', linewidth=1, linestyle='dashed', label="Test set ($\it{M_{n}}$)")
+            for p in range(0, t_sub):
+                if p%100==0:
+                    ax1.plot(depth_my, ocm1_low[:, num_train*t_sub+p], linewidth=1, linestyle='dashed', label="Test set ($\it{M_{n}}$)")
             ax1.set_title("Model Generation, State 1")
             ax1.set_ylabel("Magnitude (a.u.)")
-            ax1.legend(loc='upper right')
+            #ax1.legend(loc='upper right')
             #ax1.set_ylim(-700, 100000)
 
-            ax2.plot(depth_my, np.abs(ocm1_low[:, target] - median1_base[:]), 'r', linewidth=1, linestyle='solid', label="Absolute Difference")
+            #ax2.plot(depth_my, np.abs(ocm1_low[:, num_train*t_sub+target] - median1_base[:]), 'r', linewidth=1, linestyle='solid', label="Absolute Difference")
+            for p in range(0, t_sub):
+                if p%100==0:
+                    ax2.plot(depth_my, np.abs(ocm1_low[:, num_train*t_sub+p] - median1_base[:]), linewidth=1, linestyle='solid', label="Absolute Difference")
             ax2.plot(depth_my, sd1[:], 'g', linewidth=1, linestyle='dashed', label="Threshold (m*SD, m=1)")
             ax2.plot(depth_my, 5 * sd1[:], 'g', linewidth=1.5, linestyle='dashdot', label="Threshold (m*SD, m=5)")
             ax2.set_xlabel("Depth (cm)")
             ax2.set_ylabel("Absolute Difference")
-            ax2.legend(loc='upper right')
+            #ax2.legend(loc='upper right')
 
             fig.subplots_adjust(hspace=0)
             # fig.tight_layout()
@@ -242,83 +213,12 @@ for y in range(0, np.size(tole_list)):
             plt.setp(xticklabels, visible=False)
             plt.subplots_adjust(left=0.15, right=0.98, top=0.92)
             # plt.show()
-            f_name = 'trace_' + str(fidx // 2) + '_state1_ocm1.png'
+            f_name = 'trace_' + str(fidx // 2) + '_state1_ocm1_multi.png'
             plt.savefig(f_name)
             # =============================================================================
-            # ===============OCM2===========================================================
-            depth_my = np.linspace(2.3, 4.9, s)  # My Depth
-            fig = plt.figure(figsize=(6, 5))
-            ax1 = plt.subplot2grid((3, 1), (0, 0), colspan=2, rowspan=1)
-            ax2 = plt.subplot2grid((3, 1), (1, 0), colspan=2, sharex=ax1)
 
-            plt.subplots_adjust(hspace=0)
-            ax1 = plt.subplot(211)
-            ax2 = plt.subplot(212, sharex=ax1)
-            target = 3  # target=1 is very good, but chose the data from the different bh may be better
-
-            ax1.plot(depth_my, median2_base[:], 'k', linewidth=1, linestyle='solid', label="Baseline ($\it{M_{B}}$)")
-            ax1.plot(depth_my, ocm2_low[:, target], 'b', linewidth=1, linestyle='dashed',
-                     label="Test set ($\it{M_{n}}$)")
-            ax1.set_title("Model Generation, State 1")
-            ax1.set_ylabel("Magnitude (a.u.)")
-            ax1.legend(loc='upper right')
-            #ax1.set_ylim(-700, 100000)
-
-            ax2.plot(depth_my, np.abs(ocm2_low[:, target] - median2_base[:]), 'r', linewidth=1, linestyle='solid', label="Absolute Difference")
-            ax2.plot(depth_my, sd2[:], 'g', linewidth=1, linestyle='dashed', label="Threshold (m*SD, m=1)")
-            ax2.plot(depth_my, 5 * sd2[:], 'g', linewidth=1.5, linestyle='dashdot', label="Threshold (m*SD, m=5)")
-            ax2.set_xlabel("Depth (cm)")
-            ax2.set_ylabel("Absolute Difference")
-            ax2.legend(loc='upper right')
-
-            fig.subplots_adjust(hspace=0)
-            # fig.tight_layout()
-
-            xticklabels = ax1.get_xticklabels()
-            plt.setp(xticklabels, visible=False)
-            plt.subplots_adjust(left=0.15, right=0.98, top=0.92)
-            # plt.show()
-            f_name = 'trace_' + str(fidx // 2) + '_state1_ocm2.png'
-            plt.savefig(f_name)
-            # =============================================================================
     
         else:
-            # ===============OCM0===========================================================
-            depth_my = np.linspace(2.3, 4.9, s)  # My Depth
-            fig = plt.figure(figsize=(6, 5))
-            ax1 = plt.subplot2grid((3, 1), (0, 0), colspan=2, rowspan=1)
-            ax2 = plt.subplot2grid((3, 1), (1, 0), colspan=2, sharex=ax1)
-
-            plt.subplots_adjust(hspace=0)
-            ax1 = plt.subplot(211)
-            ax2 = plt.subplot(212, sharex=ax1)
-            target = 3  # target=1 is very good, but chose the data from the different bh may be better
-
-            ax1.plot(depth_my, median0_base[:], 'k', linewidth=1, linestyle='solid', label="Baseline ($\it{M_{B}}$)")
-            ax1.plot(depth_my, ocm0_low[:, target], 'b', linewidth=1, linestyle='dashed',
-                     label="Test set ($\it{M_{n}}$)")
-            ax1.set_title("Model Generation, State 2")
-            ax1.set_ylabel("Magnitude (a.u.)")
-            ax1.legend(loc='upper right')
-            #ax1.set_ylim(-700, 100000)
-
-            ax2.plot(depth_my, np.abs(ocm0_low[:, target] - median0_base[:]), 'r', linewidth=1, linestyle='solid', label="Absolute Difference")
-            ax2.plot(depth_my, sd0[:], 'g', linewidth=1, linestyle='dashed', label="Threshold (m*SD, m=1)")
-            ax2.plot(depth_my, 5 * sd0[:], 'g', linewidth=1.5, linestyle='dashdot', label="Threshold (m*SD, m=5)")
-            ax2.set_xlabel("Depth (cm)")
-            ax2.set_ylabel("Absolute Difference")
-            ax2.legend(loc='upper right')
-
-            fig.subplots_adjust(hspace=0)
-            # fig.tight_layout()
-
-            xticklabels = ax1.get_xticklabels()
-            plt.setp(xticklabels, visible=False)
-            plt.subplots_adjust(left=0.15, right=0.98, top=0.92)
-            # plt.show()
-            f_name = 'trace_' + str(fidx // 2) + '_state2_ocm0.png'
-            plt.savefig(f_name)
-            # =============================================================================
             # ===============OCM1===========================================================
             depth_my = np.linspace(2.3, 4.9, s)  # My Depth
             fig = plt.figure(figsize=(6, 5))
@@ -355,42 +255,6 @@ for y in range(0, np.size(tole_list)):
             plt.subplots_adjust(left=0.15, right=0.98, top=0.92)
             # plt.show()
             f_name = 'trace_' + str(fidx // 2) + '_state2_ocm1.png'
-            plt.savefig(f_name)
-            # =============================================================================
-            # ===============OCM2===========================================================
-            depth_my = np.linspace(2.3, 4.9, s)  # My Depth
-            fig = plt.figure(figsize=(6, 5))
-            ax1 = plt.subplot2grid((3, 1), (0, 0), colspan=2, rowspan=1)
-            ax2 = plt.subplot2grid((3, 1), (1, 0), colspan=2, sharex=ax1)
-
-            plt.subplots_adjust(hspace=0)
-            ax1 = plt.subplot(211)
-            ax2 = plt.subplot(212, sharex=ax1)
-            target = 3  # target=1 is very good, but chose the data from the different bh may be better
-
-            ax1.plot(depth_my, median2_base[:], 'k', linewidth=1, linestyle='solid', label="Baseline ($\it{M_{B}}$)")
-            ax1.plot(depth_my, ocm2_low[:, target], 'b', linewidth=1, linestyle='dashed',
-                     label="Test set ($\it{M_{n}}$)")
-            ax1.set_title("Model Generation, State 2")
-            ax1.set_ylabel("Magnitude (a.u.)")
-            ax1.legend(loc='upper right')
-            #ax1.set_ylim(-700, 100000)
-
-            ax2.plot(depth_my, np.abs(ocm2_low[:, target] - median2_base[:]), 'r', linewidth=1, linestyle='solid', label="Absolute Difference")
-            ax2.plot(depth_my, sd2[:], 'g', linewidth=1, linestyle='dashed', label="Threshold (m*SD, m=1)")
-            ax2.plot(depth_my, 5 * sd2[:], 'g', linewidth=1.5, linestyle='dashdot', label="Threshold (m*SD, m=5)")
-            ax2.set_xlabel("Depth (cm)")
-            ax2.set_ylabel("Absolute Difference")
-            ax2.legend(loc='upper right')
-
-            fig.subplots_adjust(hspace=0)
-            # fig.tight_layout()
-
-            xticklabels = ax1.get_xticklabels()
-            plt.setp(xticklabels, visible=False)
-            plt.subplots_adjust(left=0.15, right=0.98, top=0.92)
-            # plt.show()
-            f_name = 'trace_' + str(fidx // 2) + '_state2_ocm2.png'
             plt.savefig(f_name)
             # =============================================================================
         print(str(fidx) + 'finished!')
