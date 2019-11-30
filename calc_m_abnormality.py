@@ -12,6 +12,7 @@ import csv
 import statistics
 import pickle
 from trace_outlier_check import outlier_remove
+from scipy.stats import chi2
 
 plt.close('all')
 out_list = []
@@ -35,7 +36,9 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2.npy")
 
 sr_list = ['s1r1', 's1r1', 's1r2', 's1r2', 's2r1', 's2r1', 's2r2', 's2r2', 's3r1', 's3r1', 's3r2', 's3r2']
-rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
+#rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
+rep_list = [819, 819, 819, 819, 693, 693, 369, 369, 340, 340, 369, 369]
+
 
 '''
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy") #Before water
@@ -53,6 +56,7 @@ num_bh = 5 # number of bh in each state
 bin = 2000
 scale = 20  # number divides m
 s_new = 296  # the depth your interest
+threshold = 0.01  # Threshold for Chi^2
 
 for fidx in range(0, np.size(rep_list)):
     if fidx%2 == 0:
@@ -206,3 +210,29 @@ for fidx in range(0, np.size(rep_list)):
             for depth in range(0, s_new):
                 A1[depth, p] = np.square((mean1_base[depth] - ocm1_low[depth, p]) / sd1[depth])
                 A2[depth, p] = np.square((mean2_base[depth] - ocm2_low[depth, p]) / sd2[depth])
+
+        #### Set the threshold based on Chi^2 ####
+        _, chi2_interval_max_0001 = chi2.interval(alpha=1-0.001, df=1)
+        _, chi2_interval_max_0005 = chi2.interval(alpha=1-0.005, df=1)
+        _, chi2_interval_max_001 = chi2.interval(alpha=1-0.01, df=1)
+        _, chi2_interval_max_005 = chi2.interval(alpha=1-0.05, df=1)
+        print('chi2_interval_max_0001: ' + str(chi2_interval_max_0001))
+        print('chi2_interval_max_0005: ' + str(chi2_interval_max_0005))
+        print('chi2_interval_max_001: ' + str(chi2_interval_max_001))
+        print('chi2_interval_max_005: ' + str(chi2_interval_max_005))
+
+        # ========================Visualize==============================================
+        d = np.linspace(2.3, 4.5, s_new)
+        fig = plt.figure(figsize=(16, 8))
+        ax1 = fig.add_subplot(111)
+        plt.axhline(y=chi2_interval_max_0001, color='k', linestyle='-', label='0.1% threshold')
+        plt.axhline(y=chi2_interval_max_0005, color='k', linestyle='-', label='0.5% threshold')
+        plt.axhline(y=chi2_interval_max_001, color='k', linestyle='-', label='1% threshold')
+        plt.axhline(y=chi2_interval_max_005, color='k', linestyle='-', label='5% threshold')
+        a1 = ax1.plot(d, A0[:, 100], linewidth=1, label='OCM0')
+        a1 = ax1.plot(d, A1[:, 100], linewidth=1, label='OCM1')
+        a1 = ax1.plot(d, A2[:, 100], linewidth=1, label='OCM2')
+        plt.legend(loc='upper right')
+        fig.show()
+        f_name = 'Abnomality_'+Sub_run_name+'.png'
+        plt.savefig(f_name)
