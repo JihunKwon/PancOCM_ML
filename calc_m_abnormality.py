@@ -21,6 +21,7 @@ plt.rcParams['font.family'] ='sans-serif'
 plt.rcParams['xtick.direction'] = 'in'
 plt.rcParams['ytick.direction'] = 'in'
 
+
 #Jihun Local
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy") #Before water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy") #After water
@@ -36,15 +37,16 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2.npy")
 
 sr_list = ['s1r1', 's1r1', 's1r2', 's1r2', 's2r1', 's2r1', 's2r2', 's2r2', 's3r1', 's3r1', 's3r2', 's3r2']
-#rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
-rep_list = [500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500]
-
+rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
+#rep_list = [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]
 
 '''
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy") #Before water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy") #After water
-sr_list = ['s1r1']
-rep_list = [100]
+out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run1.npy")
+out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20181102\\run2.npy")
+sr_list = ['s1r1', 's1r1', 's1r2', 's1r2']
+rep_list = [200, 200, 200, 200]
 '''
 
 num_train = 3
@@ -59,14 +61,24 @@ s_new = 296  # the depth your interest
 threshold = 0.01  # Threshold for Chi^2
 
 #### Set the threshold based on Chi^2 ####
+_, chi2_interval_max_000000001 = chi2.interval(alpha=1 - 0.00000001, df=1)
+_, chi2_interval_max_00000001 = chi2.interval(alpha=1 - 0.0000001, df=1)
+_, chi2_interval_max_0000001 = chi2.interval(alpha=1 - 0.000001, df=1)
+_, chi2_interval_max_000001 = chi2.interval(alpha=1 - 0.00001, df=1)
+_, chi2_interval_max_00001 = chi2.interval(alpha=1 - 0.0001, df=1)
 _, chi2_interval_max_0001 = chi2.interval(alpha=1 - 0.001, df=1)
-_, chi2_interval_max_0005 = chi2.interval(alpha=1 - 0.005, df=1)
 _, chi2_interval_max_001 = chi2.interval(alpha=1 - 0.01, df=1)
-_, chi2_interval_max_005 = chi2.interval(alpha=1 - 0.05, df=1)
+print('chi2_interval_max_000000001: ' + str(chi2_interval_max_000000001))
+print('chi2_interval_max_00000001: ' + str(chi2_interval_max_00000001))
+print('chi2_interval_max_0000001: ' + str(chi2_interval_max_0000001))
+print('chi2_interval_max_000001: ' + str(chi2_interval_max_000001))
+print('chi2_interval_max_00001: ' + str(chi2_interval_max_00001))
 print('chi2_interval_max_0001: ' + str(chi2_interval_max_0001))
-print('chi2_interval_max_0005: ' + str(chi2_interval_max_0005))
 print('chi2_interval_max_001: ' + str(chi2_interval_max_001))
-print('chi2_interval_max_005: ' + str(chi2_interval_max_005))
+
+out0_test = np.zeros([int(len(rep_list)/2), 10])  # output test result
+out1_test = np.zeros([int(len(rep_list)/2), 10])
+out2_test = np.zeros([int(len(rep_list)/2), 10])
 
 for fidx in range(0, np.size(rep_list)):
     # for fidx in range(0, 2):
@@ -85,9 +97,6 @@ for fidx in range(0, np.size(rep_list)):
     median0 = np.zeros([s_new, num_bh])  # median
     median1 = np.zeros([s_new, num_bh])
     median2 = np.zeros([s_new, num_bh])
-    out0_test = np.zeros([len(rep_list), num_bh])  # output test result
-    out1_test = np.zeros([len(rep_list), num_bh])
-    out2_test = np.zeros([len(rep_list), num_bh])
     if fidx % 2 == 0:
         # median0_base = np.zeros([s_new]) # median of filtered signal
         # median1_base = np.zeros([s_new])
@@ -98,9 +107,6 @@ for fidx in range(0, np.size(rep_list)):
         sd0 = np.zeros([s_new])  # sd of (median - train)
         sd1 = np.zeros([s_new])
         sd2 = np.zeros([s_new])
-        A0 = np.zeros([s_new])  # Abnormality. a(x') = (x' - mean)^2 / SD^2
-        A1 = np.zeros([s_new])
-        A2 = np.zeros([s_new])
 
     # divide the data into each OCM and store absolute value
     b = np.linspace(0, t - 1, t)
@@ -232,96 +238,174 @@ for fidx in range(0, np.size(rep_list)):
         A0_post = A0
         A1_post = A1
         A2_post = A2
-    '''
+
     # ========================Visualize==============================================
+
     if fidx % 2 == 1:
         d = np.linspace(2.3, 4.5, s_new)
-        fig = plt.figure(figsize=(26, 8))
+        fig = plt.figure(figsize=(24, 8))
        
         # State 1
         ax1 = fig.add_subplot(231)
-        plt.axhline(y=chi2_interval_max_0001, color='k', linestyle=':', label='0.1% threshold')
-        plt.axhline(y=chi2_interval_max_001, color='k', linestyle='--', label='1% threshold')
+        plt.axhline(y=chi2_interval_max_0001, color='k', linestyle=':', linewidth=2, label='0.1% threshold')
+        plt.axhline(y=chi2_interval_max_001, color='k', linestyle='--', linewidth=2, label='1% threshold')
         plt.title('OCM0, State 1')
         plt.legend(loc='upper right')
-        for i in range(0, 100):
+        plt.ylabel('Abnormality ')
+        for i in range(0, A0_pre.shape[1], 100):
             a1 = ax1.plot(d, A0_pre[:, i], linewidth=1)
        
         ax2 = fig.add_subplot(232)
-        plt.axhline(y=chi2_interval_max_0001, color='k', linestyle=':', label='0.1% threshold')
-        plt.axhline(y=chi2_interval_max_001, color='k', linestyle='--', label='1% threshold')
+        plt.axhline(y=chi2_interval_max_0001, color='k', linestyle=':', linewidth=2, label='0.1% threshold')
+        plt.axhline(y=chi2_interval_max_001, color='k', linestyle='--', linewidth=2, label='1% threshold')
         plt.title('OCM1, State 1')
         plt.legend(loc='upper right')
-        for i in range(0, 100):
+        plt.ylabel('Abnormality ')
+        for i in range(0, A1_pre.shape[1], 100):
             a2 = ax2.plot(d, A1_pre[:, i], linewidth=1)
        
         ax3 = fig.add_subplot(233)
-        plt.axhline(y=chi2_interval_max_0001, color='k', linestyle=':', label='0.1% threshold')
-        plt.axhline(y=chi2_interval_max_001, color='k', linestyle='--', label='1% threshold')
+        plt.axhline(y=chi2_interval_max_0001, color='k', linestyle=':', linewidth=2, label='0.1% threshold')
+        plt.axhline(y=chi2_interval_max_001, color='k', linestyle='--', linewidth=2, label='1% threshold')
         plt.title('OCM2, State 1')
         plt.legend(loc='upper right')
-        for i in range(0, 100):
+        plt.ylabel('Abnormality ')
+        for i in range(0, A2_pre.shape[1], 100):
             a3 = ax3.plot(d, A2_pre[:, i], linewidth=1)
        
         # State 2
         ax4 = fig.add_subplot(234)
-        plt.axhline(y=chi2_interval_max_0001, color='k', linestyle=':', label='0.1% threshold')
-        plt.axhline(y=chi2_interval_max_001, color='k', linestyle='--', label='1% threshold')
+        plt.axhline(y=chi2_interval_max_0001, color='k', linestyle=':', linewidth=2, label='0.1% threshold')
+        plt.axhline(y=chi2_interval_max_001, color='k', linestyle='--', linewidth=2, label='1% threshold')
         plt.title('OCM0, State 2')
         plt.legend(loc='upper right')
-        for i in range(0, 100):
+        plt.xlabel('Depth (cm)')
+        plt.ylabel('Abnormality ')
+        for i in range(0, A0_post.shape[1], 100):
             a4 = ax4.plot(d, A0_post[:, i], linewidth=1)
        
         ax5 = fig.add_subplot(235)
-        plt.axhline(y=chi2_interval_max_0001, color='k', linestyle=':', label='0.1% threshold')
-        plt.axhline(y=chi2_interval_max_001, color='k', linestyle='--', label='1% threshold')
+        plt.axhline(y=chi2_interval_max_0001, color='k', linestyle=':', linewidth=2, label='0.1% threshold')
+        plt.axhline(y=chi2_interval_max_001, color='k', linestyle='--', linewidth=2, label='1% threshold')
         plt.title('OCM1, State 2')
         plt.legend(loc='upper right')
-        for i in range(0, 100):
+        plt.xlabel('Depth (cm)')
+        plt.ylabel('Abnormality ')
+        for i in range(0, A1_post.shape[1], 100):
             a5 = ax5.plot(d, A1_post[:, i], linewidth=1)
        
         ax6 = fig.add_subplot(236)
-        plt.axhline(y=chi2_interval_max_0001, color='k', linestyle=':', label='0.1% threshold')
-        plt.axhline(y=chi2_interval_max_001, color='k', linestyle='--', label='1% threshold')
+        plt.axhline(y=chi2_interval_max_0001, color='k', linestyle=':', linewidth=2, label='0.1% threshold')
+        plt.axhline(y=chi2_interval_max_001, color='k', linestyle='--', linewidth=2, label='1% threshold')
         plt.title('OCM2, State 2')
         plt.legend(loc='upper right')
-        for i in range(0, 100):
+        plt.xlabel('Depth (cm)')
+        plt.ylabel('Abnormality ')
+        for i in range(0, A2_post.shape[1], 100):
             a6 = ax6.plot(d, A2_post[:, i], linewidth=1)
        
         fig.show()
         f_name = 'Abnomality_'+Sub_run_name+'.png'
         plt.savefig(f_name)
-    '''
+        plt.close()
 
+
+    #print('A0_total shape:', A0_total.shape)
     ### Count the number of traces above threshold ###
-    # OCM0
-    for bh in range(0, num_bh):
-        for p in range(0, t_sub_removed):
-            flag0 = 0
-            for depth in range(0, s_new):
-                # if not detected yet
-                if flag0 < 1:  # OCM0
-                    # check every depth and count if it's larger than the threshold
-                    if A0[depth, bh * t_sub_removed + p] > chi2_interval_max_0001:
-                        out0_test[fidx, bh] = out0_test[fidx, bh] + 1
-                        flag0 = 1
-        out0_test[fidx, bh] = out0_test[fidx, bh] / t_sub_removed  # Show in percentage
+    if fidx % 2 is 0:
+        bh_start = 0
+        bh_end = 5
+        # OCM0
+        for bh in range(bh_start, bh_end):
+            for p in range(0, t_sub_removed):
+                flag0 = 0
+                for depth in range(0, s_new):
+                    # if not detected yet
+                    if flag0 < 1:  # OCM0
+                        # check every depth and count if it's larger than the threshold
+                        if A0_pre[depth, bh * t_sub_removed + p] > chi2_interval_max_0001:
+                            out0_test[int(fidx / 2), bh] = out0_test[int(fidx / 2), bh] + 1
+                            flag0 = 1
 
-    ##OCM1 and OCM2
-    for bh in range(0, num_bh):
-        for p in range(0, t_sub):
-            flag1 = 0
-            flag2 = 0
-            for depth in range(0, s_new):
-                # if not detected yet
-                if flag1 < 1:  # OCM1
-                    if A1[depth, bh * t_sub + p] > chi2_interval_max_0001:
-                        out1_test[fidx, bh] = out1_test[fidx, bh] + 1
-                        flag0 = 1
-                if flag2 < 1:  # OCM2
-                    if A2[depth, bh * t_sub + p] > chi2_interval_max_0001:
-                        out2_test[fidx, bh] = out2_test[fidx, bh] + 1
-                        flag2 = 1
+        ##OCM1 and OCM2
+        for bh in range(bh_start, bh_end):
+            for p in range(0, t_sub):
+                flag1 = 0
+                flag2 = 0
+                for depth in range(0, s_new):
+                    # if not detected yet
+                    if flag1 < 1:  # OCM1
+                        if A1_pre[depth, bh * t_sub + p] > chi2_interval_max_0001:
+                            out1_test[int(fidx / 2), bh] = out1_test[int(fidx / 2), bh] + 1
+                            flag1 = 1
+                    if flag2 < 1:  # OCM2
+                        if A2_pre[depth, bh * t_sub + p] > chi2_interval_max_0001:
+                            out2_test[int(fidx / 2), bh] = out2_test[int(fidx / 2), bh] + 1
+                            flag2 = 1
+    else:  # State 2
+        bh_start = 5
+        bh_end = 10
+        # OCM0
+        for bh in range(bh_start, bh_end):
+            for p in range(0, t_sub_removed):
+                flag0 = 0
+                for depth in range(0, s_new):
+                    # if not detected yet
+                    if flag0 < 1:  # OCM0
+                        # check every depth and count if it's larger than the threshold
+                        if A0_post[depth, (bh-5) * t_sub_removed + p] > chi2_interval_max_0001:
+                            out0_test[int(fidx / 2), bh] = out0_test[int(fidx / 2), bh] + 1
+                            flag0 = 1
 
-        out1_test[fidx, bh] = out1_test[fidx, bh] / t_sub  # Show in percentage
-        out2_test[fidx, bh] = out2_test[fidx, bh] / t_sub  # Show in percentage
+        ##OCM1 and OCM2
+        for bh in range(bh_start, bh_end):
+            for p in range(0, t_sub):
+                flag1 = 0
+                flag2 = 0
+                for depth in range(0, s_new):
+                    # if not detected yet
+                    if flag1 < 1:  # OCM1
+                        if A1_post[depth, (bh-5) * t_sub + p] > chi2_interval_max_0001:
+                            out1_test[int(fidx / 2), bh] = out1_test[int(fidx / 2), bh] + 1
+                            flag1 = 1
+                    if flag2 < 1:  # OCM2
+                        if A2_post[depth, (bh-5) * t_sub + p] > chi2_interval_max_0001:
+                            out2_test[int(fidx / 2), bh] = out2_test[int(fidx / 2), bh] + 1
+                            flag2 = 1
+
+        # Normalize and show in percentage
+        out0_test[int(fidx / 2), :] = out0_test[int(fidx / 2), :] / t_sub_removed  # Show in percentage
+        if fidx is 11:
+            print('fidx is '+str(fidx))
+        out1_test[int(fidx / 2), :] = out1_test[int(fidx / 2), :] / t_sub  # Show in percentage
+        out2_test[int(fidx / 2), :] = out2_test[int(fidx / 2), :] / t_sub  # Show in percentage
+
+
+
+print('out0_test:', out0_test)
+print('out1_test:', out1_test)
+print('out2_test:', out2_test)
+
+# Visualize outlier number
+bh_idx = np.linspace(1, 10, 10)
+
+fig = plt.figure(figsize=(24, 4))
+ax = fig.add_subplot(131)
+plt.title('Outlier detection rate, OCM0')
+for fidx in range(0, len(rep_list), 2):
+    print(fidx)
+    a0 = ax.plot(bh_idx, out0_test[int(fidx / 2), :], linewidth=1.5, label=sr_list[fidx])
+
+plt.legend(loc='upper left')
+ax = fig.add_subplot(132)
+plt.title('Outlier detection rate, OCM1')
+for fidx in range(0, len(rep_list), 2):
+    a1 = ax.plot(bh_idx, out1_test[int(fidx / 2), :], linewidth=1.5, label=sr_list[fidx])
+
+ax = fig.add_subplot(133)
+plt.title('Outlier detection rate, OCM2')
+for fidx in range(0, len(rep_list), 2):
+    a2 = ax.plot(bh_idx, out2_test[int(fidx / 2), :], linewidth=1.5, label=sr_list[fidx])
+
+f_name = 'Outlier_rate.png'
+plt.savefig(f_name)
