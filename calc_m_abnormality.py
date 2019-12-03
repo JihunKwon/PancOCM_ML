@@ -40,7 +40,7 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2
 
 sr_list = ['s1r1', 's1r1', 's1r2', 's1r2', 's2r1', 's2r1', 's2r2', 's2r2', 's3r1', 's3r1', 's3r2', 's3r2']
 rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
-#rep_list = [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200]
+#rep_list = [3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000]
 
 '''
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy") #Before water
@@ -63,16 +63,23 @@ s_new = 296  # the depth your interest
 threshold = 0.01  # Threshold for Chi^2
 
 #### Set the threshold based on Chi^2 ####
-Chi_list = [0.05]
-_, chi2_interval_max_001 = chi2.interval(alpha=1 - 0.01, df=1)
-_, chi2_interval_max_005 = chi2.interval(alpha=1 - 0.05, df=1)
-print('chi2_interval_max_001: ' + str(chi2_interval_max_001))
-print('chi2_interval_max_005: ' + str(chi2_interval_max_005))
+Chi_list = [0.001, 0.0001, 0.00001, 0.000001, 0.0000001]
+_, chi2_interval_max_0001 = chi2.interval(alpha=1 - 0.001, df=1)
+_, chi2_interval_max_00001 = chi2.interval(alpha=1 - 0.0001, df=1)
+_, chi2_interval_max_000001 = chi2.interval(alpha=1 - 0.00001, df=1)
+_, chi2_interval_max_0000001 = chi2.interval(alpha=1 - 0.000001, df=1)
+_, chi2_interval_max_00000001 = chi2.interval(alpha=1 - 0.0000001, df=1)
+print('chi2_interval_max_0001: ' + str(chi2_interval_max_0001))
+print('chi2_interval_max_00001: ' + str(chi2_interval_max_00001))
+print('chi2_interval_max_000001: ' + str(chi2_interval_max_000001))
+print('chi2_interval_max_0000001: ' + str(chi2_interval_max_0000001))
+print('chi2_interval_max_00000001: ' + str(chi2_interval_max_00000001))
 
 out0_test = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])  # output test result
 out1_test = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])
 out2_test = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])
 out_mean = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])
+
 
 for fidx in range(0, np.size(rep_list)):
     # for fidx in range(0, 2):
@@ -138,6 +145,12 @@ for fidx in range(0, np.size(rep_list)):
     A0 = np.zeros([s_new, c0_new_removed])
     A1 = np.zeros([s_new, c0_new])
     A2 = np.zeros([s_new, c0_new])
+    A0_pre_medi = np.zeros([s_new])
+    A1_pre_medi = np.zeros([s_new])
+    A2_pre_medi = np.zeros([s_new])
+    A0_post_medi = np.zeros([s_new])
+    A1_post_medi = np.zeros([s_new])
+    A2_post_medi = np.zeros([s_new])
     median0_low = np.zeros([s_new, num_bh])
     median1_low = np.zeros([s_new, num_bh])
     median2_low = np.zeros([s_new, num_bh])
@@ -223,6 +236,14 @@ for fidx in range(0, np.size(rep_list)):
         A0_post = A0
         A1_post = A1
         A2_post = A2
+        # Get median
+        for depth in range(0, s_new):
+            A0_pre_medi[depth] = statistics.median(A0_pre[depth, :])
+            A1_pre_medi[depth] = statistics.median(A1_pre[depth, :])
+            A2_pre_medi[depth] = statistics.median(A2_pre[depth, :])
+            A0_post_medi[depth] = statistics.median(A0_post[depth, :])
+            A1_post_medi[depth] = statistics.median(A1_post[depth, :])
+            A2_post_medi[depth] = statistics.median(A2_post[depth, :])
 
     # ========================Visualize==============================================
 
@@ -230,77 +251,95 @@ for fidx in range(0, np.size(rep_list)):
         d = np.linspace(2.3, 4.5, s_new)
         ## Plot Linear Scale ##
         fig = plt.figure(figsize=(20, 8))
-       
+
         # State 1
         ax1 = fig.add_subplot(231)
-        plt.axhline(y=chi2_interval_max_005, color='k', linestyle='--', linewidth=2, label='5% threshold')
         plt.title('OCM0, State 1')
+        a1 = ax1.plot(d, A0_pre_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
         plt.legend(loc='upper right')
         plt.ylabel('Abnormality')
         nValues = range(0, int(A0_pre.shape[1]))
         # Change line colors continuously. Red: Bh=1, Blue: Bh=5
         colors = {n: colorsys.hsv_to_rgb(hue,0.9,0.7) for n,hue in zip(nValues,np.linspace(0,0.7,(len(nValues))))}
-        for i in range(0, A0_pre.shape[1], 100):
+        for i in range(0, A0_pre.shape[1], 500):
             a1 = ax1.plot(d, A0_pre[:, i], linewidth=0.75, color=colors[i])
+        a1 = ax1.plot(d, A0_pre_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
 
         ax2 = fig.add_subplot(232)
-        plt.axhline(y=chi2_interval_max_005, color='k', linestyle='--', linewidth=2, label='5% threshold')
+        a2 = ax2.plot(d, A1_pre_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
         plt.title('OCM1, State 1')
         plt.legend(loc='upper right')
         plt.ylabel('Abnormality')
         nValues = range(0, int(A1_pre.shape[1]))
         colors = {n: colorsys.hsv_to_rgb(hue,0.9,0.7) for n,hue in zip(nValues,np.linspace(0,0.7,(len(nValues))))}
-        for i in range(0, A1_pre.shape[1], 100):
+        for i in range(0, A1_pre.shape[1], 500):
             a2 = ax2.plot(d, A1_pre[:, i], linewidth=0.75, color=colors[i])
+        a2 = ax2.plot(d, A1_pre_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
 
         ax3 = fig.add_subplot(233)
-        plt.axhline(y=chi2_interval_max_005, color='k', linestyle='--', linewidth=2, label='5% threshold')
+        a3 = ax3.plot(d, A2_pre_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
         plt.title('OCM2, State 1')
         plt.legend(loc='upper right')
         plt.ylabel('Abnormality')
         nValues = range(0, int(A2_pre.shape[1]))
         colors = {n: colorsys.hsv_to_rgb(hue,0.9,0.7) for n,hue in zip(nValues,np.linspace(0,0.7,(len(nValues))))}
-        for i in range(0, A2_pre.shape[1], 100):
+        for i in range(0, A2_pre.shape[1], 500):
             a3 = ax3.plot(d, A2_pre[:, i], linewidth=0.75, color=colors[i])
+        a3 = ax3.plot(d, A2_pre_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
 
         # State 2
         if fidx is not 11:  # The data in OCM0 for s3r2 state 2 is strange. We don't use this.
             ax4 = fig.add_subplot(234)
-            plt.axhline(y=chi2_interval_max_005, color='k', linestyle='--', linewidth=2, label='5% threshold')
+            a4 = ax4.plot(d, A0_post_medi[:], linewidth=2.0, color='k', label='median')
+            plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
             plt.title('OCM0, State 2')
             plt.legend(loc='upper right')
             plt.xlabel('Depth (cm)')
             plt.ylabel('Abnormality')
             nValues = range(0, int(A0_post.shape[1]))
             colors = {n: colorsys.hsv_to_rgb(hue,0.9,0.7) for n,hue in zip(nValues,np.linspace(0,0.7,(len(nValues))))}
-            for i in range(0, A0_post.shape[1], 100):
+            for i in range(0, A0_post.shape[1], 500):
                 a4 = ax4.plot(d, A0_post[:, i], linewidth=0.75, color=colors[i])
+            a4 = ax4.plot(d, A0_post_medi[:], linewidth=2.0, color='k', label='median')
+            plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
 
         ax5 = fig.add_subplot(235)
-        plt.axhline(y=chi2_interval_max_005, color='k', linestyle='--', linewidth=2, label='5% threshold')
+        a5 = ax5.plot(d, A1_post_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
         plt.title('OCM1, State 2')
         plt.legend(loc='upper right')
         plt.xlabel('Depth (cm)')
         plt.ylabel('Abnormality')
         nValues = range(0, int(A1_post.shape[1]))
         colors = {n: colorsys.hsv_to_rgb(hue,0.9,0.7) for n,hue in zip(nValues,np.linspace(0,0.7,(len(nValues))))}
-        for i in range(0, A1_post.shape[1], 100):
+        for i in range(0, A1_post.shape[1], 500):
             a5 = ax5.plot(d, A1_post[:, i], linewidth=0.75, color=colors[i])
+        a5 = ax5.plot(d, A1_post_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
 
         ax6 = fig.add_subplot(236)
-        plt.axhline(y=chi2_interval_max_005, color='k', linestyle='--', linewidth=2, label='5% threshold')
+        a6 = ax6.plot(d, A2_post_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
         plt.title('OCM2, State 2')
         plt.legend(loc='upper right')
         plt.xlabel('Depth (cm)')
         plt.ylabel('Abnormality')
         nValues = range(0, int(A2_post.shape[1]))
         colors = {n: colorsys.hsv_to_rgb(hue,0.9,0.7) for n,hue in zip(nValues,np.linspace(0,0.7,(len(nValues))))}
-        for i in range(0, A2_post.shape[1], 100):
+        for i in range(0, A2_post.shape[1], 500):
             a6 = ax6.plot(d, A2_post[:, i], linewidth=0.75, color=colors[i])
-       
+        a6 = ax6.plot(d, A2_post_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
+
         fig.show()
         plt.tight_layout()
-        f_name = 'Abnomality_'+Sub_run_name+'.png'
+        f_name = 'Abnomality_'+Sub_run_name +'_train'+str(num_train)+'.png'
         plt.savefig(f_name)
         plt.close()
 
@@ -309,7 +348,8 @@ for fidx in range(0, np.size(rep_list)):
 
         # State 1
         ax1 = fig.add_subplot(231)
-        plt.axhline(y=chi2_interval_max_005, color='k', linestyle='--', linewidth=2, label='5% threshold')
+        a1 = ax1.plot(d, A0_pre_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
         plt.title('OCM0, State 1')
         plt.legend(loc='upper right')
         plt.ylabel('Abnormality')
@@ -318,11 +358,14 @@ for fidx in range(0, np.size(rep_list)):
         nValues = range(0, int(A0_pre.shape[1]))
         # Change line colors continuously. Red: Bh=1, Blue: Bh=5
         colors = {n: colorsys.hsv_to_rgb(hue, 0.9, 0.7) for n, hue in zip(nValues, np.linspace(0, 0.7, (len(nValues))))}
-        for i in range(0, A0_pre.shape[1], 100):
+        for i in range(0, A0_pre.shape[1], 500):
             a1 = ax1.plot(d, A0_pre[:, i], linewidth=0.75, color=colors[i])
+        a1 = ax1.plot(d, A0_pre_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
 
         ax2 = fig.add_subplot(232)
-        plt.axhline(y=chi2_interval_max_005, color='k', linestyle='--', linewidth=2, label='5% threshold')
+        a2 = ax2.plot(d, A1_pre_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
         plt.title('OCM1, State 1')
         plt.legend(loc='upper right')
         plt.ylabel('Abnormality')
@@ -330,11 +373,14 @@ for fidx in range(0, np.size(rep_list)):
         ax2.set_ylim(0.1, 10000)
         nValues = range(0, int(A1_pre.shape[1]))
         colors = {n: colorsys.hsv_to_rgb(hue, 0.9, 0.7) for n, hue in zip(nValues, np.linspace(0, 0.7, (len(nValues))))}
-        for i in range(0, A1_pre.shape[1], 100):
+        for i in range(0, A1_pre.shape[1], 500):
             a2 = ax2.plot(d, A1_pre[:, i], linewidth=0.75, color=colors[i])
+        a2 = ax2.plot(d, A1_pre_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
 
         ax3 = fig.add_subplot(233)
-        plt.axhline(y=chi2_interval_max_005, color='k', linestyle='--', linewidth=2, label='5% threshold')
+        a3 = ax3.plot(d, A2_pre_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
         plt.title('OCM2, State 1')
         plt.legend(loc='upper right')
         plt.ylabel('Abnormality')
@@ -342,13 +388,16 @@ for fidx in range(0, np.size(rep_list)):
         ax3.set_ylim(0.1, 10000)
         nValues = range(0, int(A2_pre.shape[1]))
         colors = {n: colorsys.hsv_to_rgb(hue, 0.9, 0.7) for n, hue in zip(nValues, np.linspace(0, 0.7, (len(nValues))))}
-        for i in range(0, A2_pre.shape[1], 100):
+        for i in range(0, A2_pre.shape[1], 500):
             a3 = ax3.plot(d, A2_pre[:, i], linewidth=0.75, color=colors[i])
+        a3 = ax3.plot(d, A2_pre_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
 
         # State 2
         if fidx is not 11:  # The data in OCM0 for s3r2 state 2 is strange. We don't use this.
             ax4 = fig.add_subplot(234)
-            plt.axhline(y=chi2_interval_max_005, color='k', linestyle='--', linewidth=2, label='5% threshold')
+            a4 = ax4.plot(d, A0_post_medi[:], linewidth=2.0, color='k', label='median')
+            plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
             plt.title('OCM0, State 2')
             plt.legend(loc='upper right')
             plt.xlabel('Depth (cm)')
@@ -358,11 +407,14 @@ for fidx in range(0, np.size(rep_list)):
             nValues = range(0, int(A0_post.shape[1]))
             colors = {n: colorsys.hsv_to_rgb(hue, 0.9, 0.7) for n, hue in
                       zip(nValues, np.linspace(0, 0.7, (len(nValues))))}
-            for i in range(0, A0_post.shape[1], 100):
+            for i in range(0, A0_post.shape[1], 500):
                 a4 = ax4.plot(d, A0_post[:, i], linewidth=0.75, color=colors[i])
+            a4 = ax4.plot(d, A0_post_medi[:], linewidth=2.0, color='k', label='median')
+            plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
 
         ax5 = fig.add_subplot(235)
-        plt.axhline(y=chi2_interval_max_005, color='k', linestyle='--', linewidth=2, label='5% threshold')
+        a5 = ax5.plot(d, A1_post_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
         plt.title('OCM1, State 2')
         plt.legend(loc='upper right')
         plt.xlabel('Depth (cm)')
@@ -371,11 +423,14 @@ for fidx in range(0, np.size(rep_list)):
         ax5.set_ylim(0.1, 10000)
         nValues = range(0, int(A1_post.shape[1]))
         colors = {n: colorsys.hsv_to_rgb(hue, 0.9, 0.7) for n, hue in zip(nValues, np.linspace(0, 0.7, (len(nValues))))}
-        for i in range(0, A1_post.shape[1], 100):
+        for i in range(0, A1_post.shape[1], 500):
             a5 = ax5.plot(d, A1_post[:, i], linewidth=0.75, color=colors[i])
+        a5 = ax5.plot(d, A1_post_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
 
         ax6 = fig.add_subplot(236)
-        plt.axhline(y=chi2_interval_max_005, color='k', linestyle='--', linewidth=2, label='5% threshold')
+        a6 = ax6.plot(d, A2_post_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
         plt.title('OCM2, State 2')
         plt.legend(loc='upper right')
         plt.xlabel('Depth (cm)')
@@ -384,12 +439,14 @@ for fidx in range(0, np.size(rep_list)):
         ax6.set_ylim(0.1, 10000)
         nValues = range(0, int(A2_post.shape[1]))
         colors = {n: colorsys.hsv_to_rgb(hue, 0.9, 0.7) for n, hue in zip(nValues, np.linspace(0, 0.7, (len(nValues))))}
-        for i in range(0, A2_post.shape[1], 100):
+        for i in range(0, A2_post.shape[1], 500):
             a6 = ax6.plot(d, A2_post[:, i], linewidth=0.75, color=colors[i])
+        a6 = ax6.plot(d, A2_post_medi[:], linewidth=2.0, color='k', label='median')
+        plt.axhline(y=chi2_interval_max_00001, color='k', linestyle='--', linewidth=2, label='0.01% threshold')
 
         fig.show()
         plt.tight_layout()
-        f_name = 'Abnomality_' + Sub_run_name + '_log.png'
+        f_name = 'Abnomality_' + Sub_run_name +'_train'+str(num_train) + '_log.png'
         plt.savefig(f_name)
         plt.close()
 
@@ -401,21 +458,19 @@ for fidx in range(0, np.size(rep_list)):
         else:  # State 2
             out0_test, out1_test, out2_test = count_outlier(chi_idx, Chi_area, fidx, t_sub_removed, t_sub, s_new, out0_test, out1_test, out2_test, A0_post, A1_post, A2_post)
 
-        # Normalize and show in percentage
-        out0_test[chi_idx, int(fidx / 2), :] = out0_test[chi_idx, int(fidx / 2), :] / t_sub_removed * 100  # Show in percentage
-        out1_test[chi_idx, int(fidx / 2), :] = out1_test[chi_idx, int(fidx / 2), :] / t_sub * 100  # Show in percentage
-        out2_test[chi_idx, int(fidx / 2), :] = out2_test[chi_idx, int(fidx / 2), :] / t_sub * 100  # Show in percentage
-        # Get average for later visualization
-        if fidx is not 11:
-            out_mean[chi_idx, int(fidx / 2), :] = (out0_test[chi_idx, int(fidx / 2), :] + out1_test[chi_idx, int(fidx / 2), :] + out2_test[chi_idx, int(fidx / 2), :]) / 3
-        else:  # The data in OCM0 for s3r2 state 2 is strange. We don't use this.
-            out_mean[chi_idx, int(fidx / 2), :] = (out1_test[chi_idx, int(fidx / 2), :] + out2_test[chi_idx, int(fidx / 2), :]) / 2
+            # Normalize and show in percentage
+            out0_test[chi_idx, int(fidx / 2), :] = out0_test[chi_idx, int(fidx / 2), :] / t_sub_removed * 100  # Show in percentage
+            out1_test[chi_idx, int(fidx / 2), :] = out1_test[chi_idx, int(fidx / 2), :] / t_sub * 100  # Show in percentage
+            out2_test[chi_idx, int(fidx / 2), :] = out2_test[chi_idx, int(fidx / 2), :] / t_sub * 100  # Show in percentage
+            # Get average for later visualization
+            if fidx is not 11:
+                out_mean[chi_idx, int(fidx / 2), :] = (out0_test[chi_idx, int(fidx / 2), :] + out1_test[chi_idx, int(fidx / 2), :] + out2_test[chi_idx, int(fidx / 2), :]) / 3
+            else:  # The data in OCM0 for s3r2 state 2 is strange. We don't use this.
+                out_mean[chi_idx, int(fidx / 2), :] = (out1_test[chi_idx, int(fidx / 2), :] + out2_test[chi_idx, int(fidx / 2), :]) / 2
 
-
-
-print('out0_test:', out0_test)
-print('out1_test:', out1_test)
-print('out2_test:', out2_test)
+print('out0_test fidx_'+str(fidx)+'_chi_'+ str(chi_idx), out0_test)
+print('out1_test fidx_'+str(fidx)+'_chi_'+ str(chi_idx), out1_test)
+print('out2_test fidx_'+str(fidx)+'_chi_'+ str(chi_idx), out2_test)
 
 for chi_idx in range(0, len(Chi_list)):
     # Visualize outlier number
