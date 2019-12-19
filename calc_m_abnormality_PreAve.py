@@ -69,12 +69,14 @@ num_bh = 5 # number of bh in each state
 s_new = 269  # 2.2cm to 4.2cm
 threshold = 0.01  # Threshold for Chi^2
 interval = 2  # Interval for averaging
-plot_interval = 100
+plot_interval = 1000
 #interval_list = [2, 4, 5, 10]
-interval_list = [1, 4, 10, 100]
+#interval_list = [5, 10, 50]
+length_list = [5, 10, 20, 50]
+
 
 #### Set the threshold based on Chi^2 ####
-Chi_list = [0.00000000001, 0.000000000001, 0.0000000000001, 0.00000000000001, 0.000000000000001, 0.0000000000000005]
+Chi_list = [0.000000001, 0.0000000001, 0.000000001, 0.000000000001, 0.0000000000001, 0.00000000000001]
 _, chi2_interval_max_0000001 = chi2.interval(alpha=1 - 0.000001, df=1)
 _, chi2_interval_max_00000001 = chi2.interval(alpha=1 - 0.0000001, df=1)
 _, chi2_interval_max_000000001 = chi2.interval(alpha=1 - 0.00000001, df=1)
@@ -87,15 +89,21 @@ out0_test = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])  # output test
 out1_test = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])
 out2_test = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])
 out_mean = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])  # Mean of all OCM
-
+'''
 for interval_idx in range(0, np.size(rep_list)):
     interval = interval_list[interval_idx]
 
     out0_test = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])  # output test result
     out1_test = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])
     out2_test = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])
-
     out_mean = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])  # Mean of all OCM
+'''
+for length_idx in range(0, len(length_list)):
+    out0_test = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])  # output test result
+    out1_test = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])
+    out2_test = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])
+    out_mean = np.zeros([len(Chi_list), int(len(rep_list) / 2), 10])  # Mean of all OCM
+
     for fidx in range(0, np.size(rep_list)):
         # for fidx in range(0, 2):
         # fidx = 0
@@ -240,7 +248,8 @@ for interval_idx in range(0, np.size(rep_list)):
         median0_low = np.zeros([s_new, num_bh])
         median1_low = np.zeros([s_new, num_bh])
         median2_low = np.zeros([s_new, num_bh])
-        f1 = np.ones([10])  # low pass kernel
+        length_low = length_list[length_idx]
+        f1 = np.ones([length_low])  # low pass kernel
 
         # Median-based filtering
         for bh in range(0, num_bh):
@@ -252,6 +261,7 @@ for interval_idx in range(0, np.size(rep_list)):
 
         # Filter the median
         length = 50  # size of low pass filter
+        #length = length_list[length_idx]
         f1_medi = np.ones([length])
         for bh in range(0, num_bh):
             tr0_medi = median0[:, bh]
@@ -314,19 +324,19 @@ for interval_idx in range(0, np.size(rep_list)):
                 sd0[depth] = np.abs(np.std(mean0_base[depth] - ocm0_low[depth, 0:t_sub_removed * num_train]))
                 sd1[depth] = np.abs(np.std(mean1_base[depth] - ocm1_low[depth, 0:t_sub * num_train]))
                 sd2[depth] = np.abs(np.std(mean2_base[depth] - ocm2_low[depth, 0:t_sub * num_train]))
-        
+
         #### Abnormality calculation ####
         ## OCM0
         for p in range(0, c0_new_removed):
             for depth in range(0, s_new):
                 A0[depth, p] = np.square((mean0_base[depth] - ocm0_low[depth, p]) / sd0[depth])
-    
+
         ## OCM1 and 2
         for p in range(0, c0_new):
             for depth in range(0, s_new):
                 A1[depth, p] = np.square((mean1_base[depth] - ocm1_low[depth, p]) / sd1[depth])
                 A2[depth, p] = np.square((mean2_base[depth] - ocm2_low[depth, p]) / sd2[depth])
-    
+
         if fidx % 2 == 0:
             A0_pre = A0
             A1_pre = A1
@@ -356,7 +366,7 @@ for interval_idx in range(0, np.size(rep_list)):
 
 
         # ========================Visualize==============================================
-        '''
+
         if fidx % 2 == 1:
             if s_new is 231:
                 d = np.linspace(2.3, 4.0, s_new)
@@ -494,11 +504,11 @@ for interval_idx in range(0, np.size(rep_list)):
 
             fig.show()
             plt.tight_layout()
-            f_name = 'Abnomality_' + Sub_run_name +'_train'+str(num_train) + '_log'+'_s'+str(s_new)+'_interval'+str(interval)+'.png'
+            f_name = 'Abnomality_' + Sub_run_name +'_train'+str(num_train) + '_log'+'_s'+str(s_new)+'_interval'+str(interval)+'_filt'+str(length_low)+'.png'
             plt.savefig(f_name)
-            # plt.savefig(os.path.join(dropbox_path, f_name))  # Save on dropbox directory
+            plt.savefig(os.path.join(dropbox_path, f_name))  # Save on dropbox directory
             plt.close()
-        '''
+
 
         for chi_idx in range(0, len(Chi_list)):
             Chi_area = Chi_list[chi_idx]
@@ -593,6 +603,6 @@ for interval_idx in range(0, np.size(rep_list)):
 
         plt.legend(loc='upper left')
         plt.tight_layout()
-        f_name = 'Outlier_rate_'+str(Chi_list[chi_idx])+'_train'+str(num_train)+'_s'+str(s_new)+'_interval'+str(interval)+'_Pre_Ave.png'
+        f_name = 'Outlier_rate_'+str(Chi_list[chi_idx])+'_train'+str(num_train)+'_s'+str(s_new)+'_interval'+str(interval)+'_filt'+str(length_low)+'_Pre_Ave.png'
         plt.savefig(f_name)
-        #plt.savefig(os.path.join(dropbox_path, f_name))  # Save on dropbox directory
+        plt.savefig(os.path.join(dropbox_path, f_name))  # Save on dropbox directory
