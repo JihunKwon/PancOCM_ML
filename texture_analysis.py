@@ -33,8 +33,10 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2
 
 sr_list = ['s1r1', 's1r1', 's1r2', 's1r2', 's2r1', 's2r1', 's2r2', 's2r2', 's3r1', 's3r1', 's3r2', 's3r2']
 rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
-#rep_list = [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200]
+#rep_list = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
 
+#sr_list = ['s1r1', 's1r1']
+#rep_list = [8196, 8196]
 '''
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy") #Before water
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run2.npy") #After water
@@ -55,14 +57,17 @@ num_bh = 5 # number of bh in each state
 bin = 2000
 scale = 20  # number divides m
 s_new = 297  # 2.3cm to 4.5cm
-interval = 20  # Interval for averaging
 
+dist_list = [1, 3, 5]
+ang_list = [0, np.pi / 4, np.pi / 2]  # 0:right, pi/4:45deg, pi/2:top
+ang_list_str = ['0', '45', '90']
 # Initialize output parameters of texture analysis
-out_0 = np.zeros([len(rep_list)//2, len(grayco_prop_list), num_bh * 2, 1, 1])
-out_1 = np.zeros([len(rep_list)//2, len(grayco_prop_list), num_bh * 2, 1, 1])
-out_2 = np.zeros([len(rep_list)//2, len(grayco_prop_list), num_bh * 2, 1, 1])
+out_0 = np.zeros([len(rep_list)//2, len(grayco_prop_list), num_bh * 2, len(dist_list), len(ang_list)])
+out_1 = np.zeros([len(rep_list)//2, len(grayco_prop_list), num_bh * 2, len(dist_list), len(ang_list)])
+out_2 = np.zeros([len(rep_list)//2, len(grayco_prop_list), num_bh * 2, len(dist_list), len(ang_list)])
 
-for fidx in range(0, len(rep_list)):
+#for fidx in range(0, len(rep_list)):
+for fidx in range(0, 4):
     #fidx = 0
     #### Filtering ###
     Sub_run_name = sr_list[fidx]
@@ -178,37 +183,16 @@ for fidx in range(0, len(rep_list)):
         ocm1_low[:, p] = np.convolve(np.sqrt(np.square(tr1)), f1, 'same')
         ocm2_low[:, p] = np.convolve(np.sqrt(np.square(tr2)), f1, 'same')
 
-
-    ## Get mean of the low pass-filtered traces
-    count0 = 0
-    count12 = 0
+    # Dump data
     if fidx%2 is 0:  # if state 1
-        ocm0_low_pre = np.zeros([ocm0_low.shape[0], int(ocm0_low.shape[1] / interval) + 1])
-        ocm1_low_pre = np.zeros([ocm1_low.shape[0], int(ocm1_low.shape[1] / interval)])
-        ocm2_low_pre = np.zeros([ocm2_low.shape[0], int(ocm2_low.shape[1] / interval)])
-        for p in range(0, c0_new_removed):
-            if p % interval is 0:
-                ocm0_low_pre[:, count0] = np.mean(ocm0_low[:, count0*interval:(count0+1)*interval], axis=1)
-                count0+=1
-        for p in range(0, c0_new):
-            if p % interval is 0:
-                ocm1_low_pre[:, count12] = np.mean(ocm1_low[:, count12*interval:(count12+1)*interval], axis=1)
-                ocm2_low_pre[:, count12] = np.mean(ocm2_low[:, count12*interval:(count12+1)*interval], axis=1)
-                count12+=1
+        ocm0_low_pre = ocm0_low
+        ocm1_low_pre = ocm1_low
+        ocm2_low_pre = ocm2_low
 
     if fidx%2 is 1:  # if state 2
-        ocm0_low_post = np.zeros([ocm0_low.shape[0], int(ocm0_low.shape[1]/interval)+1])
-        ocm1_low_post = np.zeros([ocm1_low.shape[0], int(ocm1_low.shape[1]/interval)])
-        ocm2_low_post = np.zeros([ocm2_low.shape[0], int(ocm2_low.shape[1]/interval)])
-        for p in range(0, c0_new_removed):
-            if p % interval is 0:
-                ocm0_low_post[:, count0] = np.mean(ocm0_low[:, count0*interval:(count0+1)*interval], axis=1)
-                count0+=1
-        for p in range(0, c0_new):
-            if p % interval is 0:
-                ocm1_low_post[:, count12] = np.mean(ocm1_low[:, count12*interval:(count12+1)*interval], axis=1)
-                ocm2_low_post[:, count12] = np.mean(ocm2_low[:, count12*interval:(count12+1)*interval], axis=1)
-                count12+=1
+        ocm0_low_post = ocm0_low
+        ocm1_low_post = ocm1_low
+        ocm2_low_post = ocm2_low
 
         ## Followings are run when it is state 2.
         # Divide to bh
@@ -227,7 +211,8 @@ for fidx in range(0, len(rep_list)):
             ocm1_post_bh[bh, :, :] = ocm1_low_post[:, bh*int(ocm1_low_post.shape[1]/5):(bh+1)*int(ocm1_low_post.shape[1]/5)]
             ocm2_post_bh[bh, :, :] = ocm2_low_post[:, bh*int(ocm2_low_post.shape[1]/5):(bh+1)*int(ocm2_low_post.shape[1]/5)]
 
-        ## Visualize traces (averaged by "interval")
+        '''
+        ## Visualize traces
         fig = plt.figure(figsize=(11, 18))
         vis = 0
 
@@ -251,6 +236,7 @@ for fidx in range(0, len(rep_list)):
         plt.tight_layout
         f_name = 'Averaged_traces'+Sub_run_name+'.png'
         plt.savefig(f_name)
+        '''
 
         ## Get co-occurrence matrix
         ocm0_pre_scaled = exposure.rescale_intensity(ocm0_pre_bh[:,:,:], out_range=(0, 1))
@@ -267,170 +253,166 @@ for fidx in range(0, len(rep_list)):
         im_ocm1_post_scaled = util.img_as_ubyte(ocm1_post_scaled)
         im_ocm2_post_scaled = util.img_as_ubyte(ocm2_post_scaled)
 
-        greycomatrix_pre_0 = np.zeros([num_bh, 256, 256, 1, 1])
-        greycomatrix_pre_1 = np.zeros([num_bh, 256, 256, 1, 1])
-        greycomatrix_pre_2 = np.zeros([num_bh, 256, 256, 1, 1])
-        greycomatrix_post_0 = np.zeros([num_bh, 256, 256, 1, 1])
-        greycomatrix_post_1 = np.zeros([num_bh, 256, 256, 1, 1])
-        greycomatrix_post_2 = np.zeros([num_bh, 256, 256, 1, 1])
+        greycomatrix_pre_0 = np.zeros([num_bh, 256, 256, len(dist_list), len(ang_list)])
+        greycomatrix_pre_1 = np.zeros([num_bh, 256, 256, len(dist_list), len(ang_list)])
+        greycomatrix_pre_2 = np.zeros([num_bh, 256, 256, len(dist_list), len(ang_list)])
+        greycomatrix_post_0 = np.zeros([num_bh, 256, 256, len(dist_list), len(ang_list)])
+        greycomatrix_post_1 = np.zeros([num_bh, 256, 256, len(dist_list), len(ang_list)])
+        greycomatrix_post_2 = np.zeros([num_bh, 256, 256, len(dist_list), len(ang_list)])
+
 
         for bh in range(0, 5):
-            greycomatrix_pre_0[bh, :, :, :, :] = greycomatrix(im_ocm0_pre_scaled[bh,:,:], [5], [0], 256, normed=True)
-            greycomatrix_pre_1[bh, :, :, :, :] = greycomatrix(im_ocm1_pre_scaled[bh,:,:], [5], [0], 256, normed=True)
-            greycomatrix_pre_2[bh, :, :, :, :] = greycomatrix(im_ocm2_pre_scaled[bh,:,:], [5], [0], 256, normed=True)
-            greycomatrix_post_0[bh, :, :, :, :] = greycomatrix(im_ocm0_post_scaled[bh,:,:], [5], [0], 256, normed=True)
-            greycomatrix_post_1[bh, :, :, :, :] = greycomatrix(im_ocm1_post_scaled[bh,:,:], [5], [0], 256, normed=True)
-            greycomatrix_post_2[bh, :, :, :, :] = greycomatrix(im_ocm2_post_scaled[bh,:,:], [5], [0], 256, normed=True)
+            greycomatrix_pre_0[bh, :, :, :, :] = greycomatrix(im_ocm0_pre_scaled[bh,:,:], dist_list, ang_list, 256, normed=True)
+            greycomatrix_pre_1[bh, :, :, :, :] = greycomatrix(im_ocm1_pre_scaled[bh,:,:], dist_list, ang_list, 256, normed=True)
+            greycomatrix_pre_2[bh, :, :, :, :] = greycomatrix(im_ocm2_pre_scaled[bh,:,:], dist_list, ang_list, 256, normed=True)
+            greycomatrix_post_0[bh, :, :, :, :] = greycomatrix(im_ocm0_post_scaled[bh,:,:], dist_list, ang_list, 256, normed=True)
+            greycomatrix_post_1[bh, :, :, :, :] = greycomatrix(im_ocm1_post_scaled[bh,:,:], dist_list, ang_list, 256, normed=True)
+            greycomatrix_post_2[bh, :, :, :, :] = greycomatrix(im_ocm2_post_scaled[bh,:,:], dist_list, ang_list, 256, normed=True)
+            print('greycomatrix_pre_0 shape:', greycomatrix_pre_0.shape)
 
+            for dist_idx in range(0, len(dist_list)):
+                for ang_idx in range(0, len(ang_list)):
+                    ## Plot OCM0 GLCM ##
+                    im_size = 256
+                    v_max = 0.002
+                    fig = plt.figure(figsize=(35, 27))
+                    # state 1
+                    for bh in range(0, num_bh):
+                        ax = fig.add_subplot(5, 6, bh * 6 + 1)
+                        plt.title('OCM0, Bh=' + str(bh + 1))
+                        plt.xlabel('Neighbor pixel value')
+                        plt.ylabel('Center pixel value')
+                        divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
+                        a0 = ax.imshow(greycomatrix_pre_0[bh, 0:im_size, 0:im_size, dist_idx, ang_idx], vmin=0, vmax=v_max)
+                        cax = divider.append_axes('right', '5%', pad='3%')
+                        cbar = fig.colorbar(a0, cax=cax)
+                        cbar.set_label('Probability')
 
-        ## Plot OCM0 GLCM ##
-        im_size = 256
-        v_max = 0.002
-        fig = plt.figure(figsize=(13, 27))
-        # state 1
-        for bh in range(0, num_bh):
-            ax = fig.add_subplot(5, 2, bh * 2 + 1)
-            plt.title('Bh=' + str(bh + 1))
-            plt.xlabel('Neighbor pixel value')
-            plt.ylabel('Center pixel value')
-            divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
-            a0 = ax.imshow(greycomatrix_pre_0[bh, 0:im_size, 0:im_size, 0, 0], vmin=0, vmax=v_max)
-            cax = divider.append_axes('right', '5%', pad='3%')
-            cbar = fig.colorbar(a0, cax=cax)
-            cbar.set_label('Probability')
+                    # state 2
+                    for bh in range(0, num_bh):
+                        ax = fig.add_subplot(5, 6, bh * 6 + 2)
+                        a1 = ax.imshow(greycomatrix_post_0[bh, 0:im_size, 0:im_size, dist_idx, ang_idx], vmin=0, vmax=v_max)
+                        plt.title('OCM0, Bh=' + str(bh + 6))
+                        plt.xlabel('Neighbor pixel value')
+                        plt.ylabel('Center pixel value')
+                        divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
+                        cax = divider.append_axes('right', '5%', pad='3%')
+                        cbar = fig.colorbar(a1, cax=cax)
+                        cbar.set_label('Probability')
 
-        # state 2
-        for bh in range(0, num_bh):
-            ax = fig.add_subplot(5, 2, bh * 2 + 2)
-            a1 = ax.imshow(greycomatrix_post_0[bh, 0:im_size, 0:im_size, 0, 0], vmin=0, vmax=v_max)
-            plt.title('Bh=' + str(bh + 6))
-            plt.xlabel('Neighbor pixel value')
-            plt.ylabel('Center pixel value')
-            divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
-            cax = divider.append_axes('right', '5%', pad='3%')
-            cbar = fig.colorbar(a1, cax=cax)
-            cbar.set_label('Probability')
-        plt.tight_layout
-        f_name = 'GLCM'+Sub_run_name+'_OCM0.png'
-        plt.savefig(f_name)
+                    ## Plot OCM1 GLCM ##
+                    # State 1
+                    for bh in range(0, num_bh):
+                        ax = fig.add_subplot(5, 6, bh * 6 + 3)
+                        plt.title('OCM1, Bh=' + str(bh + 1))
+                        plt.xlabel('Neighbor pixel value')
+                        plt.ylabel('Center pixel value')
+                        divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
+                        a0 = ax.imshow(greycomatrix_pre_1[bh, 0:im_size, 0:im_size, dist_idx, ang_idx], vmin=0, vmax=v_max)
+                        cax = divider.append_axes('right', '5%', pad='3%')
+                        cbar = fig.colorbar(a0, cax=cax)
+                        cbar.set_label('Probability')
+                    # State 2
+                    for bh in range(0, num_bh):
+                        ax = fig.add_subplot(5, 6, bh * 6 + 4)
+                        a1 = ax.imshow(greycomatrix_post_1[bh, 0:im_size, 0:im_size, dist_idx, ang_idx], vmin=0, vmax=v_max)
+                        plt.title('OCM1, Bh=' + str(bh + 6))
+                        plt.xlabel('Neighbor pixel value')
+                        plt.ylabel('Center pixel value')
+                        divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
+                        cax = divider.append_axes('right', '5%', pad='3%')
+                        cbar = fig.colorbar(a1, cax=cax)
+                        cbar.set_label('Probability')
 
-        ## Plot OCM1 GLCM ##
-        fig = plt.figure(figsize=(13, 27))
-        # State 1
-        for bh in range(0, num_bh):
-            ax = fig.add_subplot(5, 2, bh * 2 + 1)
-            plt.title('Bh=' + str(bh + 1))
-            plt.xlabel('Neighbor pixel value')
-            plt.ylabel('Center pixel value')
-            divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
-            a0 = ax.imshow(greycomatrix_pre_1[bh, 0:im_size, 0:im_size, 0, 0], vmin=0, vmax=v_max)
-            cax = divider.append_axes('right', '5%', pad='3%')
-            cbar = fig.colorbar(a0, cax=cax)
-            cbar.set_label('Probability')
-        # State 2
-        for bh in range(0, num_bh):
-            ax = fig.add_subplot(5, 2, bh * 2 + 2)
-            a1 = ax.imshow(greycomatrix_post_1[bh, 0:im_size, 0:im_size, 0, 0], vmin=0, vmax=v_max)
-            plt.title('Bh=' + str(bh + 6))
-            plt.xlabel('Neighbor pixel value')
-            plt.ylabel('Center pixel value')
-            divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
-            cax = divider.append_axes('right', '5%', pad='3%')
-            cbar = fig.colorbar(a1, cax=cax)
-            cbar.set_label('Probability')
-        plt.tight_layout
-        f_name = 'GLCM'+Sub_run_name+'_OCM1.png'
-        plt.savefig(f_name)
+                    ## Plot OCM2 GLCM ##
+                    # State 1
+                    for bh in range(0, num_bh):
+                        ax = fig.add_subplot(5, 6, bh * 6 + 5)
+                        plt.title('OCM2, Bh=' + str(bh + 1))
+                        plt.xlabel('Neighbor pixel value')
+                        plt.ylabel('Center pixel value')
+                        divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
+                        a0 = ax.imshow(greycomatrix_pre_2[bh, 0:im_size, 0:im_size, dist_idx, ang_idx], vmin=0, vmax=v_max)
+                        cax = divider.append_axes('right', '5%', pad='3%')
+                        cbar = fig.colorbar(a0, cax=cax)
+                        cbar.set_label('Probability')
 
-        ## Plot OCM1 GLCM ##
-        fig = plt.figure(figsize=(13, 27))
-        # State 1
-        for bh in range(0, num_bh):
-            ax = fig.add_subplot(5, 2, bh * 2 + 1)
-            plt.title('Bh=' + str(bh + 1))
-            plt.xlabel('Neighbor pixel value')
-            plt.ylabel('Center pixel value')
-            divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
-            a0 = ax.imshow(greycomatrix_pre_2[bh, 0:im_size, 0:im_size, 0, 0], vmin=0, vmax=v_max)
-            cax = divider.append_axes('right', '5%', pad='3%')
-            cbar = fig.colorbar(a0, cax=cax)
-            cbar.set_label('Probability')
+                    # State 2
+                    for bh in range(0, num_bh):
+                        ax = fig.add_subplot(5, 6, bh * 6 + 6)
+                        a1 = ax.imshow(greycomatrix_post_2[bh, 0:im_size, 0:im_size, dist_idx, ang_idx], vmin=0, vmax=v_max)
+                        plt.title('OCM2, Bh=' + str(bh + 6))
+                        plt.xlabel('Neighbor pixel value')
+                        plt.ylabel('Center pixel value')
+                        divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
+                        cax = divider.append_axes('right', '5%', pad='3%')
+                        cbar = fig.colorbar(a1, cax=cax)
+                        cbar.set_label('Probability')
+                    plt.subplots_adjust(wspace=0.5, hspace=0.2)
+                    f_name = 'GLCM'+Sub_run_name+'_dist'+str(dist_list[dist_idx])+'_angle'+str(ang_list_str[ang_idx])+'.png'
+                    plt.savefig(f_name)
 
-        # State 2
-        for bh in range(0, num_bh):
-            ax = fig.add_subplot(5, 2, bh * 2 + 2)
-            a1 = ax.imshow(greycomatrix_post_2[bh, 0:im_size, 0:im_size, 0, 0], vmin=0, vmax=v_max)
-            plt.title('Bh=' + str(bh + 6))
-            plt.xlabel('Neighbor pixel value')
-            plt.ylabel('Center pixel value')
-            divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
-            cax = divider.append_axes('right', '5%', pad='3%')
-            cbar = fig.colorbar(a1, cax=cax)
-            cbar.set_label('Probability')
-        plt.tight_layout
-        f_name = 'GLCM'+Sub_run_name+'_OCM2.png'
-        plt.savefig(f_name)
+                    ## Texture Analysis ##
+                    for prop_idx in range(0, len(grayco_prop_list)):
+                        for bh in range(0, 10):
+                            if bh < 5:
+                                out_0[fidx//2, prop_idx, bh, :, :] = greycoprops(greycomatrix_pre_0[bh, :, :, :, :], grayco_prop_list[prop_idx])
+                                out_1[fidx//2, prop_idx, bh, :, :] = greycoprops(greycomatrix_pre_1[bh, :, :, :, :], grayco_prop_list[prop_idx])
+                                out_2[fidx//2, prop_idx, bh, :, :] = greycoprops(greycomatrix_pre_2[bh, :, :, :, :], grayco_prop_list[prop_idx])
+                            else:
+                                out_0[fidx//2, prop_idx, bh, :, :] = greycoprops(greycomatrix_post_0[bh-5, :, :, :, :], grayco_prop_list[prop_idx])
+                                out_1[fidx//2, prop_idx, bh, :, :] = greycoprops(greycomatrix_post_1[bh-5, :, :, :, :], grayco_prop_list[prop_idx])
+                                out_2[fidx//2, prop_idx, bh, :, :] = greycoprops(greycomatrix_post_2[bh-5, :, :, :, :], grayco_prop_list[prop_idx])
 
-        ## Texture Analysis ##
-        print('Start Texture Analysis')
+print('Calculating properties...')
+for dist_idx in range(0, len(dist_list)):
+    for ang_idx in range(0, len(ang_list)):
+        ## Plot metrics vs bh
+        bh_idx = np.linspace(1, 10, 10)
+        # OCM0
+        fig = plt.figure(figsize=(16, 10))
         for prop_idx in range(0, len(grayco_prop_list)):
-            for bh in range(0, 10):
-                if bh < 5:
-                    out_0[fidx//2, prop_idx, bh, :, :] = greycoprops(greycomatrix_pre_0[bh, :, :, :, :], grayco_prop_list[prop_idx])
-                    out_1[fidx//2, prop_idx, bh, :, :] = greycoprops(greycomatrix_pre_1[bh, :, :, :, :], grayco_prop_list[prop_idx])
-                    out_2[fidx//2, prop_idx, bh, :, :] = greycoprops(greycomatrix_pre_2[bh, :, :, :, :], grayco_prop_list[prop_idx])
-                else:
-                    out_0[fidx//2, prop_idx, bh, :, :] = greycoprops(greycomatrix_post_0[bh-5, :, :, :, :], grayco_prop_list[prop_idx])
-                    out_1[fidx//2, prop_idx, bh, :, :] = greycoprops(greycomatrix_post_1[bh-5, :, :, :, :], grayco_prop_list[prop_idx])
-                    out_2[fidx//2, prop_idx, bh, :, :] = greycoprops(greycomatrix_post_2[bh-5, :, :, :, :], grayco_prop_list[prop_idx])
+            for f_idx in range(0, len(rep_list)//2):
+                ax = fig.add_subplot(2, 3, prop_idx + 1)
+                plt.title('OCM0, ' + grayco_prop_list[prop_idx])
+                a0 = ax.plot(bh_idx, out_0[f_idx, prop_idx, :, dist_list[dist_idx], ang_list[ang_idx]], label=sr_list[f_idx*2])
+                plt.xlim(1, 10)
+                #plt.ylim(0, np.max(out_0[f_idx, prop_idx, :, dist_idx, ang_idx]) * 1.05)
+                plt.xlabel('Breath-holds')
+                plt.ylabel(grayco_prop_list[prop_idx])
+                plt.legend(loc='best')
+        f_name = 'Metrics_plot'+'_dist'+str(dist_list[dist_idx])+'_angle'+str(ang_list_str[ang_idx])+'_OCM0.png'
+        plt.gca().set_ylim(bottom=0)
+        plt.savefig(f_name)
 
+        # OCM1
+        fig = plt.figure(figsize=(16, 10))
+        for prop_idx in range(0, len(grayco_prop_list)):
+            for f_idx in range(0, len(rep_list)//2):
+                ax = fig.add_subplot(2, 3, prop_idx + 1)
+                plt.title('OCM1, ' + grayco_prop_list[prop_idx])
+                a0 = ax.plot(bh_idx, out_1[f_idx, prop_idx, :, dist_list[dist_idx], ang_list[ang_idx]], label=sr_list[f_idx*2])
+                plt.xlim(1, 10)
+                #plt.ylim(0, np.max(out_1[f_idx, prop_idx, :, dist_idx, ang_idx]) * 1.05)
+                plt.xlabel('Breath-holds')
+                plt.ylabel(grayco_prop_list[prop_idx])
+                plt.legend(loc='best')
+        plt.gca().set_ylim(bottom=0)
+        f_name = 'Metrics_plot'+'_dist'+str(dist_list[dist_idx])+'_angle'+str(ang_list_str[ang_idx])+'_OCM1.png'
+        plt.savefig(f_name)
 
-## Plot metrics vs bh
-bh_idx = np.linspace(1, 10, 10)
-# OCM0
-fig = plt.figure(figsize=(16, 10))
-for prop_idx in range(0, len(grayco_prop_list)):
-    for f_idx in range(0, len(rep_list)//2):
-        ax = fig.add_subplot(2, 3, prop_idx + 1)
-        plt.title('OCM0, ' + grayco_prop_list[prop_idx])
-        a0 = ax.plot(bh_idx, out_0[f_idx, prop_idx, :, 0, 0], label=sr_list[f_idx*2])
-        plt.xlim(1, 10)
-        #plt.ylim(0, np.max(out_0[f_idx, prop_idx, :, 0, 0]) * 1.05)
-        plt.xlabel('Breath-holds')
-        plt.ylabel(grayco_prop_list[prop_idx])
-        plt.legend(loc='best')
-f_name = 'Metrics_plot_OCM0.png'
-plt.gca().set_ylim(bottom=0)
-plt.savefig(f_name)
-
-# OCM1
-fig = plt.figure(figsize=(16, 10))
-for prop_idx in range(0, len(grayco_prop_list)):
-    for f_idx in range(0, len(rep_list)//2):
-        ax = fig.add_subplot(2, 3, prop_idx + 1)
-        plt.title('OCM1, ' + grayco_prop_list[prop_idx])
-        a0 = ax.plot(bh_idx, out_1[f_idx, prop_idx, :, 0, 0], label=sr_list[f_idx*2])
-        plt.xlim(1, 10)
-        #plt.ylim(0, np.max(out_1[f_idx, prop_idx, :, 0, 0]) * 1.05)
-        plt.xlabel('Breath-holds')
-        plt.ylabel(grayco_prop_list[prop_idx])
-        plt.legend(loc='best')
-plt.gca().set_ylim(bottom=0)
-f_name = 'Metrics_plot_OCM1.png'
-plt.savefig(f_name)
-
-# OCM2
-fig = plt.figure(figsize=(16, 10))
-for prop_idx in range(0, len(grayco_prop_list)):
-    for f_idx in range(0, len(rep_list)//2):
-        ax = fig.add_subplot(2, 3, prop_idx + 1)
-        plt.title('OCM2, ' + grayco_prop_list[prop_idx])
-        a0 = ax.plot(bh_idx, out_2[f_idx, prop_idx, :, 0, 0], label=sr_list[f_idx*2])
-        plt.xlim(1, 10)
-        #plt.ylim(0, np.max(out_2[f_idx, prop_idx, :, 0, 0]) * 1.05)
-        plt.xlabel('Breath-holds')
-        plt.ylabel(grayco_prop_list[prop_idx])
-        plt.legend(loc='best')
-plt.gca().set_ylim(bottom=0)
-f_name = 'Metrics_plot_OCM2.png'
-plt.savefig(f_name)
+        # OCM2
+        fig = plt.figure(figsize=(16, 10))
+        for prop_idx in range(0, len(grayco_prop_list)):
+            for f_idx in range(0, len(rep_list)//2):
+                ax = fig.add_subplot(2, 3, prop_idx + 1)
+                plt.title('OCM2, ' + grayco_prop_list[prop_idx])
+                a0 = ax.plot(bh_idx, out_2[f_idx, prop_idx, :, dist_list[dist_idx], ang_list[ang_idx]], label=sr_list[f_idx*2])
+                plt.xlim(1, 10)
+                #plt.ylim(0, np.max(out_2[f_idx, prop_idx, :, dist_idx, ang_idx]) * 1.05)
+                plt.xlabel('Breath-holds')
+                plt.ylabel(grayco_prop_list[prop_idx])
+                plt.legend(loc='best')
+        plt.gca().set_ylim(bottom=0)
+        f_name = 'Metrics_plot'+'_dist'+str(dist_list[dist_idx])+'_angle'+str(ang_list_str[ang_idx])+'_OCM2.png'
+        plt.savefig(f_name)
