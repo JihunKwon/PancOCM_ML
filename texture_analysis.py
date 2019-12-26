@@ -66,8 +66,7 @@ out_0 = np.zeros([len(rep_list)//2, len(grayco_prop_list), num_bh * 2, len(dist_
 out_1 = np.zeros([len(rep_list)//2, len(grayco_prop_list), num_bh * 2, len(dist_list), len(ang_list)])
 out_2 = np.zeros([len(rep_list)//2, len(grayco_prop_list), num_bh * 2, len(dist_list), len(ang_list)])
 
-#for fidx in range(0, len(rep_list)):
-for fidx in range(0, 4):
+for fidx in range(0, len(rep_list)):
     #fidx = 0
     #### Filtering ###
     Sub_run_name = sr_list[fidx]
@@ -101,14 +100,12 @@ for fidx in range(0, 4):
     b2 = np.mod(b, 4) == 2
     ocm2 = ocm[:, b2]
     s, c0 = np.shape(ocm0)
-    print('ocm0:', ocm0.shape)
 
     # first few traces are strange. Remove them
     ocm0 = ocm0[:, c0 - num_bh * rep_list[fidx]:]
     ocm1 = ocm1[:, c0 - num_bh * rep_list[fidx]:]
     ocm2 = ocm2[:, c0 - num_bh * rep_list[fidx]:]
 
-    print('ocm0 new:', ocm0.shape)
     s, c0_new = np.shape(ocm0)
     t_sub = int(c0_new / num_bh)
 
@@ -117,8 +114,6 @@ for fidx in range(0, 4):
     s, c0_new_removed = np.shape(ocm0_new)
     t_sub_removed = int(c0_new_removed / num_bh)
     dif = ocm0.shape[1] - ocm0_new.shape[1]
-
-    print('ocm0 new_removed:', ocm0_new.shape)
     print(str(dif), 'was removed. It is', '{:.2f}'.format(dif * 100 / ocm0.shape[1]), '%')
 
     ocm0_filt = np.zeros([s_new, c0_new_removed])  # filtered signal (median based filtering)
@@ -268,7 +263,7 @@ for fidx in range(0, 4):
             greycomatrix_post_0[bh, :, :, :, :] = greycomatrix(im_ocm0_post_scaled[bh,:,:], dist_list, ang_list, 256, normed=True)
             greycomatrix_post_1[bh, :, :, :, :] = greycomatrix(im_ocm1_post_scaled[bh,:,:], dist_list, ang_list, 256, normed=True)
             greycomatrix_post_2[bh, :, :, :, :] = greycomatrix(im_ocm2_post_scaled[bh,:,:], dist_list, ang_list, 256, normed=True)
-            print('greycomatrix_pre_0 shape:', greycomatrix_pre_0.shape)
+            #print('greycomatrix_pre_0 shape:', greycomatrix_pre_0.shape)
 
             for dist_idx in range(0, len(dist_list)):
                 for ang_idx in range(0, len(ang_list)):
@@ -351,6 +346,7 @@ for fidx in range(0, 4):
                     plt.subplots_adjust(wspace=0.5, hspace=0.2)
                     f_name = 'GLCM'+Sub_run_name+'_dist'+str(dist_list[dist_idx])+'_angle'+str(ang_list_str[ang_idx])+'.png'
                     plt.savefig(f_name)
+                    plt.close('all')
 
                     ## Texture Analysis ##
                     for prop_idx in range(0, len(grayco_prop_list)):
@@ -375,7 +371,7 @@ for dist_idx in range(0, len(dist_list)):
             for f_idx in range(0, len(rep_list)//2):
                 ax = fig.add_subplot(2, 3, prop_idx + 1)
                 plt.title('OCM0, ' + grayco_prop_list[prop_idx])
-                a0 = ax.plot(bh_idx, out_0[f_idx, prop_idx, :, dist_list[dist_idx], ang_list[ang_idx]], label=sr_list[f_idx*2])
+                a0 = ax.plot(bh_idx, out_0[f_idx, prop_idx, :, dist_idx, ang_idx], label=sr_list[f_idx*2])
                 plt.xlim(1, 10)
                 #plt.ylim(0, np.max(out_0[f_idx, prop_idx, :, dist_idx, ang_idx]) * 1.05)
                 plt.xlabel('Breath-holds')
@@ -391,7 +387,7 @@ for dist_idx in range(0, len(dist_list)):
             for f_idx in range(0, len(rep_list)//2):
                 ax = fig.add_subplot(2, 3, prop_idx + 1)
                 plt.title('OCM1, ' + grayco_prop_list[prop_idx])
-                a0 = ax.plot(bh_idx, out_1[f_idx, prop_idx, :, dist_list[dist_idx], ang_list[ang_idx]], label=sr_list[f_idx*2])
+                a0 = ax.plot(bh_idx, out_1[f_idx, prop_idx, :, dist_idx, ang_idx], label=sr_list[f_idx*2])
                 plt.xlim(1, 10)
                 #plt.ylim(0, np.max(out_1[f_idx, prop_idx, :, dist_idx, ang_idx]) * 1.05)
                 plt.xlabel('Breath-holds')
@@ -407,7 +403,7 @@ for dist_idx in range(0, len(dist_list)):
             for f_idx in range(0, len(rep_list)//2):
                 ax = fig.add_subplot(2, 3, prop_idx + 1)
                 plt.title('OCM2, ' + grayco_prop_list[prop_idx])
-                a0 = ax.plot(bh_idx, out_2[f_idx, prop_idx, :, dist_list[dist_idx], ang_list[ang_idx]], label=sr_list[f_idx*2])
+                a0 = ax.plot(bh_idx, out_2[f_idx, prop_idx, :, dist_idx, ang_idx], label=sr_list[f_idx*2])
                 plt.xlim(1, 10)
                 #plt.ylim(0, np.max(out_2[f_idx, prop_idx, :, dist_idx, ang_idx]) * 1.05)
                 plt.xlabel('Breath-holds')
