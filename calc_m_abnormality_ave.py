@@ -147,39 +147,6 @@ for interval_idx in range(0, np.size(rep_list)):
         print('ocm0 new_removed:', ocm0_new.shape)
         print(str(dif), 'was removed. It is', '{:.2f}'.format(dif * 100 / ocm0.shape[1]), '%')
 
-        '''
-        ## Averaging the traces into the time dimension using the "interval" parameter ""
-        ocm0_ave = np.zeros([s_new, c0_new_removed//interval+1])
-        ocm1_ave = np.zeros([s_new, c0_new//interval+1])
-        ocm2_ave = np.zeros([s_new, c0_new//interval+1])
-        count0 = 0
-        count12 = 0
-        for p in range(0, c0_new_removed):
-            if p % interval is 0:
-                ocm0_ave[:, count0] = np.mean(ocm0[:, count0*interval:(count0+1)*interval], axis=1)
-                count0+=1
-        for p in range(0, c0_new):
-            if p % interval is 0:
-                ocm1_ave[:, count12] = np.mean(ocm1[:, count12*interval:(count12+1)*interval], axis=1)
-                ocm2_ave[:, count12] = np.mean(ocm2[:, count12*interval:(count12+1)*interval], axis=1)
-                count12+=1
-        # check zero array
-        if np.sum(ocm0_ave[:, -1]) is 0.0:
-            ocm0_ave = ocm0_ave[:, -1]  # remove last element
-            print('Last Element Removed!, ocm0')
-        if np.sum(ocm1_ave[:, -1]) is 0.0:
-            ocm1_ave = ocm1_ave[:, -1]
-            print('Last Element Removed!, ocm1')
-        if np.sum(ocm1_ave[:, -1]) is 0.0:
-            ocm2_ave = ocm2_ave[:, -1]
-            print('Last Element Removed!, ocm2')
-        # update parameters
-        c0_new_removed = ocm0_ave.shape[1]
-        c0_new = ocm1_ave.shape[1]
-        t_sub = int(c0_new / num_bh)
-        t_sub_removed = int(c0_new_removed / num_bh)
-        '''
-
         ocm0_filt = np.zeros([s_new, c0_new_removed])  # filtered signal (median based filtering)
         ocm1_filt = np.zeros([s_new, c0_new])
         ocm2_filt = np.zeros([s_new, c0_new])
@@ -334,52 +301,6 @@ for interval_idx in range(0, np.size(rep_list)):
                 A0_post_medi[depth] = statistics.median(A0_post[depth, :])
                 A1_post_medi[depth] = statistics.median(A1_post[depth, :])
                 A2_post_medi[depth] = statistics.median(A2_post[depth, :])
-
-
-        '''
-        # if state 1, get mean and sd. Later use it to calculate abnormality.
-        if fidx % 2 == 0:
-            # Median-based filtering
-            for depth in range(0, s_new):
-                # Instead of median, use mean for anomality calculation
-                mean0_base[depth] = statistics.mean(ocm0_low[depth, 0:t_sub_removed * num_train])
-                mean1_base[depth] = statistics.mean(ocm1_low[depth, 0:t_sub * num_train])
-                mean2_base[depth] = statistics.mean(ocm2_low[depth, 0:t_sub * num_train])
-                # Get SD of (Median - train)
-                sd0[depth] = np.abs(np.std(mean0_base[depth] - ocm0_low[depth, 0:t_sub_removed * num_train]))
-                sd1[depth] = np.abs(np.std(mean1_base[depth] - ocm1_low[depth, 0:t_sub * num_train]))
-                sd2[depth] = np.abs(np.std(mean2_base[depth] - ocm2_low[depth, 0:t_sub * num_train]))
-        
-        #### Abnormality calculation ####
-        ## OCM0
-        for p in range(0, c0_new_removed):
-            for depth in range(0, s_new):
-                A0[depth, p] = np.square((mean0_base[depth] - ocm0_low[depth, p]) / sd0[depth])
-    
-        ## OCM1 and 2
-        for p in range(0, c0_new):
-            for depth in range(0, s_new):
-                A1[depth, p] = np.square((mean1_base[depth] - ocm1_low[depth, p]) / sd1[depth])
-                A2[depth, p] = np.square((mean2_base[depth] - ocm2_low[depth, p]) / sd2[depth])
-    
-        if fidx % 2 == 0:
-            A0_pre = A0
-            A1_pre = A1
-            A2_pre = A2
-        else:
-            A0_post = A0
-            A1_post = A1
-            A2_post = A2
-            # Get median
-            for depth in range(0, s_new):
-                A0_pre_medi[depth] = statistics.median(A0_pre[depth, :])
-                A1_pre_medi[depth] = statistics.median(A1_pre[depth, :])
-                A2_pre_medi[depth] = statistics.median(A2_pre[depth, :])
-                A0_post_medi[depth] = statistics.median(A0_post[depth, :])
-                A1_post_medi[depth] = statistics.median(A1_post[depth, :])
-                A2_post_medi[depth] = statistics.median(A2_post[depth, :])
-        '''
-
 
         # ========================Visualize==============================================
 

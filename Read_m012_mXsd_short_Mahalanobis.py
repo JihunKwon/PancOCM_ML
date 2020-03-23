@@ -46,11 +46,13 @@ num_train = 3
 num_test = 10 - num_train
 num_ocm = 3
 num_bh = 5 # number of bh in each state
-bin = 1000
-scale = 50  # number divides m
+#bin = 1000
+#scale = 50  # number divides m
+bin = 2000
+scale = 20  # number divides m
 s_new = 296  # the depth your interest
 
-tole_list = [0.01]
+tole_list = [0.005]
 
 for y in range(0, np.size(tole_list)):
     for fidx in range(0, np.size(rep_list)):
@@ -72,9 +74,9 @@ for y in range(0, np.size(tole_list)):
         median1 = np.zeros([s_new, num_bh])
         median2 = np.zeros([s_new, num_bh])
         if fidx % 2 == 0:
-            thr0 = np.zeros([s])  # threshold
-            thr1 = np.zeros([s])
-            thr2 = np.zeros([s])
+            thr0 = np.zeros([s_new])  # threshold
+            thr1 = np.zeros([s_new])
+            thr2 = np.zeros([s_new])
             out0_state0 = np.zeros([num_bh])  # output test result for state 0
             out1_state0 = np.zeros([num_bh])
             out2_state0 = np.zeros([num_bh])
@@ -175,7 +177,7 @@ for y in range(0, np.size(tole_list)):
         if fidx % 2 == 0:
             #### Get parameter m ####
             # m and OoE (out of envelop) distribution
-            fname = 'm012_' + str(Sub_run_name) + '_bin' + str(bin) + '_scale' + str(scale) + '_train' + str(num_train) + '_short_mahala.pkl'
+            fname = 'm012_' + str(Sub_run_name) + '_bin' + str(bin) + '_scale' + str(scale) + '_train' + str(num_train) + '_short_mahala_prepared.pkl'
             with open(fname, 'rb') as f:
                 count0, count1, count2, median0_base, median1_base, median2_base, sd0, sd1, sd2 = pickle.load(f)
 

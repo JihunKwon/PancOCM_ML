@@ -1,5 +1,5 @@
 '''
-This code show mean+SD for all bh before water intake
+This code show representative mean+SD with xaxis converted to [cm] scale
 '''
 
 import numpy as np

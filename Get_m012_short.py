@@ -173,8 +173,8 @@ for fidx in range(0, np.size(rep_list)):
             for depth in range(0, s_new):
                 # Calculate median of baseline signal
                 median0_base[depth] = statistics.median(ocm0_low[depth, 0:t_sub_removed*num_train])
-                median1_base[depth] = statistics.median(ocm1_low[depth, 0:t_sub_removed*num_train])
-                median2_base[depth] = statistics.median(ocm2_low[depth, 0:t_sub_removed*num_train])
+                median1_base[depth] = statistics.median(ocm1_low[depth, 0:t_sub*num_train])
+                median2_base[depth] = statistics.median(ocm2_low[depth, 0:t_sub*num_train])
                 # Get SD of (Median - train)
                 sd0[depth] = np.abs(np.std(median0_base[depth] - ocm0_low[depth, 0:t_sub_removed*num_train]))
                 sd1[depth] = np.abs(np.std(median1_base[depth] - ocm1_low[depth, 0:t_sub*num_train]))

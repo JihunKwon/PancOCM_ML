@@ -12,7 +12,6 @@ out_list = []
 plt.rcParams['font.family'] ='sans-serif'
 plt.rcParams['xtick.direction'] = 'in'
 plt.rcParams['ytick.direction'] = 'in'
-plt.rcParams["font.size"] = 12
 
 #Jihun Local
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy") #Before water
@@ -32,8 +31,8 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2
 num_bh = 5
 batch = 3 # Divide each bh into three separate groups
 num_ocm = 3 # # of OCM
-#rep_list = [8196, 8196]
-#sr_list = ['s1_run1']
+#rep_list = [6932, 6932]
+#sr_list = ['s2_run1']
 
 rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
 sr_list = ['s1_run1', 's1_run2', 's2_run1', 's2_run2', 's3_run1', 's3_run2']
@@ -50,6 +49,7 @@ fpr_2 = np.zeros([thr_max])
 auc = np.zeros([num_ocm, len(sr_list)])
 
 for fidx in range(0,np.size(rep_list)):
+    plt.rcParams["font.size"] = 11
     in_filename = out_list[fidx]
     ocm = np.load(in_filename)
 
@@ -79,23 +79,32 @@ for fidx in range(0,np.size(rep_list)):
 
     #for sub in range(0, batch * num_bh):  # loop from 0 to 15 for each state
     for p in range(0,t):  # loop every t_sub
-        # high pass then low pass filter the data
+
+        # Better result
+        f1 = np.ones([7])
         tr1 = ocm[:,p]
-        hptr[:,p] = np.convolve(tr1,[1,-1],'same')
-        tr2 = hptr[:,p]
-        #lptr[:,p] = np.convolve(tr2,f1,'same')
         lptr[:,p] = np.convolve(tr1,f1,'same')  # it's turned out that without high-pass filter works better.
         tr3 = lptr[:,p]
         # get magnitude
         mag[:,p] = np.abs(tr3)
-        #mag[:,p] = np.abs(tr1)
+        mag_norm[:,p] = mag[:,p]
+
+        '''
+        # Previous filtering
+        f1 = np.ones([5])
+        tr1 = ocm[:,p]
+        hptr[:,p] = np.convolve(tr1,[1,-1],'same')
+        tr2 = hptr[:,p]
+        lptr[:,p] = np.convolve(tr2,f1,'same')
+        tr3 = lptr[:,p]
+        # get magnitude
+        mag[:,p] = np.abs(tr3)
         # normalize
         max_temp = np.max(mag[:,p])
         if max_p < max_temp:
             max_p = max_temp
-
-        #mag_norm[:,p] = np.divide(mag[:,p],np.max(mag[:,p]))
-        mag_norm[:,p] = mag[:,p]
+        mag_norm[:,p] = np.divide(mag[:,p],np.max(mag[:,p]))
+'''
 
     print('mag_norm:', mag_norm.shape)  # mag_norm: (350, 166211)
 
@@ -162,44 +171,86 @@ for fidx in range(0,np.size(rep_list)):
             diff0[depth, n] = diff0[depth, n] + abs(mag_norm_medi0[depth, n] - base0[depth, 0])
             diff1[depth, n] = diff1[depth, n] + abs(mag_norm_medi1[depth, n] - base1[depth, 0])
             diff2[depth, n] = diff2[depth, n] + abs(mag_norm_medi2[depth, n] - base2[depth, 0])
-
+    '''
     # visualize difference between Medi_base and Medi_test
+    if fidx % 2 == 0:  # if state 1
+        # ===============OCM1===========================================================
+        depth_my = np.linspace(2.3, 4.9, s)  # My Depth
+        fig = plt.figure(figsize=(6, 5))
+        ax1 = plt.subplot2grid((3, 1), (0, 0), colspan=2, rowspan=1)
+        ax2 = plt.subplot2grid((3, 1), (1, 0), colspan=2, sharex=ax1)
 
-    if fidx%2 == 1:  # if state 2
+        plt.subplots_adjust(hspace=0)
+        ax1 = plt.subplot(211)
+        ax2 = plt.subplot(212, sharex=ax1)
+        target = 3  # target=1 is very good, but chose the data from the different bh may be better
+
+        ax1.plot(depth_my, base1[:, 0], 'k', linewidth=1, linestyle='solid', label="Baseline ($\it{M_{B}}$)")
+        ax1.plot(depth_my, mag_norm_medi1[:, target], 'b', linewidth=1, linestyle='dashed',
+                 label="Test set ($\it{M_{n}}$)")
+        ax1.set_title("Model Generation, State 1")
+        ax1.set_ylabel("Magnitude (a.u.)")
+        ax1.legend(loc='upper right')
+        ax1.set_ylim(-700, 20000)
+
+        ax2.plot(depth_my, diff1[:, target], 'r', linewidth=1, linestyle='solid', label="Absolute Difference")
+        ax2.plot(depth_my, base_sd1[:], 'g', linewidth=1, linestyle='dashed', label="Threshold (m*SD, m=1)")
+        ax2.plot(depth_my, 10 * base_sd1[:], 'g', linewidth=1.5, linestyle='dashdot',
+                 label="Threshold (m*SD, m=10)")
+        ax2.set_xlabel("Depth (cm)")
+        ax2.set_ylabel("Absolute Difference")
+        ax2.legend(loc='upper right')
+
+        fig.subplots_adjust(hspace=0)
+        # fig.tight_layout()
+
+        xticklabels = ax1.get_xticklabels()
+        plt.setp(xticklabels, visible=False)
+        plt.subplots_adjust(left=0.14, right=0.98, top=0.92)
+        # plt.show()
+        f_name = 'Median1_' + str(fidx // 2) + '_state1.png'
+        plt.savefig(f_name)
+        # =============================================================================
+
+    if fidx % 2 == 1:  # if state 2
 
         # ===============OCM1===========================================================
         depth_my = np.linspace(2.3, 4.9, s)  # My Depth
-        fig = plt.figure(figsize=(6,5))
-        ax1 = plt.subplot2grid((3,1), (0, 0), colspan=2, rowspan=1)
-        ax2 = plt.subplot2grid((3,1), (1, 0), colspan=2, sharex=ax1)
+        fig = plt.figure(figsize=(6, 5))
+        ax1 = plt.subplot2grid((3, 1), (0, 0), colspan=2, rowspan=1)
+        ax2 = plt.subplot2grid((3, 1), (1, 0), colspan=2, sharex=ax1)
 
         plt.subplots_adjust(hspace=0)
         ax1 = plt.subplot(211)
         ax2 = plt.subplot(212, sharex=ax1)
 
         ax1.plot(depth_my, base1[:, 0], 'k', linewidth=1, linestyle='solid', label="Baseline ($\it{M_{B}}$)")
-        ax1.plot(depth_my, mag_norm_medi1[:, 0], 'b', linewidth=1, linestyle='dashed', label="Test set ($\it{M_{n}}$)")
-        #ax1.set_title("Magnitude")
+        ax1.plot(depth_my, mag_norm_medi1[:, 0], 'b', linewidth=1, linestyle='dashed',
+                 label="Test set ($\it{M_{n}}$)")
+        ax1.set_title("Model Generation, State 2")
         ax1.set_ylabel("Magnitude (a.u.)")
         ax1.legend(loc='upper right')
+        ax1.set_ylim(-700, 20000)
 
         ax2.plot(depth_my, diff1[:, 0], 'r', linewidth=1, linestyle='solid', label="Absolute Difference")
         ax2.plot(depth_my, base_sd1[:], 'g', linewidth=1, linestyle='dashed', label="Threshold (m*SD, m=1)")
+        ax2.plot(depth_my, 10 * base_sd1[:], 'g', linewidth=1.5, linestyle='dashdot',
+                 label="Threshold (m*SD, m=10)")
         ax2.set_xlabel("Depth (cm)")
         ax2.set_ylabel("Absolute Difference")
         ax2.legend(loc='upper right')
 
         fig.subplots_adjust(hspace=0)
-        #fig.tight_layout()
+        # fig.tight_layout()
 
         xticklabels = ax1.get_xticklabels()
         plt.setp(xticklabels, visible=False)
-        plt.subplots_adjust(left=0.14, right=0.98, top=0.98)
-        #plt.show()
-        f_name = 'Median1_' + str(fidx) + '_unnorm.png'
+        plt.subplots_adjust(left=0.14, right=0.98, top=0.92)
+        # plt.show()
+        f_name = 'Median1_' + str(fidx // 2) + '_state2.png'
         plt.savefig(f_name)
         # =============================================================================
-
+    '''
 
 
     # Count the number of sub-bh above threshold
@@ -266,28 +317,30 @@ for fidx in range(0,np.size(rep_list)):
 
         if m==thr_max-1 and fidx % 2 == 1:
             ## Plot ROC curve
-            plt.rcParams["font.size"] = 14
+            plt.rcParams["font.size"] = 12
             fig = plt.figure()
             ax1 = fig.add_subplot(111)
             if fidx != 11:
-                #ax1.plot(fpr_0, tpr_0, 'r', linewidth=1.5, linestyle='solid', label="OCM0 (AUC = {:.3f})".format(metrics.auc(fpr_0, tpr_0)))
-                #ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='dashed', label="OCM1 (AUC = {:.3f})".format(metrics.auc(fpr_1, tpr_1)))
-                #ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='dashdot', label="OCM2 (AUC = {:.3f})".format(metrics.auc(fpr_2, tpr_2)))
-                ax1.plot(fpr_0, tpr_0, 'r', linewidth=1.5, linestyle='solid', label="OCM0".format(metrics.auc(fpr_0, tpr_0)))
-                ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='dashed', label="OCM1".format(metrics.auc(fpr_1, tpr_1)))
-                ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='dashdot', label="OCM2".format(metrics.auc(fpr_2, tpr_2)))
+
+                ax1.plot(fpr_0, tpr_0, 'r', linewidth=1.5, linestyle='solid', label="OCM0 (AUC = {:.3f})".format(metrics.auc(fpr_0, tpr_0)))
+                ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='dashed', label="OCM1 (AUC = {:.3f})".format(metrics.auc(fpr_1, tpr_1)))
+                ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='dashdot', label="OCM2 (AUC = {:.3f})".format(metrics.auc(fpr_2, tpr_2)))
+                #ax1.plot(fpr_0, tpr_0, 'r', linewidth=1.5, linestyle='solid', label="OCM0".format(metrics.auc(fpr_0, tpr_0)))
+                #ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='dashed', label="OCM1".format(metrics.auc(fpr_1, tpr_1)))
+                #ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='dashdot', label="OCM2".format(metrics.auc(fpr_2, tpr_2)))
+
                 auc[0, fidx//2] = metrics.auc(fpr_0, tpr_0)  # store auc values
                 auc[1, fidx//2] = metrics.auc(fpr_1, tpr_1)
                 auc[2, fidx//2] = metrics.auc(fpr_2, tpr_2)
             else:  # signal from OCM0 for fidx=11 (s3r2) is strange and we neglect this.
-                #ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='dashed', label="OCM1 (AUC = {:.3f})".format(metrics.auc(fpr_1, tpr_1)))
-                #ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='dashdot', label="OCM2 (AUC = {:.3f})".format(metrics.auc(fpr_2, tpr_2)))
-                ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='dashed', label="OCM1".format(metrics.auc(fpr_1, tpr_1)))
-                ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='dashdot', label="OCM2".format(metrics.auc(fpr_2, tpr_2)))
+                ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='dashed', label="OCM1 (AUC = {:.3f})".format(metrics.auc(fpr_1, tpr_1)))
+                ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='dashdot', label="OCM2 (AUC = {:.3f})".format(metrics.auc(fpr_2, tpr_2)))
+                #ax1.plot(fpr_1, tpr_1, 'g', linewidth=1.5, linestyle='dashed', label="OCM1".format(metrics.auc(fpr_1, tpr_1)))
+                #ax1.plot(fpr_2, tpr_2, 'b', linewidth=1.5, linestyle='dashdot', label="OCM2".format(metrics.auc(fpr_2, tpr_2)))
                 auc[1, fidx//2] = metrics.auc(fpr_1, tpr_1)  # store auc values
                 auc[2, fidx//2] = metrics.auc(fpr_2, tpr_2)
             roc_name = 'ROC curve, ' + sr_list[fidx//2]
-            #ax1.set_title(roc_name)
+            ax1.set_title(roc_name)
             ax1.set_xlabel("False Positive Rate")
             ax1.set_ylabel("True Positive Rate")
             ax1.set_aspect('equal','box')
@@ -297,7 +350,7 @@ for fidx in range(0,np.size(rep_list)):
             plt.tight_layout()
             plt.legend(loc='lower right')
             fig.show()
-            f_name = 'roc_subject' + str(cnt) + '_batch' + str(batch) + '_unnorm.png'
+            f_name = 'roc_subject' + str(cnt) + '_batch' + str(batch) + '_noHPF.png'
             plt.savefig(f_name)
 
 

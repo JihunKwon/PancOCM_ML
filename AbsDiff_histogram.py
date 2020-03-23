@@ -7,6 +7,7 @@ import csv
 import statistics
 import pickle
 from trace_outlier_check import outlier_remove
+import mimic_alpha as ma
 
 plt.close('all')
 
@@ -15,7 +16,7 @@ out_list = []
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['xtick.direction'] = 'in'
 plt.rcParams['ytick.direction'] = 'in'
-plt.rcParams["font.size"] = 13
+plt.rcParams["font.size"] = 12
 plt.rcParams["legend.fontsize"] = 11
 plt.rcParams["legend.edgecolor"] = 'k'
 plt.rcParams["legend.labelspacing"] = 0.5
@@ -151,17 +152,22 @@ for fidx in range(4, 6):
     if fidx % 2 == 1:
         fig = plt.figure(figsize=(6, 5))
         ax = fig.add_subplot(1,1,1)
+        plt.subplots_adjust(right=0.98, top=0.92, bottom=0.15)
 
         target_depth = 94  # the depth you want to get a histogram
-        ax.hist(abs_diff_st1[target_depth, :], bins=200, color='red', alpha=0.7, label='State 1 (n=6932)')
-        ax.hist(abs_diff_st2[target_depth, :], bins=200, color='blue', alpha=0.4, label='State 2 (n=6932)')
-        plt.axvline(10 * sd1[target_depth], color='k', linewidth=1.3, label='Threshold (m*SD, m=10)')
-        ax.set_xlabel("Absolute difference (a.u.)")
+        #ax.hist(abs_diff_st2[target_depth, :], bins=200, color='blue', alpha=0.4, label='State 2 (n=6932)')
+        #ax.hist(abs_diff_st1[target_depth, :], bins=200, color='red', alpha=0.7, label='State 1 (n=6932)')
+        ax.hist(abs_diff_st2[target_depth, :], bins=200, color=ma.colorAlpha_to_rgb('b', 0.5), label='State 2 (n=6932)')
+        ax.hist(abs_diff_st1[target_depth, :], bins=200, color=ma.colorAlpha_to_rgb('r', 0.7), label='State 1 (n=6932)')
+        plt.axvline(10 * sd1[target_depth], color='k', linewidth=1.3, label='Threshold (m*$\it{SD_{B,s}}$, m=10)')
+        ax.set_xlabel("Absolute difference between the test trace \n and median trace of baseline (a.u.)")
         ax.set_ylabel("Count")
         ax.legend(loc='upper right')
         #plt.show()
 
         f_name = 'hist_AbsDiff_s2r1.png'
+        f_name_pdf = 'hist_AbsDiff_s2r1.pdf'
         f_name_eps = 'hist_AbsDiff_s2r1.eps'
         plt.savefig(f_name)
-        plt.savefig(f_name_eps)
+        plt.savefig(f_name_pdf)
+        plt.savefig(f_name_eps)  # alpha in histogram doesn't work for eps

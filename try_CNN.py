@@ -18,6 +18,9 @@ from keras.layers import Conv1D, MaxPooling1D
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping
 from keras.regularizers import l1_l2
+import time
+
+start = time.time()
 
 # Hyperparameters
 batch_size = 32
@@ -75,8 +78,6 @@ ocm2_ba_s1r2 = ocm2_ba_s1r2.T
 # concatinate three OCM sensors
 n, t = ocm0_ba_s1r2.shape
 ocm_ba_s1r2 = np.zeros((n, t ,3))
-ocm_b10_s1r2 = np.zeros((n, t ,3))
-ocm_a10_s1r2 = np.zeros((n, t ,3))
 # allocate to one variable
 ocm_ba_s1r2[:,:,0] = ocm0_ba_s1r2[:,:]
 ocm_ba_s1r2[:,:,1] = ocm1_ba_s1r2[:,:]
@@ -104,8 +105,6 @@ ocm2_ba_s2r1 = ocm2_ba_s2r1.T
 # concatinate three OCM sensors
 n, t = ocm0_ba_s2r1.shape
 ocm_ba_s2r1 = np.zeros((n, t ,3))
-ocm_b10_s2r1 = np.zeros((n, t ,3))
-ocm_a10_s2r1 = np.zeros((n, t ,3))
 # allocate to one variable
 ocm_ba_s2r1[:,:,0] = ocm0_ba_s2r1[:,:]
 ocm_ba_s2r1[:,:,1] = ocm1_ba_s2r1[:,:]
@@ -133,8 +132,6 @@ ocm2_ba_s2r2 = ocm2_ba_s2r2.T
 # concatinate three OCM sensors
 n, t = ocm0_ba_s2r2.shape
 ocm_ba_s2r2 = np.zeros((n, t ,3))
-ocm_b10_s2r2 = np.zeros((n, t ,3))
-ocm_a10_s2r2 = np.zeros((n, t ,3))
 # allocate to one variable
 ocm_ba_s2r2[:,:,0] = ocm0_ba_s2r2[:,:]
 ocm_ba_s2r2[:,:,1] = ocm1_ba_s2r2[:,:]
@@ -162,8 +159,6 @@ ocm2_ba_s3r1 = ocm2_ba_s3r1.T
 # concatinate three OCM sensors
 n, t = ocm0_ba_s3r1.shape
 ocm_ba_s3r1 = np.zeros((n, t ,3))
-ocm_b10_s3r1 = np.zeros((n, t ,3))
-ocm_a10_s3r1 = np.zeros((n, t ,3))
 # allocate to one variable
 ocm_ba_s3r1[:,:,0] = ocm0_ba_s3r1[:,:]
 ocm_ba_s3r1[:,:,1] = ocm1_ba_s3r1[:,:]
@@ -185,18 +180,6 @@ ocm_ba_all_r1 = np.zeros((ocm_ba_s1r1.shape[0]+ocm_ba_s2r1.shape[0]+ocm_ba_s3r1.
 ocm_ba_all_r2 = np.zeros((ocm_ba_s1r2.shape[0]+ocm_ba_s2r2.shape[0], ocm_ba_s1r2.shape[1], ocm_ba_s1r2.shape[2])) # Exclude s3r2 (because of ocm0)
 ocm_ba_all_r1 = np.concatenate([ocm_ba_s1r1, ocm_ba_s2r1, ocm_ba_s3r1], axis=0)
 ocm_ba_all_r2 = np.concatenate([ocm_ba_s1r2, ocm_ba_s2r2], axis=0)
-'''
-# S1 and S2
-#ocm_ba_all_r1 = np.zeros((ocm_ba_s1r1.shape[0]+ocm_ba_s2r1.shape[0], ocm_ba_s1r1.shape[1], ocm_ba_s1r1.shape[2]))
-#ocm_ba_all_r2 = np.zeros((ocm_ba_s1r2.shape[0]+ocm_ba_s2r2.shape[0], ocm_ba_s1r2.shape[1], ocm_ba_s1r2.shape[2]))
-#ocm_ba_all_r1 = np.concatenate([ocm_ba_s1r1, ocm_ba_s2r1], axis=0)
-#ocm_ba_all_r2 = np.concatenate([ocm_ba_s1r2, ocm_ba_s2r2], axis=0)
-# Only S1
-ocm_ba_all_r1 = np.zeros(ocm_ba_s1r1.shape)
-ocm_ba_all_r2 = np.zeros(ocm_ba_s1r2.shape)
-ocm_ba_all_r1 = ocm_ba_s1r1
-ocm_ba_all_r2 = ocm_ba_s1r2
-'''
 print('ocm_ba_all_r1 shape:', ocm_ba_all_r1.shape)
 print('ocm_ba_all_r2 shape:', ocm_ba_all_r2.shape)
 
@@ -211,20 +194,10 @@ y_ba_s2r2 = np.zeros(ocm_ba_s2r2.shape[0])
 y_ba_s2r2[ocm0_bef_s2r2.shape[1]:] = 1
 y_ba_s3r1 = np.zeros(ocm_ba_s3r1.shape[0])
 y_ba_s3r1[ocm0_bef_s3r1.shape[1]:] = 1
-#y_ba_s3r2 = np.zeros(ocm_ba_s3r2.shape[0])
-#y_ba_s3r2[ocm0_bef_s3r2.shape[1]:] = 1
 
 # All subject (except s3r2)
 y_ba_all_r1 = np.concatenate([y_ba_s1r1,y_ba_s2r1,y_ba_s3r1], axis=0)
 y_ba_all_r2 = np.concatenate([y_ba_s1r2,y_ba_s2r2], axis=0)
-'''
-# S1 and S2
-#y_ba_all_r1 = np.concatenate([y_ba_s1r1,y_ba_s2r1], axis=0)
-#y_ba_all_r2 = np.concatenate([y_ba_s1r2,y_ba_s2r2], axis=0)
-# Only S1
-#y_ba_all_r1 = y_ba_s1r1
-#y_ba_all_r2 = y_ba_s1r2
-'''
 print('y_ba_all_r1 shape:', y_ba_all_r1.shape)
 print('y_ba_all_r2 shape:', y_ba_all_r2.shape)
 
@@ -240,9 +213,21 @@ y_test = y_ba_all_r2.astype(int)
 n_timesteps, n_features = X_train.shape[1], X_train.shape[2]
 
 # Build NN
-n_conv = 64
+n_conv = 128
 n_dense = 128
-
+'''
+model = Sequential()
+model.add(Conv1D(filters=n_conv, kernel_size=3, padding='same', input_shape=(n_timesteps, n_features), activation='relu'))
+model.add(Dropout(0.5))
+model.add(MaxPooling1D(pool_size=2, padding='same'))
+model.add(Conv1D(filters=n_conv, kernel_size=3, activation='relu'))
+model.add(Dropout(0.5))
+model.add(MaxPooling1D(pool_size=2, padding='same'))
+model.add(Flatten())
+model.add(Dense(100, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
+model.summary()
+'''
 model = Sequential()
 model.add(Conv1D(filters=n_conv, kernel_size=3, padding='same', input_shape=(n_timesteps, n_features), activation='relu'))
 model.add(Conv1D(filters=n_conv, kernel_size=3, activation='relu'))
@@ -254,6 +239,11 @@ model.add(Conv1D(filters=n_conv * 2, kernel_size=3, activation='relu'))
 model.add(Dropout(0.2))
 model.add(MaxPooling1D(pool_size=2, padding='same'))
 
+model.add(Conv1D(filters=n_conv * 4, kernel_size=3, activation='relu'))
+model.add(Conv1D(filters=n_conv * 4, kernel_size=3, activation='relu'))
+model.add(Dropout(0.2))
+model.add(MaxPooling1D(pool_size=2, padding='same'))
+
 model.add(Flatten())
 model.add(Dense(n_dense, activation='relu', W_regularizer = l1_l2(0.001)))
 model.add(Dropout(0.2))
@@ -262,7 +252,7 @@ model.add(Dropout(0.2))
 model.add(Dense(1, activation='sigmoid'))
 model.summary()
 
-# initiate RMSprop optimizer
+# initiate optimizer
 opt = keras.optimizers.adam(lr=0.00005, decay=1e-6)
 
 # Let's train the model using RMSprop
@@ -338,3 +328,5 @@ plt.ylabel('True positive rate')
 plt.title('ROC curve')
 plt.legend(loc='best')
 plt.savefig('./ROC.png')
+
+print(time.time() - start)

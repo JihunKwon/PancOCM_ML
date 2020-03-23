@@ -8,6 +8,7 @@ from scipy import signal
 import pickle
 import seaborn as sns
 import csv
+from sklearn import preprocessing
 
 plt.rcParams['font.family'] ='sans-serif'
 plt.rcParams['xtick.direction'] = 'in'
@@ -35,12 +36,53 @@ for fidx in range(0, np.size(sr_list)):
     ocm1_ba = np.zeros([depth, 2 * ocm0_all.shape[1]])  # 2nd dim is "before" and "after"
     ocm2_ba = np.zeros([depth, 2 * ocm0_all.shape[1]])  # 2nd dim is "before" and "after"
 
+    # low pass filtering
+    ocm0_lp_bef = np.zeros([ocm0_all.shape[0], ocm0_all.shape[1]])
+    ocm1_lp_bef = np.zeros([ocm0_all.shape[0], ocm0_all.shape[1]])
+    ocm2_lp_bef = np.zeros([ocm0_all.shape[0], ocm0_all.shape[1]])
+    ocm0_lp_aft = np.zeros([ocm0_all.shape[0], ocm0_all.shape[1]])
+    ocm1_lp_aft = np.zeros([ocm0_all.shape[0], ocm0_all.shape[1]])
+    ocm2_lp_aft = np.zeros([ocm0_all.shape[0], ocm0_all.shape[1]])
+    f1 = np.ones([5])
+
+    # Low pass filtering ################################
+    for p in range(0,depth):
+        tr0_bef = ocm0_all[p, :, 0]
+        tr1_bef = ocm1_all[p, :, 0]
+        tr2_bef = ocm2_all[p, :, 0]
+        tr0_aft = ocm0_all[p, :, 1]
+        tr1_aft = ocm1_all[p, :, 1]
+        tr2_aft = ocm2_all[p, :, 1]
+        ocm0_lp_bef[p, :] = np.convolve(tr0_bef, f1, 'same')
+        ocm1_lp_bef[p, :] = np.convolve(tr1_bef, f1, 'same')
+        ocm2_lp_bef[p, :] = np.convolve(tr2_bef, f1, 'same')
+        ocm0_lp_aft[p, :] = np.convolve(tr0_aft, f1, 'same')
+        ocm1_lp_aft[p, :] = np.convolve(tr1_aft, f1, 'same')
+        ocm2_lp_aft[p, :] = np.convolve(tr2_aft, f1, 'same')
+        # normalize
+        ocm0_lp_bef[p, :] = preprocessing.normalize([ocm0_lp_bef[p, :]])
+        ocm1_lp_bef[p, :] = preprocessing.normalize([ocm1_lp_bef[p, :]])
+        ocm2_lp_bef[p, :] = preprocessing.normalize([ocm2_lp_bef[p, :]])
+        ocm0_lp_aft[p, :] = preprocessing.normalize([ocm0_lp_aft[p, :]])
+        ocm1_lp_aft[p, :] = preprocessing.normalize([ocm1_lp_aft[p, :]])
+        ocm2_lp_aft[p, :] = preprocessing.normalize([ocm2_lp_aft[p, :]])
+
+    ocm0_ba[:, 0:num_max] = ocm0_lp_bef[:, :]  # add "before"
+    ocm1_ba[:, 0:num_max] = ocm1_lp_bef[:, :]
+    ocm2_ba[:, 0:num_max] = ocm2_lp_bef[:, :]
+    ocm0_ba[:, num_max:2 * num_max] = ocm0_lp_aft[:, :]  # add "after"
+    ocm1_ba[:, num_max:2 * num_max] = ocm1_lp_aft[:, :]
+    ocm2_ba[:, num_max:2 * num_max] = ocm2_lp_aft[:, :]
+    ################################
+
+    '''
     ocm0_ba[:, 0:num_max] = ocm0_all[:, :, 0]  # add "before"
     ocm1_ba[:, 0:num_max] = ocm1_all[:, :, 0]
     ocm2_ba[:, 0:num_max] = ocm2_all[:, :, 0]
     ocm0_ba[:, num_max:2 * num_max] = ocm0_all[:, :, 1]  # add "after"
     ocm1_ba[:, num_max:2 * num_max] = ocm1_all[:, :, 1]
     ocm2_ba[:, num_max:2 * num_max] = ocm2_all[:, :, 1]
+    '''
 
     # Add to one variable
     ocm_ba = np.zeros([depth, 2 * num_max, 3])
@@ -149,7 +191,6 @@ for fidx in range(0, np.size(sr_list)):
         ax1.set_ylim(-2,2)
         ax1.set_xlabel('Depth')
         ax1.set_ylabel('Intensity')
-        plt.legend(loc='lower right')
         plt.legend(loc='lower right')
         # OCM1
         ocm = 1

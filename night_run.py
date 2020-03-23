@@ -18,12 +18,12 @@ sr_list = ['s1r1', 's1r2', 's2r1', 's2r2', 's3r1', 's3r2']
 #sr_list = ['s2r2']
 tole = 10  # tolerance level
 
-bh_train = 1
+bh_train = 2
 bh_test = 10 - bh_train
-batch = 100  # subset of OCM traces used to get local average
+batch = 500  # subset of OCM traces used to get local average
 area_level = 0.9  # What FPR you want to get for first bh of test set.
 fpr_level = 0.5
-fpr_level_idx = [0.1]
+fpr_level_idx = [0.3, 0.5]
 
 for fpr_idx in range(0, len(fpr_level_idx)):
     fpr_level = fpr_level_idx[fpr_idx]
@@ -32,6 +32,7 @@ for fpr_idx in range(0, len(fpr_level_idx)):
     for fidx in range(0, np.size(sr_list)):
         Sub_run = sr_list[fidx]
         sr_name = 'Raw_det_ocm012_' + Sub_run + '.pkl'  # raw
+        #sr_name = 'ocm012_' + Sub_run + '.pkl'  # filtered
         with open(sr_name, 'rb') as f:
             ocm0_all, ocm1_all, ocm2_all = pickle.load(f)
 

@@ -18,7 +18,7 @@ sr_list = ['s1r1', 's1r2', 's2r1', 's2r2', 's3r1', 's3r2']
 #sr_list = ['s1r1']
 tole = 0  # tolerance level
 
-bh_train = 4
+bh_train = 5
 bh_test = 10 - bh_train
 
 

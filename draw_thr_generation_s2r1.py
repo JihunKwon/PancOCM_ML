@@ -15,6 +15,10 @@ out_list = []
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['xtick.direction'] = 'in'
 plt.rcParams['ytick.direction'] = 'in'
+plt.rcParams["font.size"] = 11
+plt.rcParams["legend.fontsize"] = 9.5
+plt.rcParams["legend.edgecolor"] = 'k'
+plt.rcParams["legend.labelspacing"] = 0.01
 
 # Jihun Local
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_01_20180928\\run1.npy")  # Before water
@@ -31,6 +35,7 @@ out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run1
 out_list.append("C:\\Users\\Kwon\\Documents\\Panc_OCM\\Subject_03_20190320\\run2.npy")
 
 rep_list = [8196, 8196, 8192, 8192, 6932, 6932, 3690, 3690, 3401, 3401, 3690, 3690]
+#rep_list = [8196, 8196, 8192, 8192, 693, 693, 3690, 3690, 3401, 3401, 3690, 3690]
 sr_list = ['s1r1', 's1r1', 's1r2', 's1r2', 's2r1', 's2r1', 's2r2', 's2r2', 's3r1', 's3r1', 's3r2', 's3r2']
 
 
@@ -51,7 +56,7 @@ for y in range(0, np.size(tole_list)):
         tole = tole_list[y]
         Sub_run_name = sr_list[fidx]
         print('Status: train' + str(num_train) + '_' + Sub_run_name)
-        plt.rcParams["font.size"] = 11
+
         in_filename = out_list[fidx]
         ocm = np.load(in_filename)
 
@@ -170,7 +175,7 @@ for y in range(0, np.size(tole_list)):
                 #### Get parameter m ####
                 # m and OoE (out of envelop) distribution
                 fname = 'm012_' + str(Sub_run_name) + '_bin' + str(bin) + '_scale' + str(scale) + '_train' + str(
-                    num_train) + '_short.pkl'
+                    num_train) + '_short_pr.pkl'
                 with open(fname, 'rb') as f:
                     count0, count1, count2, median0_base, median1_base, median2_base, sd0, sd1, sd2 = pickle.load(f)
 
@@ -186,34 +191,41 @@ for y in range(0, np.size(tole_list)):
             ax2 = plt.subplot(212, sharex=ax1)
             target = 3  # target=1 is very good, but chose the data from the different bh may be better
 
-            ax1.plot(depth_my, median1_base[:], 'k', linewidth=1, linestyle='solid', label="Baseline ($\it{M_{B}}$)")
+            ax1.plot(depth_my, median1_base[:], 'k', linewidth=1.1, linestyle='solid', label="Median of baseline ($\it{M_{B,s}}$)")
             # check with the trace with bh=4
-            ax1.plot(depth_my, ocm1_low[:, num_train*t_sub+target], 'b', linewidth=1, linestyle='dashed', label="Test set ($\it{M_{n}}$)")
-            ax1.set_title("Model Generation, State 1")
+            ax1.plot(depth_my, ocm1_low[:, num_train*t_sub+target], 'b', linewidth=1.1, linestyle='dashed', label="Test trace ($\it{U'_{i,s}}$)")
+            #ax1.set_title("Model Generation, State 1")
             ax1.set_ylabel("Magnitude (a.u.)")
             ax1.legend(loc='upper right')
-            ax1.set_ylim(-700, 55000)
+            ax1.set_ylim(100, 500000)
+            ax1.set_yscale('log')
+            ax1.text(2.25, 150000, "(a)", size=13, color='k')
 
-            ax2.plot(depth_my, np.abs(ocm1_low[:, num_train*t_sub+target] - median1_base[:]), 'r', linewidth=1, linestyle='solid',
+            ax2.plot(depth_my, np.abs(ocm1_low[:, num_train*t_sub+target] - median1_base[:]), 'r', linewidth=1.1, linestyle='solid',
                      label="Absolute Difference")
-            ax2.plot(depth_my, sd1[:], 'g', linewidth=1, linestyle='dashed', label="Threshold (m*SD, m=1)")
-            ax2.plot(depth_my, 10 * sd1[:], 'g', linewidth=1.5, linestyle='dashdot', label="Threshold (m*SD, m=10)")
+            ax2.plot(depth_my, sd1[:], 'g', linewidth=1.1, linestyle='dashed', label="Threshold (m*$\it{SD_{B,s}}$, m=1)")
+            ax2.plot(depth_my, 10 * sd1[:], 'g', linewidth=1.5, linestyle='dashdot', label="Threshold (m*$\it{SD_{B,s}}$, m=10)")
             ax2.set_xlabel("Depth (cm)")
             ax2.set_ylabel("Absolute Difference")
             ax2.legend(loc='upper right')
-            ax2.set_ylim(-700, 55000)
+            ax2.set_ylim(100, 500000)
+            ax2.set_yscale('log')
+            ax2.text(2.25, 150000, "(b)", size=13, color='k')
 
             fig.subplots_adjust(hspace=0)
             # fig.tight_layout()
 
             xticklabels = ax1.get_xticklabels()
             plt.setp(xticklabels, visible=False)
-            plt.subplots_adjust(left=0.15, right=0.98, top=0.92)
+            plt.subplots_adjust(left=0.11, right=0.98, top=0.92)
+            #plt.legend().get_frame().set_edgecolor('k')
             # plt.show()
             f_name = 'trace_fidx' + str(fidx) + '_state1_ocm1_3_short.png'
             f_name_pdf = 'trace_fidx' + str(fidx) + '_state1_ocm1_3_short.pdf'
+            f_name_eps = 'trace_fidx' + str(fidx) + '_state1_ocm1_3_short.eps'
             plt.savefig(f_name)
             plt.savefig(f_name_pdf)
+            plt.savefig(f_name_eps)
             # =============================================================================
 
         else:
@@ -228,33 +240,39 @@ for y in range(0, np.size(tole_list)):
             ax2 = plt.subplot(212, sharex=ax1)
             target = 3
 
-            ax1.plot(depth_my, median1_base[:], 'k', linewidth=1, linestyle='solid',
-                     label="Baseline ($\it{M_{B}}$)")
-            ax1.plot(depth_my, ocm1_low[:, target], 'b', linewidth=1, linestyle='dashed',
-                     label="Test set ($\it{M_{n}}$)")
-            ax1.set_title("Model Generation, State 2")
+            ax1.plot(depth_my, median1_base[:], 'k', linewidth=1.1, linestyle='solid', label="Median of baseline ($\it{M_{B,s}}$)")
+            ax1.plot(depth_my, ocm1_low[:, target], 'b', linewidth=1.1, linestyle='dashed', label="Test trace ($\it{U'_{i,s}}$)")
+            #ax1.set_title("Model Generation, State 2")
             ax1.set_ylabel("Magnitude (a.u.)")
             ax1.legend(loc='upper right')
-            ax1.set_ylim(-700, 55000)
+            ax1.set_ylim(100, 500000)
+            ax1.set_yscale('log')
+            ax1.text(2.25, 150000, "(a)", size=13, color='k')
 
-            ax2.plot(depth_my, np.abs(ocm1_low[:, target] - median1_base[:]), 'r', linewidth=1, linestyle='solid',
+            ax2.plot(depth_my, np.abs(ocm1_low[:, target] - median1_base[:]), 'r', linewidth=1.1, linestyle='solid',
                      label="Absolute Difference")
-            ax2.plot(depth_my, sd1[:], 'g', linewidth=1, linestyle='dashed', label="Threshold (m*SD, m=1)")
-            ax2.plot(depth_my, 10 * sd1[:], 'g', linewidth=1.5, linestyle='dashdot', label="Threshold (m*SD, m=10)")
+            ax2.plot(depth_my, sd1[:], 'g', linewidth=1.1, linestyle='dashed', label="Threshold (m*$\it{SD_{B,s}}$, m=1)")
+            ax2.plot(depth_my, 10 * sd1[:], 'g', linewidth=1.5, linestyle='dashdot', label="Threshold (m*$\it{SD_{B,s}}$, m=10)")
             ax2.set_xlabel("Depth (cm)")
             ax2.set_ylabel("Absolute Difference")
             ax2.legend(loc='upper right')
-            ax2.set_ylim(-700, 55000)
+            ax2.set_ylim(100, 500000)
+            ax2.set_yscale('log')
+            ax2.text(2.25, 150000, "(b)", size=13, color='k')
+
+
 
             fig.subplots_adjust(hspace=0)
             # fig.tight_layout()
 
             xticklabels = ax1.get_xticklabels()
             plt.setp(xticklabels, visible=False)
-            plt.subplots_adjust(left=0.15, right=0.98, top=0.92)
+            plt.subplots_adjust(left=0.11, right=0.98, top=0.92)
             # plt.show()
             f_name = 'trace_fidx' + str(fidx) + '_state2_ocm1_short.png'
             f_name_pdf = 'trace_fidx' + str(fidx) + '_state2_ocm1_short.pdf'
+            f_name_eps = 'trace_fidx' + str(fidx) + '_state2_ocm1_short.eps'
             plt.savefig(f_name)
             plt.savefig(f_name_pdf)
+            plt.savefig(f_name_eps)
             # =============================================================================

@@ -68,7 +68,7 @@ num_bh = 5 # number of bh in each state
 #s_new = 231  # 2.3cm to 4.0cm
 s_new = 269  # 2.2cm to 4.2cm
 threshold = 0.01  # Threshold for Chi^2
-interval = 2  # Interval for averaging
+interval = 1  # Interval for averaging
 plot_interval = 1000
 #interval_list = [2, 4, 5, 10]
 #interval_list = [5, 10, 50]
@@ -76,7 +76,7 @@ length_list = [5, 10, 20, 50]
 
 
 #### Set the threshold based on Chi^2 ####
-Chi_list = [0.000000001, 0.0000000001, 0.000000001, 0.000000000001, 0.0000000000001, 0.00000000000001]
+Chi_list = [0.000000001, 0.0000000001, 0.000000001, 0.000000000001, 0.0000000000001, 0.00000000000001, 0.000000000000001, 0.0000000000000001]
 _, chi2_interval_max_0000001 = chi2.interval(alpha=1 - 0.000001, df=1)
 _, chi2_interval_max_00000001 = chi2.interval(alpha=1 - 0.0000001, df=1)
 _, chi2_interval_max_000000001 = chi2.interval(alpha=1 - 0.00000001, df=1)
@@ -163,9 +163,12 @@ for length_idx in range(0, len(length_list)):
 
 
         ## Averaging the traces into the time dimension using the "interval" parameter ""
-        ocm0_ave = np.zeros([s_new, c0_new_removed//interval+1])
-        ocm1_ave = np.zeros([s_new, c0_new//interval+1])
-        ocm2_ave = np.zeros([s_new, c0_new//interval+1])
+        #ocm0_ave = np.zeros([s_new, c0_new_removed//interval+1])
+        #ocm1_ave = np.zeros([s_new, c0_new//interval+1])
+        #ocm2_ave = np.zeros([s_new, c0_new//interval+1])
+        ocm0_ave = np.zeros([s_new, c0_new_removed//interval])
+        ocm1_ave = np.zeros([s_new, c0_new//interval])
+        ocm2_ave = np.zeros([s_new, c0_new//interval])
         count0 = 0
         count12 = 0
         '''

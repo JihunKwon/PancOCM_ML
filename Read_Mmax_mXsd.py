@@ -48,7 +48,7 @@ num_bh = 5 # number of bh in each state
 bin = 1000
 scale = 50  # number divides m
 
-m_list = [1.1, 1.2, 1.3, 1.4]
+m_list = [1.0, 1.1, 1.2, 1.3, 1.4]
 
 for y in range(0, np.size(m_list)):
     for fidx in range(0, np.size(rep_list)):
